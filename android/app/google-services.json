@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "52460152829",
+    "project_id": "beetask-3906d",
+    "storage_bucket": "beetask-3906d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:52460152829:android:9bbe365d1a5a0f375a5b94",
+        "android_client_info": {
+          "package_name": "com.example.bee_task"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBBRnxZ3X8-gXGaq-jIrnW1G7G-2_DyOE0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
