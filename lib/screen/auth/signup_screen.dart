@@ -2,7 +2,6 @@ import 'package:bee_task/bloc/auth/auth_bloc.dart';
 import 'package:bee_task/bloc/auth/auth_event.dart';
 import 'package:bee_task/bloc/auth/auth_state.dart';
 import 'package:bee_task/screen/auth/login_screen.dart';
-import 'package:bee_task/screen/home_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';

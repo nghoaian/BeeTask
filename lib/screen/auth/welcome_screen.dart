@@ -2,7 +2,7 @@ import 'package:bee_task/bloc/auth/auth_bloc.dart';
 import 'package:bee_task/bloc/auth/auth_state.dart';
 import 'package:bee_task/screen/auth/login_screen.dart';
 import 'package:bee_task/screen/auth/signup_screen.dart';
-import 'package:bee_task/screen/home_screen.dart';
+import 'package:bee_task/screen/nav/nav_ui_screen.dart';
 import 'package:bee_task/util/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,7 +16,7 @@ class WelcomeScreen extends StatelessWidget {
       body: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
           if (state is AuthAuthenticated) {
-            return HomeScreen();
+            return NavUIScreen();
           } else if (state is AuthUnauthenticated) {
             return _buildWelcomeScreen(context);
           } else if (state is AuthLoading) {
@@ -74,7 +74,7 @@ class WelcomeScreen extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => LoginScreen()),
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
               );
             },
             child: Container(
@@ -103,7 +103,7 @@ class WelcomeScreen extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => SignupScreen()),
+                MaterialPageRoute(builder: (context) => const SignupScreen()),
               );
             },
             child: Container(
@@ -144,7 +144,7 @@ class WelcomeScreen extends StatelessWidget {
         children: [
           Text(
             errorMessage,
-            style: TextStyle(color: Colors.red, fontSize: 18),
+            style: const TextStyle(color: Colors.red, fontSize: 18),
           ),
         ],
       ),

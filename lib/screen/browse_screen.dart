@@ -1,21 +1,18 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:bee_task/screen/auth/welcome_screen.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+class BrowseScreen extends StatefulWidget {
+  const BrowseScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<BrowseScreen> createState() => _BrowseScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-    @override
+class _BrowseScreenState extends State<BrowseScreen> {
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Home'),
+        title: const Text('Browse'),
         backgroundColor: Color(0xFF4254FE),
         foregroundColor: Colors.white,
       ),
@@ -32,8 +29,8 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 children: <Widget>[
                   ListTile(
-                    title: const Text('Home Screen'),
-                    subtitle: const Text('This is Home Screen'),
+                    title: const Text('Browse Screen'),
+                    subtitle: const Text('This is Browse Screen'),
                   ),
                 ],
               ),

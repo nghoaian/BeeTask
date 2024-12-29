@@ -1,21 +1,18 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:bee_task/screen/auth/welcome_screen.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+class SearchScreen extends StatefulWidget {
+  const SearchScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<SearchScreen> createState() => _SearchScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-    @override
+class _SearchScreenState extends State<SearchScreen> {
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Home'),
+        title: const Text('Search'),
         backgroundColor: Color(0xFF4254FE),
         foregroundColor: Colors.white,
       ),
@@ -32,8 +29,8 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 children: <Widget>[
                   ListTile(
-                    title: const Text('Home Screen'),
-                    subtitle: const Text('This is Home Screen'),
+                    title: const Text('Search Screen'),
+                    subtitle: const Text('This is Search Screen'),
                   ),
                 ],
               ),

@@ -2,7 +2,7 @@ import 'package:bee_task/bloc/auth/auth_bloc.dart';
 import 'package:bee_task/bloc/auth/auth_event.dart';
 import 'package:bee_task/bloc/auth/auth_state.dart';
 import 'package:bee_task/screen/auth/signup_screen.dart';
-import 'package:bee_task/screen/home_screen.dart';
+import 'package:bee_task/screen/nav/nav_ui_screen.dart';
 import 'package:bee_task/util/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -44,7 +44,7 @@ class _LoginScreenState extends State<LoginScreen> {
             // Navigate to homepage
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (_) => HomeScreen()),
+              MaterialPageRoute(builder: (_) => NavUIScreen()),
             );
           } else if (state is AuthFailure) {
             Navigator.of(context).pop();

@@ -1,6 +1,7 @@
 import 'package:bee_task/bloc/auth/auth_bloc.dart';
 import 'package:bee_task/firebase/firebase_options.dart';
 import 'package:bee_task/screen/auth/welcome_screen.dart';
+import 'package:bee_task/screen/setting_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -28,6 +29,7 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         routes: {
           '/': (context) => WelcomeScreen(),
+          '/setting': (context) => SettingScreen(),
         },
       ),
     );
