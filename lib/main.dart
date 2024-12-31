@@ -1,3 +1,4 @@
+import 'package:bee_task/bloc/account/account_bloc.dart';
 import 'package:bee_task/bloc/auth/auth_bloc.dart';
 import 'package:bee_task/firebase/firebase_options.dart';
 import 'package:bee_task/screen/auth/welcome_screen.dart';
@@ -19,11 +20,21 @@ Future<void> main() async {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => AuthBloc(
-        firebaseAuth: FirebaseAuth.instance,
-        firestore: FirebaseFirestore.instance,
-      ),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => AuthBloc(
+            firebaseAuth: FirebaseAuth.instance,
+            firestore: FirebaseFirestore.instance,
+          ),
+        ),
+        BlocProvider(
+          create: (context) => AccountBloc(
+            firebaseAuth: FirebaseAuth.instance,
+            firestore: FirebaseFirestore.instance,
+          ),
+        ),
+      ],
       child: MaterialApp(
         title: 'Quizlet App',
         debugShowCheckedModeBanner: false,

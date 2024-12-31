@@ -1,3 +1,4 @@
+import 'package:bee_task/data/repository/UserRepository.dart';
 import 'package:bloc/bloc.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
@@ -7,9 +8,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final FirebaseAuth firebaseAuth;
   final FirebaseFirestore firestore;
+  final UserRepository userRepository;
 
   AuthBloc({required this.firebaseAuth, required this.firestore})
-      : super(AuthInitial()) {
+      : userRepository = FirebaseUserRepository(firestore: firestore, firebaseAuth: firebaseAuth),
+        super(AuthInitial()) {
     on<AuthStatusChanged>(_onAuthStatusChanged);
     on<LoginRequested>(_onLoginRequested);
     on<SignupRequested>(_onSignupRequested);
@@ -52,7 +55,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       // Kiểm tra username đã tồn tại chưa
-      bool usernameExists = await _checkIfUsernameExists(event.username);
+      bool usernameExists = await userRepository.checkIfUsernameExist(event.username);
       if (usernameExists) {
         emit(AuthSignUpFailure(errorMessage: "Username đã tồn tại!"));
         return;
@@ -65,32 +68,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
 
       // Thêm thông tin user vào Firestore
-      await _addUserNames(event.username, event.email);
+      await userRepository.addUserName(event.username, event.email);
 
       emit(AuthSignedUp());
     } on FirebaseAuthException catch (e) {
       emit(AuthSignUpFailure(errorMessage: e.message ?? "Unknown error"));
     }
-  }
-
-  // Kiểm tra tên người dùng đã tồn tại trong Firestore
-  Future<bool> _checkIfUsernameExists(String username) async {
-    final CollectionReference usersCollection = firestore.collection('users');
-    final QuerySnapshot result = await usersCollection
-        .where('userName', isEqualTo: username)
-        .limit(1)
-        .get();
-
-    return result.docs.isNotEmpty;
-  }
-
-  // Thêm người dùng vào Firestore
-  Future<void> _addUserNames(String username, String email) async {
-    final CollectionReference usersCollection = firestore.collection('users');
-    await usersCollection.add({
-      'userName': username,
-      'userEmail': email,
-    });
   }
 
   // Xử lý đổi mật khẩu
@@ -126,6 +109,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         return;
       }
       await user.updatePassword(event.newPassword);
+
       emit(ChangePasswordSuccess());
     } on FirebaseAuthException catch (e) {
       emit(ChangePasswordFailure(
