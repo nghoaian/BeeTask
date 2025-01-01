@@ -17,6 +17,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LoginRequested>(_onLoginRequested);
     on<SignupRequested>(_onSignupRequested);
     on<ChangePasswordRequested>(_onChangePasswordRequested);
+    on<ForgetPasswordRequested>(_onForgetPasswordRequested);
 
     // Kiểm tra trạng thái đăng nhập
     firebaseAuth.authStateChanges().listen((user) {
@@ -115,6 +116,20 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(ChangePasswordFailure(
           errorMessage:
               e.message ?? "Password change failed. Please try again."));
+    }
+  }
+
+  // Xử lý quên mật khẩu
+  Future<void> _onForgetPasswordRequested(
+      ForgetPasswordRequested event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      await FirebaseAuth.instance
+          .sendPasswordResetEmail(email: event.email.trim());
+      emit(ForgetPasswordSuccess());
+    } on FirebaseAuthException catch (e) {
+      emit(ForgetPasswordFailure(
+          errorMessage: e.message ?? "An unexpected error occurred."));
     }
   }
 }

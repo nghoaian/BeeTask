@@ -1,6 +1,7 @@
 import 'package:bee_task/bloc/account/account_bloc.dart';
 import 'package:bee_task/bloc/auth/auth_bloc.dart';
 import 'package:bee_task/firebase/firebase_options.dart';
+import 'package:bee_task/screen/auth/forget_password.dart';
 import 'package:bee_task/screen/auth/welcome_screen.dart';
 import 'package:bee_task/screen/setting_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -41,6 +42,7 @@ class MyApp extends StatelessWidget {
         routes: {
           '/': (context) => WelcomeScreen(),
           '/setting': (context) => SettingScreen(),
+          '/forgot_password': (context) => ForgetPasswordScreen(),
         },
       ),
     );
