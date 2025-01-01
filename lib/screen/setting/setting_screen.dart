@@ -1,7 +1,7 @@
 import 'package:bee_task/screen/auth/change_password.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'auth/welcome_screen.dart';
+import '../auth/welcome_screen.dart';
 
 class SettingScreen extends StatefulWidget {
   const SettingScreen({super.key});
