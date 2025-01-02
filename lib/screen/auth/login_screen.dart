@@ -37,8 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: CircularProgressIndicator(),
               ),
             );
-          } else
-          if (state is AuthAuthenticated) {
+          } else if (state is AuthAuthenticated) {
             // Xoa dialog loading
             Navigator.of(context).pop();
             // Navigate to homepage
@@ -192,11 +191,11 @@ class _LoginScreenState extends State<LoginScreen> {
     return GestureDetector(
       onTap: () {
         BlocProvider.of<AuthBloc>(context).add(
-              LoginRequested(
-                email: emailController.text,
-                password: passwordController.text,
-              ),
-            );
+          LoginRequested(
+            email: emailController.text,
+            password: passwordController.text,
+          ),
+        );
       },
       child: Container(
         height: 55,
@@ -236,9 +235,9 @@ class _LoginScreenState extends State<LoginScreen> {
           GestureDetector(
             onTap: () {
               Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => SignupScreen()),
-            );
+                context,
+                MaterialPageRoute(builder: (_) => SignupScreen()),
+              );
             },
             child: const Text(
               "Sign up",

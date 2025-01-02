@@ -72,7 +72,9 @@ class _SettingScreenState extends State<SettingScreen> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const ChangePasswordScreen()),
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  const ChangePasswordScreen()),
                         );
                       },
                     ),
