@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:bee_task/data/repository/UserRepository.dart';
 import 'package:bloc/bloc.dart';
+import 'package:flutter/material.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -9,6 +12,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final FirebaseAuth firebaseAuth;
   final FirebaseFirestore firestore;
   final UserRepository userRepository;
+  late final StreamSubscription<User?> _authSubscription;
 
   AuthBloc({required this.firebaseAuth, required this.firestore})
       : userRepository = FirebaseUserRepository(firestore: firestore, firebaseAuth: firebaseAuth),
@@ -20,7 +24,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<ForgetPasswordRequested>(_onForgetPasswordRequested);
 
     // Kiểm tra trạng thái đăng nhập
-    firebaseAuth.authStateChanges().listen((user) {
+    _authSubscription = firebaseAuth.authStateChanges().listen((user) {
       add(AuthStatusChanged(user: user));
     });
   }
@@ -55,10 +59,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       SignupRequested event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
     try {
-      // Kiểm tra username đã tồn tại chưa
-      bool usernameExists = await userRepository.checkIfUsernameExist(event.username);
-      if (usernameExists) {
-        emit(AuthSignUpFailure(errorMessage: "Username đã tồn tại!"));
+      // Kiểm tra useremail đã tồn tại chưa
+      bool useremailExists = await userRepository.checkIfUserEmailExist(event.email);
+      if (useremailExists) {
+        emit(AuthSignUpFailure(errorMessage: "Email đã tồn tại!"));
         return;
       }
 
@@ -131,5 +135,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(ForgetPasswordFailure(
           errorMessage: e.message ?? "An unexpected error occurred."));
     }
+  }
+
+   @override
+  Future<void> close() {
+    // Hủy luồng khi Bloc bị đóng
+    _authSubscription.cancel();
+    return super.close();
   }
 }

@@ -45,26 +45,33 @@ class WelcomeScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Padding(
-            padding: EdgeInsets.only(top: 200.0),
-            child: Text(
-              'Quizlet',
-              style: TextStyle(
-                fontFamily: 'Times New Roman',
-                fontSize: 40,
-                color: AppColors.white,
-                fontWeight: FontWeight.bold,
-              ),
+          Padding(
+            padding: EdgeInsets.only(top: 120.0),
+            // child: Text(
+            //   'BeeTask',
+            //   style: TextStyle(
+            //     fontFamily: 'Times New Roman',
+            //     fontSize: 40,
+            //     color: AppColors.white,
+            //     fontWeight: FontWeight.bold,
+            //   ),
+            // ),
+            child: Image.asset(
+              'lib/util/images/beetasklogo.png', 
+              width: 250,
+              height: 250,
+              fit: BoxFit.contain,
             ),
           ),
           const SizedBox(
-            height: 100,
+            height: 50,
           ),
           const Text(
-            'Welcome To Quizlet',
+            'Welcome To BeeTask',
             style: TextStyle(
-              fontSize: 30,
-              color: AppColors.white,
+              fontSize: 35,
+              fontFamily: 'Times New Roman',
+              color: Colors.yellow,
             ),
           ),
           const SizedBox(

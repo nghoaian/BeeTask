@@ -1,127 +1,188 @@
-import 'package:bee_task/screen/auth/change_password.dart';
+import 'package:bee_task/screen/account/account_screen.dart';
+import 'package:bee_task/screen/auth/welcome_screen.dart';
+import 'package:bee_task/util/colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../auth/welcome_screen.dart';
 
 class SettingScreen extends StatefulWidget {
-  const SettingScreen({super.key});
-
   @override
-  State<SettingScreen> createState() => _SettingScreenState();
+  _SettingScreenState createState() => _SettingScreenState();
 }
 
 class _SettingScreenState extends State<SettingScreen> {
-  late User? user;
-  late String userEmail = 'No Email';
-  String userName = 'No Username';
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: const Text('Settings'),
-        backgroundColor: Color(0xFF4254FE),
-        foregroundColor: Colors.white,
+        title: Text('Settings'),
+        backgroundColor: Colors.grey[200],
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: TextStyle(
+          color: Colors.black,
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+        iconTheme: IconThemeData(color: Colors.black),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: <Widget>[
-            UserAccountsDrawerHeader(
-              accountName: Text(
-                userName,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+      body: Container(
+        color: Colors.grey[200],
+        child: ListView(
+          children: [
+            // First section
+            _buildSection(
+              children: [
+                _buildListTile(
+                  icon: Icons.person,
+                  title: 'Account',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => AccountScreen()),
+                    );
+                  },
                 ),
-              ),
-              accountEmail: Text(
-                userEmail,
-                style: const TextStyle(color: Colors.white70),
-              ),
-              currentAccountPicture: CircleAvatar(
-                backgroundColor: Colors.white,
-                child: Text(
-                  userName.isNotEmpty ? userName[0].toUpperCase() : '',
-                  style: TextStyle(
-                    fontSize: 40.0,
-                    color: Color(0xFF4254FE),
-                  ),
+                // buildDividerWithPadding(),
+                _buildListTile(
+                  icon: Icons.settings,
+                  title: 'General',
                 ),
-              ),
-              decoration: BoxDecoration(
-                color: Color(0xFF4254FE),
-              ),
+                // buildDividerWithPadding(),
+                _buildListTile(
+                  icon: Icons.calendar_today,
+                  title: 'Calendar',
+                ),
+              ],
             ),
-            Container(
-              margin: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey[300]!),
-                borderRadius: BorderRadius.circular(25.0),
-              ),
-              child: Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25.0),
+            // Second section
+            _buildSectionTitle('PERSONALIZATION'),
+            _buildSection(
+              children: [
+                _buildListTile(
+                  icon: Icons.palette,
+                  title: 'Theme',
+                  trailingText: 'Todoist',
                 ),
-                elevation: 0,
-                child: Column(
-                  children: [
-                    ListTile(
-                      leading: Icon(Icons.lock, color: Color(0xFF4254FE)),
-                      title: const Text('Change Password'),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  const ChangePasswordScreen()),
-                        );
-                      },
-                    ),
-                    buildDividerWithPadding(),
-                    ListTile(
-                      leading: Icon(Icons.download_rounded,
-                          color: Color(0xFF4254FE)),
-                      title: const Text('Download Courses for Offline'),
-                      subtitle: const Text(
-                        'Your 8 most recently accessed courses will be automatically downloaded',
-                      ),
-                      onTap: () {
-                        // Navigate to offline learning screen
-                      },
-                    ),
-                    buildDividerWithPadding(),
-                    ListTile(
-                      leading: Icon(Icons.storage, color: Color(0xFF4254FE)),
-                      title: const Text('Manage Storage'),
-                      onTap: () {
-                        // Navigate to storage management screen
-                      },
-                    ),
-                    buildDividerWithPadding(),
-                    ListTile(
-                      leading: Icon(Icons.logout, color: Colors.redAccent),
-                      title: const Text('Logout'),
-                      onTap: () {
-                        signOut();
-                      },
-                    ),
-                  ],
+                _buildListTile(
+                  icon: Icons.apps,
+                  title: 'App Icon',
+                  trailingText: 'Todoist',
                 ),
-              ),
+                _buildListTile(
+                  icon: Icons.menu,
+                  title: 'Navigation',
+                ),
+                _buildListTile(
+                  icon: Icons.add_circle_outline,
+                  title: 'Quick Add',
+                ),
+              ],
             ),
+            // Third section
+            _buildSectionTitle('PRODUCTIVITY'),
+            _buildSection(
+              children: [
+                _buildListTile(
+                  icon: Icons.show_chart,
+                  title: 'Productivity',
+                ),
+                _buildListTile(
+                  icon: Icons.alarm,
+                  title: 'Reminders',
+                ),
+                _buildListTile(
+                  icon: Icons.notifications,
+                  title: 'Notifications',
+                ),
+              ],
+            ),
+            // Fourth section
+            _buildLogoutButton(),
           ],
         ),
       ),
     );
   }
 
-  Widget buildDividerWithPadding() {
-    return Row(
-      children: [
-        SizedBox(width: 55), // adjust the width as needed
-        Expanded(child: Divider()),
-      ],
+  Widget _buildSection({required List<Widget> children}) {
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(25),
+      ),
+      child: Column(
+        children: children,
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 14,
+          color: Colors.grey[600],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildListTile({
+    required IconData icon,
+    required String title,
+    String? trailingText,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: ListTile(
+        contentPadding: EdgeInsets.symmetric(horizontal: 16.0),
+        leading: Icon(icon, color: AppColors.primary),
+        title: Text(
+          title,
+          style: TextStyle(fontSize: 16),
+        ),
+        trailing: trailingText != null
+            ? Text(
+                trailingText,
+                style: TextStyle(color: Colors.grey),
+              )
+            : null,
+      ),
+    );
+  }
+
+  // Widget buildDividerWithPadding() {
+  //   return Row(
+  //     children: [
+  //       SizedBox(width: 55), // adjust the width as needed
+  //       Expanded(child: Divider()),
+  //     ],
+  //   );
+  // }
+
+  Widget _buildLogoutButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: ElevatedButton(
+        onPressed: () {signOut();},
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.red,
+          padding: const EdgeInsets.symmetric(vertical: 15),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        child: const Text(
+          "Log Out",
+          style: TextStyle(fontSize: 16),
+        ),
+      ),
     );
   }
 

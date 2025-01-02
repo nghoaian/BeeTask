@@ -1,7 +1,7 @@
 import 'package:bee_task/screen/browse/browse_screen.dart';
+import 'package:bee_task/screen/setting/setting_screen.dart';
 import 'package:bee_task/screen/upcoming/home_screen.dart';
 import 'package:bee_task/screen/search/search_screen.dart';
-import 'package:bee_task/screen/setting/setting_screen.dart'; // Giả sử bạn có màn SettingScreen
 import 'package:bee_task/util/colors.dart';
 import 'package:flutter/material.dart';
 

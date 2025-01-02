@@ -1,10 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 
 abstract class UserRepository {
-  Future<bool> checkIfUsernameExist(String username);
+  Future<bool> checkIfUserEmailExist(String username);
   Future<void> addUserName(String username, String email);
-  Future<String?> getUserName(String uid);
+  Future<String?> getUserName();
   Future<void> updateUserName(String uid, String username);
 }
 
@@ -14,11 +15,13 @@ class FirebaseUserRepository implements UserRepository {
 
   FirebaseUserRepository({required this.firestore, required this.firebaseAuth});
 
+  String get _uid => firebaseAuth.currentUser?.uid ?? '';
+
   @override
-  Future<bool> checkIfUsernameExist(String username) async {
+  Future<bool> checkIfUserEmailExist(String useremail) async {
     final CollectionReference usersCollection = firestore.collection('users');
     final QuerySnapshot result = await usersCollection
-        .where('userName', isEqualTo: username)
+        .where('userEmail', isEqualTo: useremail)
         .limit(1)
         .get();
 
@@ -35,10 +38,12 @@ class FirebaseUserRepository implements UserRepository {
   }
 
   @override
-  Future<String?> getUserName(String uid) async {
+  Future<String?> getUserName() async {
+    final String uid = _uid;
     final DocumentSnapshot userDoc = await firestore.collection('users').doc(uid).get();
     if (userDoc.exists) {
       return userDoc['userName'];
+      debugPrint('userName: ${userDoc['userName']}');
     }
     return null;
   }

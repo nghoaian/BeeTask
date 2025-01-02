@@ -1,25 +1,12 @@
+import 'package:bee_task/util/colors.dart';
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
+class AccountScreen extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: SettingsPage(),
-    );
-  }
+  _AccountScreenState createState() => _AccountScreenState();
 }
 
-class SettingsPage extends StatefulWidget {
-  @override
-  _SettingsPageState createState() => _SettingsPageState();
-}
-
-class _SettingsPageState extends State<SettingsPage> {
+class _AccountScreenState extends State<AccountScreen> {
   bool isTwoFactorEnabled = false;
 
   @override
@@ -28,7 +15,7 @@ class _SettingsPageState extends State<SettingsPage> {
       appBar: buildAppBar(),
       backgroundColor: Colors.grey[200],
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(5),
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             AvatarSection(),
@@ -39,12 +26,6 @@ class _SettingsPageState extends State<SettingsPage> {
             SizedBox(height: 20),
             PasswordSection(),
             SizedBox(height: 20),
-            TwoFactorSection(isTwoFactorEnabled, (value) {
-              setState(() {
-                isTwoFactorEnabled = value;
-              });
-            }),
-            SizedBox(height: 20),
             DeleteAccountButton(),
           ],
         ),
@@ -54,28 +35,32 @@ class _SettingsPageState extends State<SettingsPage> {
 
   AppBar buildAppBar() {
     return AppBar(
-      backgroundColor: Colors.grey[200], // Nền xám nhạt
+      backgroundColor: Colors.grey[200],
       elevation: 0,
-      leadingWidth: 120, // Giới hạn chiều rộng của leading
-      leading: Row(
-        children: [
-          IconButton(
-            icon: Icon(Icons.arrow_back_ios, color: Colors.red), // Dấu "<"
-            onPressed: () {},
+      leadingWidth: 120,
+      leading: GestureDetector(
+        onTap: () {
+          Navigator.pop(context);
+        },
+        child: Container(
+          margin: const EdgeInsets.only(left: 16),
+          child: const Row(
+            children: [
+              Icon(Icons.arrow_back_ios, color: AppColors.primary),
+              Text(
+                'Settings',
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 17,
+                ),
+              ),
+            ],
           ),
-          SizedBox(width: 0), // Khoảng cách nhỏ giữa nút "<" và chữ "Settings"
-          Text(
-            'Settings',
-            overflow: TextOverflow.ellipsis, // Xử lý tràn text
-            style: TextStyle(
-              color: Colors.red,
-              fontSize: 17, // Chữ "Settings" nhỏ hơn
-            ),
-          ),
-        ],
+        ),
       ),
-      centerTitle: true, // Căn giữa tiêu đề
-      title: Text(
+      centerTitle: true,
+      title: const Text(
         'Account',
         style: TextStyle(
           color: Colors.black,
@@ -85,19 +70,24 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  // Avatar section
   Widget AvatarSection() {
+    String userName = 'An Nguyen';
+
     return Column(
       children: [
         CircleAvatar(
-          radius: 30, // Kích thước nhỏ hơn
-          backgroundColor: Colors.teal,
+          radius: 50, 
+          backgroundColor: AppColors.primary,
           child: Text(
-            'A',
-            style: TextStyle(color: Colors.white, fontSize: 25),
+            userName.isNotEmpty
+                ? userName[0].toUpperCase()
+                : '',
+            style: const TextStyle(
+                color: Colors.white,
+                fontSize: 30), // Màu chữ trắng và kích thước chữ
           ),
         ),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
         Text(
           'Your avatar photo will be public',
           style: TextStyle(color: Colors.grey[600]),
@@ -106,7 +96,6 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  // Edit Button
   Widget EditButton() {
     return TextButton(
       onPressed: () {},
@@ -117,16 +106,12 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  // Info Section (Full Name, Email)
   Widget InfoSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Full Name
         Padding(
-          padding: const EdgeInsets.only(
-              left: 16.0,
-              bottom: 8.0), // Xích qua phải một chút và lên một chút
+          padding: const EdgeInsets.only(left: 16.0, bottom: 8.0),
           child: Text(
             'FULL NAME',
             style: TextStyle(color: Colors.grey[600]),
@@ -141,22 +126,18 @@ class _SettingsPageState extends State<SettingsPage> {
             border: InputBorder.none,
             contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
             ),
           ),
         ),
         SizedBox(height: 20),
-
-        // Email
         Padding(
-          padding: const EdgeInsets.only(
-              left: 16.0,
-              bottom: 8.0), // Xích qua phải một chút và lên một chút
+          padding: const EdgeInsets.only(left: 16.0, bottom: 8.0),
           child: Text(
             'EMAIL',
             style: TextStyle(color: Colors.grey[600]),
@@ -171,11 +152,11 @@ class _SettingsPageState extends State<SettingsPage> {
             border: InputBorder.none,
             contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
             ),
             suffixIcon: Icon(Icons.arrow_forward_ios),
@@ -185,13 +166,12 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-// Password Section
   Widget PasswordSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 16.0), // Xích qua phải một chút
+          padding: const EdgeInsets.only(left: 16.0),
           child: Text(
             'PASSWORD',
             style: TextStyle(color: Colors.grey[600]),
@@ -202,55 +182,18 @@ class _SettingsPageState extends State<SettingsPage> {
           onPressed: () {},
           child: Text('Add Password'),
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white, // Nền màu trắng
-            foregroundColor: Colors.black, // Chữ màu đen
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(16),
             ),
-            minimumSize:
-                Size(double.infinity, 50), // Kích thước lớn bằng thanh box
+            minimumSize: Size(double.infinity, 50),
           ),
         ),
       ],
     );
   }
 
-// Two-Factor Authentication Section
-  Widget TwoFactorSection(bool isTwoFactorEnabled, Function(bool) onChanged) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 16), // Xích qua phải một chút
-          child: Text(
-            'TWO-FACTOR AUTHENTICATION',
-            style: TextStyle(color: Colors.grey[600]),
-          ),
-        ),
-        SizedBox(height: 10),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey[300]!),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Require 2FA', style: TextStyle(color: Colors.black)),
-              Switch(
-                value: isTwoFactorEnabled,
-                onChanged: onChanged,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  // Delete Account Button
   Widget DeleteAccountButton() {
     return ElevatedButton(
       onPressed: () {},
@@ -262,7 +205,7 @@ class _SettingsPageState extends State<SettingsPage> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.red,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(16),
         ),
         minimumSize: Size(double.infinity, 50),
       ),
