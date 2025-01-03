@@ -212,7 +212,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Icon(
         Icons.add,
         color: Colors.white,
-        size: 30,
+        size: 40,
       ),
       shape: CircleBorder(),
       elevation: 6,

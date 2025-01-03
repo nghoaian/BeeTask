@@ -53,11 +53,11 @@ class BrowseScreen extends StatelessWidget {
               // Khối 1: Inbox, Filters & Labels, Completed
               buildSectionGroup(
                 [
-                  buildSection("Inbox", Icons.inbox, count: 4),
+                  buildButton("Inbox", Icons.inbox, count: 4),
                   buildDividerWithPadding(),
-                  buildSection("Filters & Labels", Icons.grid_view),
+                  buildButton("Filters & Labels", Icons.grid_view),
                   buildDividerWithPadding(),
-                  buildSection("Completed", Icons.check_circle),
+                  buildButton("Completed", Icons.check_circle),
                 ],
               ),
 
@@ -67,13 +67,13 @@ class BrowseScreen extends StatelessWidget {
               // Khối 2: Home, Project Tracker, Testproject
               buildSectionGroup(
                 [
-                  buildProjectItem("Home🏡", 5),
+                  buildButton("Home🏡", Icons.tag, count: 5),
                   buildDividerWithPadding(),
-                  buildProjectItem("Project Tracker", 35),
+                  buildButton("Project Tracker", Icons.tag, count: 35),
                   buildDividerWithPadding(),
-                  buildProjectItem("Testproject 👥", 2),
+                  buildButton("Testproject 👥", Icons.tag, count: 2),
                   buildDividerWithPadding(),
-                  buildListTile(Icons.edit, "Manage Projects"),
+                  buildButton("Manage Projects", Icons.edit),
                 ],
               ),
 
@@ -101,46 +101,31 @@ class BrowseScreen extends StatelessWidget {
     );
   }
 
-  Widget buildSection(String title, IconData icon, {int? count}) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.red),
-      title: Text(
-        title,
-        style: TextStyle(color: Colors.black),
+  Widget buildButton(String title, IconData icon, {int? count}) {
+    return TextButton(
+      onPressed: () {
+        // Xử lý sự kiện khi bấm vào nút
+        print('Button "$title" clicked!');
+      },
+      style: TextButton.styleFrom(
+        padding: EdgeInsets.zero,
       ),
-      trailing: count != null
-          ? CircleAvatar(
-              radius: 12,
-              backgroundColor: Colors.grey[200],
-              child: Text(
-                count.toString(),
-                style: TextStyle(fontSize: 12, color: Colors.black),
-              ),
-            )
-          : null,
-    );
-  }
-
-  Widget buildProjectItem(String title, int count) {
-    return ListTile(
-      leading: Icon(Icons.tag, color: Colors.grey),
-      title: Text(
-        title,
-        style: TextStyle(color: Colors.black),
-      ),
-      trailing: Text(
-        count.toString(),
-        style: TextStyle(color: Colors.black),
-      ),
-    );
-  }
-
-  Widget buildListTile(IconData icon, String title) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.black),
-      title: Text(
-        title,
-        style: TextStyle(color: Colors.black),
+      child: ListTile(
+        leading: Icon(icon, color: Colors.red),
+        title: Text(
+          title,
+          style: TextStyle(color: Colors.black),
+        ),
+        trailing: count != null
+            ? CircleAvatar(
+                radius: 12,
+                backgroundColor: Colors.grey[200],
+                child: Text(
+                  count.toString(),
+                  style: TextStyle(fontSize: 12, color: Colors.black),
+                ),
+              )
+            : null,
       ),
     );
   }
@@ -149,19 +134,25 @@ class BrowseScreen extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        TextButton.icon(
-          onPressed: () {},
-          icon: Text(
-            "My Projects",
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
+        Padding(
+          padding: const EdgeInsets.only(left: 16.0), // Thụt vào bên phải
+          child: TextButton.icon(
+            onPressed: () {
+              // Xử lý khi bấm vào "My Projects"
+              print("My Projects clicked!");
+            },
+            icon: Text(
+              "My Projects",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
             ),
-          ),
-          label: Icon(Icons.chevron_right, color: Colors.black),
-          style: TextButton.styleFrom(
-            padding: EdgeInsets.zero,
+            label: Icon(Icons.chevron_right, color: Colors.black),
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.zero,
+            ),
           ),
         ),
         Row(
@@ -212,11 +203,20 @@ class BrowseScreen extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
       ),
-      child: ListTile(
-        leading: Icon(Icons.palette, color: Colors.black),
-        title: Text(
-          "Browse Templates",
-          style: TextStyle(color: Colors.black),
+      child: TextButton(
+        onPressed: () {
+          // Xử lý sự kiện khi bấm vào Browse Templates
+          print("Browse Templates clicked!");
+        },
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.zero,
+        ),
+        child: ListTile(
+          leading: Icon(Icons.palette, color: Colors.black),
+          title: Text(
+            "Browse Templates",
+            style: TextStyle(color: Colors.black),
+          ),
         ),
       ),
     );
