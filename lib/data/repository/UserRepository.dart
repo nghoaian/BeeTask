@@ -3,10 +3,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 abstract class UserRepository {
+  FirebaseAuth get firebaseAuth;
   Future<bool> checkIfUserEmailExist(String username);
-  Future<void> addUserName(String username, String email);
+  Future<void> addUser(String id, String username, String email);
   Future<String?> getUserName();
-  Future<void> updateUserName(String uid, String username);
+  Future<String?> getUserEmail();
+  Future<void> updateUserName(String username);
 }
 
 class FirebaseUserRepository implements UserRepository {
@@ -14,8 +16,6 @@ class FirebaseUserRepository implements UserRepository {
   final FirebaseAuth firebaseAuth;
 
   FirebaseUserRepository({required this.firestore, required this.firebaseAuth});
-
-  String get _uid => firebaseAuth.currentUser?.uid ?? '';
 
   @override
   Future<bool> checkIfUserEmailExist(String useremail) async {
@@ -28,10 +28,9 @@ class FirebaseUserRepository implements UserRepository {
     return result.docs.isNotEmpty;
   }
 
-  @override
-  Future<void> addUserName(String username, String email) async {
+  Future<void> addUser(String userId, String username, String email) async {
     final CollectionReference usersCollection = firestore.collection('users');
-    await usersCollection.add({
+    await usersCollection.doc(userId).set({
       'userName': username,
       'userEmail': email,
     });
@@ -39,21 +38,44 @@ class FirebaseUserRepository implements UserRepository {
 
   @override
   Future<String?> getUserName() async {
-    final String uid = _uid;
-    final DocumentSnapshot userDoc = await firestore.collection('users').doc(uid).get();
-    if (userDoc.exists) {
-      return userDoc['userName'];
-      debugPrint('userName: ${userDoc['userName']}');
+    User? user = firebaseAuth.currentUser;
+    if (user != null) {
+      try {
+        DocumentSnapshot doc =
+            await firestore.collection('users').doc(user.uid).get();
+        return doc.get('userName') as String?;
+      } catch (e) {
+        debugPrint('Error fetching user name: $e');
+        return null;
+      }
     }
     return null;
   }
 
   @override
-  Future<void> updateUserName(String uid, String username) async {
-    final DocumentReference userDoc = firestore.collection('users').doc(uid);
-    await userDoc.update({
-      'userName': username,
-    });
+  Future<String?> getUserEmail() async {
+    User? user = firebaseAuth.currentUser;
+    if (user != null) {
+      try {
+        DocumentSnapshot doc =
+            await firestore.collection('users').doc(user.uid).get();
+        return doc.get('userEmail') as String?;
+      } catch (e) {
+        debugPrint('Error fetching user name: $e');
+        return null;
+      }
+    }
+    return null;
+  }
+
+  @override
+  Future<void> updateUserName(String username) async {
+    User? user = firebaseAuth.currentUser;
+    if (user != null) {
+      await firestore.collection('users').doc(user.uid).update({
+        'userName': username,
+      });
+    }
   }
 
   @override

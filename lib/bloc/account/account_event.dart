@@ -5,6 +5,8 @@ abstract class AccountEvent extends Equatable {
   List<Object> get props => [];
 }
 
+class FetchUserNameRequested extends AccountEvent {}
+
 class UpdateUserNameRequested extends AccountEvent {
   final String username;
 

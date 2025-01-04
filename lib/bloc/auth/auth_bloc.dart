@@ -15,7 +15,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   late final StreamSubscription<User?> _authSubscription;
 
   AuthBloc({required this.firebaseAuth, required this.firestore})
-      : userRepository = FirebaseUserRepository(firestore: firestore, firebaseAuth: firebaseAuth),
+      : userRepository = FirebaseUserRepository(
+            firestore: firestore, firebaseAuth: firebaseAuth),
         super(AuthInitial()) {
     on<AuthStatusChanged>(_onAuthStatusChanged);
     on<LoginRequested>(_onLoginRequested);
@@ -60,20 +61,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       // Kiểm tra useremail đã tồn tại chưa
-      bool useremailExists = await userRepository.checkIfUserEmailExist(event.email);
+      bool useremailExists =
+          await userRepository.checkIfUserEmailExist(event.email);
       if (useremailExists) {
         emit(AuthSignUpFailure(errorMessage: "Email đã tồn tại!"));
         return;
       }
 
       // Tạo tài khoản mới
-      await firebaseAuth.createUserWithEmailAndPassword(
+      UserCredential userCredential =
+          await firebaseAuth.createUserWithEmailAndPassword(
         email: event.email.trim(),
         password: event.password.trim(),
       );
 
       // Thêm thông tin user vào Firestore
-      await userRepository.addUserName(event.username, event.email);
+      String userId = userCredential.user!.uid;
+      await userRepository.addUser(userId, event.username, event.email);
 
       emit(AuthSignedUp());
     } on FirebaseAuthException catch (e) {
@@ -137,7 +141,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
-   @override
+  @override
   Future<void> close() {
     // Hủy luồng khi Bloc bị đóng
     _authSubscription.cancel();
