@@ -169,7 +169,9 @@ class _SettingScreenState extends State<SettingScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: ElevatedButton(
-        onPressed: () {signOut();},
+        onPressed: () {
+          signOut();
+        },
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.white,
           foregroundColor: Colors.red,

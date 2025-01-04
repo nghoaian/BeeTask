@@ -88,16 +88,14 @@ class BrowseScreen extends StatelessWidget {
 
   FloatingActionButton buildFloatingActionButton() {
     return FloatingActionButton(
-      onPressed: () {},
-      backgroundColor: Colors.red, // Màu nền của nút
-      child: Icon(
-        Icons.add,
-        color: Colors.white,
-        size: 40, // Kích thước biểu tượng
-      ),
-      shape: CircleBorder(), // Đảm bảo rằng nó có hình dạng tròn
-      elevation: 6, // Độ bóng
-      mini: false,
+      onPressed: () {
+        // Xử lý khi nhấn nút thêm công việc
+        print('Add');
+      },
+      child:
+          Icon(Icons.add, color: Colors.white), // Đặt màu biểu tượng là trắng
+      backgroundColor: Colors.red, // Đặt nền màu đỏ
+      shape: CircleBorder(), // Đảm bảo hình tròn
     );
   }
 

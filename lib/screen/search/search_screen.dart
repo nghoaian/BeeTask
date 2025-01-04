@@ -31,15 +31,14 @@ class _SearchScreenState extends State<SearchScreen> {
 
   FloatingActionButton _buildFloatingActionButton() {
     return FloatingActionButton(
-      onPressed: () {},
-      backgroundColor: Colors.red,
-      child: const Icon(
-        Icons.add,
-        color: Colors.white,
-        size: 40,
-      ),
-      shape: const CircleBorder(),
-      elevation: 6,
+      onPressed: () {
+        // Xử lý khi nhấn nút thêm công việc
+        print('Add');
+      },
+      child:
+          Icon(Icons.add, color: Colors.white), // Đặt màu biểu tượng là trắng
+      backgroundColor: Colors.red, // Đặt nền màu đỏ
+      shape: CircleBorder(), // Đảm bảo hình tròn
     );
   }
 }

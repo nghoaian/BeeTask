@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:sticky_headers/sticky_headers.dart'; // Thư viện cần thiết
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -9,13 +10,39 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  CalendarFormat _calendarFormat = CalendarFormat.week;
+  CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
 
-  final Map<DateTime, List<String>> _tasks = {
-    DateTime(2025, 1, 2): ['Ngủ'],
-    DateTime(2025, 1, 3): ['Ngủ'],
+  final Map<DateTime, List<Map<String, dynamic>>> _tasks = {
+    DateTime(2025, 1, 2): [
+      {'task': 'Ngủ', 'status': 'Chưa Hoàn Thành', 'priority': 'Cao'},
+      {'task': 'Ăn cơm', 'status': 'Chưa Hoàn Thành', 'priority': 'Trung Bình'}
+    ],
+    DateTime(2025, 1, 3): [
+      {'task': 'Ngủ', 'status': 'Hoàn Thành', 'priority': 'Thấp'},
+      {'task': 'Học bài', 'status': 'Chưa Hoàn Thành', 'priority': 'Cao'},
+      {'task': 'Đi dạo', 'status': 'Chưa Hoàn Thành', 'priority': 'Trung Bình'}
+    ],
+    DateTime(2025, 1, 4): [
+      {'task': 'Học bài', 'status': 'Chưa Hoàn Thành', 'priority': 'Cao'},
+      {'task': 'Chơi game', 'status': 'Hoàn Thành', 'priority': 'Thấp'},
+      {
+        'task': 'Dọn dẹp',
+        'status': 'Chưa Hoàn Thành',
+        'priority': 'Trung Bình'
+      },
+      {'task': 'Gọi điện thoại', 'status': 'Hoàn Thành', 'priority': 'Thấp'}
+    ],
+    DateTime(2025, 1, 5): [
+      {'task': 'Làm việc', 'status': 'Chưa Hoàn Thành', 'priority': 'Cao'},
+      {
+        'task': 'Tập thể dục',
+        'status': 'Chưa Hoàn Thành',
+        'priority': 'Trung Bình'
+      },
+      {'task': 'Đi shopping', 'status': 'Chưa Hoàn Thành', 'priority': 'Thấp'}
+    ],
   };
 
   @override
@@ -37,6 +64,16 @@ class _HomeScreenState extends State<HomeScreen> {
     return daysInMonth;
   }
 
+  // Hàm để lấy ngày đầu tiên của tuần
+  DateTime _getFirstDayOfWeek(DateTime date) {
+    int difference = date.weekday - DateTime.monday;
+    if (difference > 0) {
+      return date.subtract(Duration(days: difference));
+    } else {
+      return date.add(Duration(days: difference));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -44,7 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Column(
         children: [
           _buildCalendar(),
-          Divider(height: 1, thickness: 1, color: Colors.grey[300]),
+          Divider(height: 1, thickness: 1, color: Colors.grey[200]),
           _buildTaskList(),
         ],
       ),
@@ -55,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
   AppBar _buildAppBar() {
     return AppBar(
       title: const Text('Upcoming', style: TextStyle(color: Colors.black)),
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[300],
       elevation: 0,
       actions: [
         IconButton(
@@ -77,6 +114,11 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           _selectedDay = selectedDay;
           _focusedDay = focusedDay;
+
+          // Nếu ngày được chọn thuộc tháng trước hoặc sau, điều chỉnh _selectedDay để không bị lỗi
+          if (_selectedDay!.month != _focusedDay.month) {
+            _selectedDay = DateTime(_focusedDay.year, _focusedDay.month, 1);
+          }
         });
       },
       onFormatChanged: (format) {
@@ -87,19 +129,15 @@ class _HomeScreenState extends State<HomeScreen> {
       onPageChanged: (focusedDay) {
         setState(() {
           _focusedDay = focusedDay;
-
-          // Điều chỉnh lại _selectedDay khi chuyển giữa chế độ tháng và tuần
+          // Điều chỉnh lại _selectedDay khi chuyển tháng
           if (_calendarFormat == CalendarFormat.month) {
-            // Nếu chuyển sang chế độ tháng, đảm bảo ngày chọn không vượt quá tháng hiện tại
             if (_selectedDay == null ||
                 _selectedDay!.month != focusedDay.month) {
               _selectedDay = DateTime(focusedDay.year, focusedDay.month, 1);
             }
           } else if (_calendarFormat == CalendarFormat.week) {
-            // Nếu chuyển sang chế độ tuần, đảm bảo ngày chọn là ngày đầu tuần của tháng hiện tại
             _selectedDay = _getFirstDayOfWeek(focusedDay);
             if (_selectedDay!.month != focusedDay.month) {
-              // Nếu ngày đầu tuần không nằm trong tháng hiện tại, cập nhật lại
               _selectedDay = DateTime(focusedDay.year, focusedDay.month, 1);
             }
           }
@@ -133,16 +171,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Helper function to get the first day of the week
-  DateTime _getFirstDayOfWeek(DateTime date) {
-    int difference = date.weekday - DateTime.monday;
-    if (difference > 0) {
-      return date.subtract(Duration(days: difference));
-    } else {
-      return date.add(Duration(days: difference));
-    }
-  }
-
   Widget _buildTaskList() {
     final daysInMonth = _getDaysInMonth(_focusedDay);
     final startIndex = _selectedDay != null
@@ -151,93 +179,162 @@ class _HomeScreenState extends State<HomeScreen> {
     final daysFromSelectedDay = daysInMonth.sublist(startIndex);
 
     return Expanded(
-      child: ListView(
-        children: [
-          ...daysFromSelectedDay.map((date) {
-            final tasks = _tasks[date] ?? [];
+      child: ListView.builder(
+        itemCount: daysFromSelectedDay.length,
+        itemBuilder: (context, index) {
+          final date = daysFromSelectedDay[index];
+          final tasks = _tasks[date] ?? [];
 
-            return Column(
+          // Nhóm công việc theo độ ưu tiên trong ngày
+          Map<String, List<Map<String, dynamic>>> groupedTasks = {};
+          for (var task in tasks) {
+            String priority = task['priority'];
+            if (groupedTasks[priority] == null) {
+              groupedTasks[priority] = [];
+            }
+            groupedTasks[priority]?.add(task);
+          }
+
+          // Sắp xếp các độ ưu tiên theo thứ tự
+          List<String> priorities = ['Cao', 'Trung Bình', 'Thấp'];
+          List<String> existingPriorities = priorities
+              .where((priority) => groupedTasks.containsKey(priority))
+              .toList();
+
+          return StickyHeader(
+            header: Container(
+              color: Colors.grey[200],
+              padding:
+                  const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${date.day}/${date.month} · ${_getDayName(date)}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            content: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 12.0, horizontal: 8.0),
-                  child: Text(
-                    '${date.day}/${date.month} · ${_getDayName(date)}',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                ),
-                if (tasks.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                  ),
-                ...tasks.map((task) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: ListTile(
-                        leading: Icon(Icons.circle_outlined),
-                        title: Text(task),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Inbox',
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                            Icon(
-                              Icons.mail_outline,
-                              color: Colors.grey,
-                              size: 20,
-                            ),
-                          ],
+              children: List.generate(existingPriorities.length, (i) {
+                String priority = existingPriorities[i];
+                final tasksWithPriority = groupedTasks[priority] ?? [];
+
+                return Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Text(
+                        '$priority',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
                         ),
                       ),
-                    )),
-                Divider(
-                  height: 1,
-                  thickness: 1,
-                  color: Colors.grey[300],
-                ),
-              ],
-            );
-          }),
-        ],
-      ),
-    );
-  }
+                    ),
+                    ...tasksWithPriority.map((taskData) {
+                      bool isCompleted = taskData['status'] == 'Hoàn Thành';
 
-  FloatingActionButton _buildFloatingActionButton() {
-    return FloatingActionButton(
-      onPressed: () {},
-      backgroundColor: Colors.red,
-      child: Icon(
-        Icons.add,
-        color: Colors.white,
-        size: 40,
+                      return StatefulBuilder(
+                        builder: (context, setState) {
+                          return Column(
+                            children: [
+                              Row(
+                                children: [
+                                  IconButton(
+                                    icon: Icon(
+                                      isCompleted
+                                          ? Icons.check_circle
+                                          : Icons.circle_outlined,
+                                      color: isCompleted
+                                          ? Colors.green
+                                          : Colors.grey,
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        // Toggle task completion status
+                                        isCompleted = !isCompleted;
+                                        taskData['status'] = isCompleted
+                                            ? 'Hoàn Thành'
+                                            : 'Chưa Hoàn Thành';
+                                      });
+                                    },
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      // Xử lý khi nhấn vào nội dung công việc
+                                      print(
+                                          'Clicked on task: ${taskData['task']}');
+                                    },
+                                    child: Text(
+                                      taskData['task'],
+                                      style: TextStyle(
+                                        color: isCompleted
+                                            ? Colors.green
+                                            : Colors.black,
+                                        decoration: isCompleted
+                                            ? TextDecoration.lineThrough
+                                            : null,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    }).toList(),
+                    // Chỉ hiển thị Divider giữa các nhóm công việc có độ ưu tiên khác nhau
+                    if (i < existingPriorities.length - 1) Divider(),
+                  ],
+                );
+              }),
+            ),
+          );
+        },
       ),
-      shape: CircleBorder(),
-      elevation: 6,
     );
   }
 
   String _getDayName(DateTime date) {
-    final weekday = date.weekday;
-    switch (weekday) {
+    switch (date.weekday) {
       case DateTime.monday:
-        return 'Monday';
+        return 'Thứ 2';
       case DateTime.tuesday:
-        return 'Tuesday';
+        return 'Thứ 3';
       case DateTime.wednesday:
-        return 'Wednesday';
+        return 'Thứ 4';
       case DateTime.thursday:
-        return 'Thursday';
+        return 'Thứ 5';
       case DateTime.friday:
-        return 'Friday';
+        return 'Thứ 6';
       case DateTime.saturday:
-        return 'Saturday';
+        return 'Thứ 7';
       case DateTime.sunday:
-        return 'Sunday';
+        return 'Chủ Nhật';
       default:
         return '';
     }
+  }
+
+  Widget _buildFloatingActionButton() {
+    return FloatingActionButton(
+      onPressed: () {
+        // Xử lý khi nhấn nút thêm công việc
+        print('Add new task');
+      },
+      child:
+          Icon(Icons.add, color: Colors.white), // Đặt màu biểu tượng là trắng
+      backgroundColor: Colors.red, // Đặt nền màu đỏ
+      shape: CircleBorder(), // Đảm bảo hình tròn
+    );
   }
 }
