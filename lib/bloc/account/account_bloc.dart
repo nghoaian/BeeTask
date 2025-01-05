@@ -15,7 +15,7 @@ class AccountBloc extends Bloc<AccountEvent, AccountState> {
       : userRepository = FirebaseUserRepository(
             firestore: firestore, firebaseAuth: firebaseAuth),
         super(AccountInitial()) {
-    on<FetchUserNameRequested>(_onFetchUserNameRequested);      
+    on<FetchUserNameRequested>(_onFetchUserNameRequested);
     on<UpdateUserNameRequested>(_onUpdateUserNameRequested);
     on<UpdateUserImageRequested>(_onUpdateUserImageRequested);
   }
@@ -47,7 +47,6 @@ class AccountBloc extends Bloc<AccountEvent, AccountState> {
         emit(AccountError("User not found."));
         return;
       }
-
       await userRepository.updateUserName(event.username);
 
       final String? userEmail = await userRepository.getUserEmail();
@@ -55,6 +54,31 @@ class AccountBloc extends Bloc<AccountEvent, AccountState> {
       emit(AccountLoaded(event.username, userEmail!));
     } catch (e) {
       emit(AccountError("Failed to update username: $e"));
+    }
+  }
+
+  // Xử lý cập nhật UserEmail
+  Future<void> _onUpdateEmailRequested(
+      UpdateEmailRequested event, Emitter<AccountState> emit) async {
+    emit(AccountLoading());
+
+    try {
+      User? user = firebaseAuth.currentUser;
+      if (user == null) {
+        emit(AccountError("User not found."));
+        return;
+      }
+      await userRepository.updateUserEmail(event.newEmail);
+
+      emit(UpdateEmailSuccess());
+    } on Exception catch (e) {
+      if (e.toString().contains("Email already exists in the system.")) {
+        emit(UpdateEmailFailure(
+            errorMessage: "Email already exists in the system."));
+      } else {
+        emit(UpdateEmailFailure(
+            errorMessage: e.toString() ?? "Failed to update email."));
+      }
     }
   }
 

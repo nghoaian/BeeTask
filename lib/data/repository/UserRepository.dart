@@ -9,6 +9,7 @@ abstract class UserRepository {
   Future<String?> getUserName();
   Future<String?> getUserEmail();
   Future<void> updateUserName(String username);
+  Future<void> updateUserEmail(String useremail);
 }
 
 class FirebaseUserRepository implements UserRepository {
@@ -75,6 +76,29 @@ class FirebaseUserRepository implements UserRepository {
       await firestore.collection('users').doc(user.uid).update({
         'userName': username,
       });
+    }
+  }
+
+  @override
+  Future<void> updateUserEmail(String useremail) async {
+    User? user = firebaseAuth.currentUser;
+    if (user != null) {
+      final emailExists =
+          await checkIfUserEmailExist(useremail);
+      if (emailExists) {
+        throw Exception("Email already exists in the system.");
+      }
+
+      try {
+        await user.updateEmail(useremail);
+
+        await firestore.collection('users').doc(user.uid).update({
+          'userEmail': useremail,
+        });
+      } on FirebaseAuthException catch (e) {
+        debugPrint('Error updating email: ${e.message}');
+        rethrow;
+      }
     }
   }
 

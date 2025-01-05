@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:bee_task/bloc/account/account_bloc.dart';
 import 'package:bee_task/bloc/account/account_event.dart';
 import 'package:bee_task/bloc/account/account_state.dart';
@@ -6,6 +8,7 @@ import 'package:bee_task/screen/auth/change_password.dart';
 import 'package:bee_task/util/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+// import 'package:image_picker/image_picker.dart';
 
 class AccountScreen extends StatefulWidget {
   @override
@@ -14,12 +17,12 @@ class AccountScreen extends StatefulWidget {
 
 class _AccountScreenState extends State<AccountScreen> {
   late TextEditingController _nameController;
+  String _avatarPath = ''; // Đường dẫn đến avatar
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController();
-    // Lấy thông tin khi khởi tạo
     final accountBloc = BlocProvider.of<AccountBloc>(context);
     accountBloc.add(FetchUserNameRequested());
   }
@@ -29,6 +32,52 @@ class _AccountScreenState extends State<AccountScreen> {
     _nameController.dispose();
     super.dispose();
   }
+
+  // Future<void> _showEditOptions() async {
+  //   final ImagePicker _picker = ImagePicker();
+  //   final pickedFile = await showModalBottomSheet<XFile?>(
+  //     context: context,
+  //     builder: (context) {
+  //       return Container(
+  //         height: 200,
+  //         child: Column(
+  //           children: [
+  //             ListTile(
+  //               leading: Icon(Icons.camera),
+  //               title: Text('Take Photo'),
+  //               onTap: () async {
+  //                 Navigator.pop(context, await _picker.pickImage(source: ImageSource.camera));
+  //               },
+  //             ),
+  //             ListTile(
+  //               leading: Icon(Icons.photo),
+  //               title: Text('Choose from Photos'),
+  //               onTap: () async {
+  //                 Navigator.pop(context, await _picker.pickImage(source: ImageSource.gallery));
+  //               },
+  //             ),
+  //             ListTile(
+  //               leading: Icon(Icons.delete),
+  //               title: Text('Remove Current Photo'),
+  //               onTap: () {
+  //                 setState(() {
+  //                   _avatarPath = ''; // Xóa ảnh
+  //                 });
+  //                 Navigator.pop(context);
+  //               },
+  //             ),
+  //           ],
+  //         ),
+  //       );
+  //     },
+  //   );
+
+  //   if (pickedFile != null) {
+  //     setState(() {
+  //       _avatarPath = pickedFile.path; // Cập nhật đường dẫn avatar
+  //     });
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +92,7 @@ class _AccountScreenState extends State<AccountScreen> {
               _nameController.text = state.userName;
               return Column(
                 children: [
-                  AvatarSection(userName: state.userName),
+                  AvatarSection(userName: state.userName, userEmail: state.userEmail),
                   SizedBox(height: 0),
                   EditButton(),
                   SizedBox(height: 0),
@@ -102,20 +151,21 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
-  Widget AvatarSection({required String userName}) {
+  Widget AvatarSection({required String userName, required String userEmail}) {
     return Column(
       children: [
         CircleAvatar(
           radius: 50,
           backgroundColor: AppColors.primary,
+          backgroundImage: _avatarPath.isNotEmpty ? FileImage(File(_avatarPath)) : null,
           child: Text(
-            userName.isNotEmpty ? userName[0].toUpperCase() : '',
+            _avatarPath.isEmpty ? userName[0].toUpperCase() : '',
             style: const TextStyle(color: Colors.white, fontSize: 30),
           ),
         ),
         const SizedBox(height: 10),
         Text(
-          'Your avatar photo will be public',
+          userEmail,
           style: TextStyle(color: Colors.grey[600]),
         ),
       ],
@@ -124,11 +174,8 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Widget EditButton() {
     return TextButton(
-      onPressed: () {},
-      child: Text(
-        'Edit',
-        style: TextStyle(color: Colors.red),
-      ),
+      onPressed: () {},//_showEditOptions,
+      child: Text('Edit', style: TextStyle(color: Colors.red)),
     );
   }
 
@@ -138,10 +185,7 @@ class _AccountScreenState extends State<AccountScreen> {
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 16.0, bottom: 8.0),
-          child: Text(
-            'NAME',
-            style: TextStyle(color: Colors.grey[600]),
-          ),
+          child: Text('FULL NAME', style: TextStyle(color: Colors.grey[600])),
         ),
         TextFormField(
           controller: _nameController,
@@ -165,39 +209,6 @@ class _AccountScreenState extends State<AccountScreen> {
             ),
           ),
         ),
-        SizedBox(height: 20),
-        Padding(
-          padding: const EdgeInsets.only(left: 16.0, bottom: 8.0),
-          child: Text(
-            'EMAIL',
-            style: TextStyle(color: Colors.grey[600]),
-          ),
-        ),
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => UpdateEmailScreen()),
-            );
-          },
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  userEmail ?? 'Email not found',
-                  style: TextStyle(fontSize: 16, color: Colors.black),
-                ),
-                Icon(Icons.arrow_forward_ios, color: Colors.black),
-              ],
-            ),
-          ),
-        )
       ],
     );
   }
@@ -208,18 +219,14 @@ class _AccountScreenState extends State<AccountScreen> {
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 16.0),
-          child: Text(
-            'PASSWORD',
-            style: TextStyle(color: Colors.grey[600]),
-          ),
+          child: Text('PASSWORD', style: TextStyle(color: Colors.grey[600])),
         ),
         SizedBox(height: 10),
         ElevatedButton(
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(
-                  builder: (context) => const ChangePasswordScreen()),
+              MaterialPageRoute(builder: (context) => const ChangePasswordScreen()),
             );
           },
           child: Text('Change Password'),
@@ -239,10 +246,7 @@ class _AccountScreenState extends State<AccountScreen> {
   Widget DeleteAccountButton() {
     return ElevatedButton(
       onPressed: () {},
-      child: Text(
-        'Delete Account',
-        style: TextStyle(color: Colors.red),
-      ),
+      child: Text('Delete Account', style: TextStyle(color: Colors.red)),
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.white,
         foregroundColor: Colors.red,

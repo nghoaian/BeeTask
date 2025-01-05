@@ -28,6 +28,15 @@ class AccountError extends AccountState {
   List<Object> get props => [message];
 }
 
+
+class UpdateEmailSuccess extends AccountState {}
+
+class UpdateEmailFailure extends AccountState {
+  final String errorMessage;
+
+  UpdateEmailFailure({required this.errorMessage});
+}
+
 class UpdateUserImageSuccess extends AccountState {}
 
 class UpdateUserImageFailure extends AccountState {

@@ -16,6 +16,12 @@ class UpdateUserNameRequested extends AccountEvent {
   List<Object> get props => [username];
 }
 
+class UpdateEmailRequested extends AccountEvent {
+  final String newEmail;
+
+  UpdateEmailRequested({required this.newEmail});
+}
+
 class UpdateUserImageRequested extends AccountEvent {
   final String userImage;
 
