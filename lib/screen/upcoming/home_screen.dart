@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:sticky_headers/sticky_headers.dart'; // Thư viện cần thiết
+import 'package:flutter/cupertino.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -16,32 +16,103 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final Map<DateTime, List<Map<String, dynamic>>> _tasks = {
     DateTime(2025, 1, 2): [
-      {'task': 'Ngủ', 'status': 'Chưa Hoàn Thành', 'priority': 'Cao'},
-      {'task': 'Ăn cơm', 'status': 'Chưa Hoàn Thành', 'priority': 'Trung Bình'}
-    ],
-    DateTime(2025, 1, 3): [
-      {'task': 'Ngủ', 'status': 'Hoàn Thành', 'priority': 'Thấp'},
-      {'task': 'Học bài', 'status': 'Chưa Hoàn Thành', 'priority': 'Cao'},
-      {'task': 'Đi dạo', 'status': 'Chưa Hoàn Thành', 'priority': 'Trung Bình'}
-    ],
-    DateTime(2025, 1, 4): [
-      {'task': 'Học bài', 'status': 'Chưa Hoàn Thành', 'priority': 'Cao'},
-      {'task': 'Chơi game', 'status': 'Hoàn Thành', 'priority': 'Thấp'},
       {
-        'task': 'Dọn dẹp',
+        'task': 'Ngủ',
         'status': 'Chưa Hoàn Thành',
-        'priority': 'Trung Bình'
+        'priority': 'Cao',
+        'description': 'Ngủ đủ 8 tiếng để có sức khỏe tốt',
+        'type': 'Inbox',
+        'subtasks': [
+          {
+            'subtask': 'Đi ngủ đúng giờ',
+            'status': 'Chưa Hoàn Thành',
+            'priority': 'Cao',
+            'subsubtasks': [
+              {
+                'subsubtask': 'Tắt máy tính',
+                'status': 'Chưa Hoàn Thành',
+                'priority': 'Trung bình',
+              },
+              {
+                'subsubtask': 'Đi vệ sinh',
+                'status': 'Chưa Hoàn Thành',
+                'priority': 'Thấp',
+              },
+            ],
+          },
+          {
+            'subtask': 'Đi ngủ đúng giờ',
+            'status': 'Chưa Hoàn Thành',
+            'priority': 'Cao',
+            'subsubtasks': [
+              {
+                'subsubtask': 'Tắt máy tính',
+                'status': 'Chưa Hoàn Thành',
+                'priority': 'Trung bình',
+              },
+              {
+                'subsubtask': 'Đi vệ sinh',
+                'status': 'Chưa Hoàn Thành',
+                'priority': 'Thấp',
+              },
+            ],
+          },
+        ],
       },
-      {'task': 'Gọi điện thoại', 'status': 'Hoàn Thành', 'priority': 'Thấp'}
-    ],
-    DateTime(2025, 1, 5): [
-      {'task': 'Làm việc', 'status': 'Chưa Hoàn Thành', 'priority': 'Cao'},
       {
         'task': 'Tập thể dục',
         'status': 'Chưa Hoàn Thành',
-        'priority': 'Trung Bình'
+        'priority': 'Trung bình',
+        'description': 'Chạy bộ 30 phút vào buổi sáng',
+        'type': 'Inbox',
+        'subtasks': [
+          {
+            'subtask': 'Khởi động',
+            'status': 'Chưa Hoàn Thành',
+            'priority': 'Cao',
+            'subsubtasks': [
+              {
+                'subsubtask': 'Giãn cơ',
+                'status': 'Chưa Hoàn Thành',
+                'priority': 'Cao',
+              },
+            ],
+          },
+        ],
       },
-      {'task': 'Đi shopping', 'status': 'Chưa Hoàn Thành', 'priority': 'Thấp'}
+    ],
+    DateTime(2025, 1, 3): [
+      {
+        'task': 'Học lập trình',
+        'status': 'Chưa Hoàn Thành',
+        'priority': 'Cao',
+        'description': 'Học Flutter và Dart',
+        'type': 'Work',
+        'subtasks': [
+          {
+            'subtask': 'Xem video tutorial',
+            'status': 'Chưa Hoàn Thành',
+            'priority': 'Cao',
+            'subsubtasks': [],
+          },
+          {
+            'subtask': 'Thực hành viết mã',
+            'status': 'Chưa Hoàn Thành',
+            'priority': 'Trung bình',
+            'subsubtasks': [],
+          },
+        ],
+      },
+    ],
+    DateTime(2025, 1, 4): [
+      {
+        'task': 'Học lập trình',
+        'status': 'Chưa Hoàn Thành',
+        'priority': 'Cao',
+        'description': 'Học Flutter và Dart',
+        'type': 'Work',
+        'subtasks': [],
+      },
     ],
   };
 
@@ -64,7 +135,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return daysInMonth;
   }
 
-  // Hàm để lấy ngày đầu tiên của tuần
   DateTime _getFirstDayOfWeek(DateTime date) {
     int difference = date.weekday - DateTime.monday;
     if (difference > 0) {
@@ -114,11 +184,6 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           _selectedDay = selectedDay;
           _focusedDay = focusedDay;
-
-          // Nếu ngày được chọn thuộc tháng trước hoặc sau, điều chỉnh _selectedDay để không bị lỗi
-          if (_selectedDay!.month != _focusedDay.month) {
-            _selectedDay = DateTime(_focusedDay.year, _focusedDay.month, 1);
-          }
         });
       },
       onFormatChanged: (format) {
@@ -129,18 +194,6 @@ class _HomeScreenState extends State<HomeScreen> {
       onPageChanged: (focusedDay) {
         setState(() {
           _focusedDay = focusedDay;
-          // Điều chỉnh lại _selectedDay khi chuyển tháng
-          if (_calendarFormat == CalendarFormat.month) {
-            if (_selectedDay == null ||
-                _selectedDay!.month != focusedDay.month) {
-              _selectedDay = DateTime(focusedDay.year, focusedDay.month, 1);
-            }
-          } else if (_calendarFormat == CalendarFormat.week) {
-            _selectedDay = _getFirstDayOfWeek(focusedDay);
-            if (_selectedDay!.month != focusedDay.month) {
-              _selectedDay = DateTime(focusedDay.year, focusedDay.month, 1);
-            }
-          }
         });
       },
       availableCalendarFormats: const {
@@ -171,170 +224,512 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Color _getPriorityColor(String priority) {
+    switch (priority) {
+      case 'Cao':
+        return Colors.red;
+      case 'Trung bình':
+        return Colors.orange;
+      case 'Thấp':
+        return Colors.blue;
+      default:
+        return Colors.grey;
+    }
+  }
+
   Widget _buildTaskList() {
-    final daysInMonth = _getDaysInMonth(_focusedDay);
-    final startIndex = _selectedDay != null
-        ? daysInMonth.indexWhere((date) => isSameDay(date, _selectedDay!))
-        : 0;
-    final daysFromSelectedDay = daysInMonth.sublist(startIndex);
+    final selectedDateTasks = _tasks.entries
+        .firstWhere(
+          (entry) =>
+              entry.key.year == _selectedDay!.year &&
+              entry.key.month == _selectedDay!.month &&
+              entry.key.day == _selectedDay!.day,
+          orElse: () => MapEntry(DateTime(2000), []), // Nếu không có công việc
+        )
+        .value;
 
     return Expanded(
-      child: ListView.builder(
-        itemCount: daysFromSelectedDay.length,
-        itemBuilder: (context, index) {
-          final date = daysFromSelectedDay[index];
-          final tasks = _tasks[date] ?? [];
+      child: selectedDateTasks.isNotEmpty
+          ? ListView.builder(
+              itemCount: selectedDateTasks.length,
+              itemBuilder: (context, index) {
+                final task = selectedDateTasks[index];
+                final subtasks = (task['subtasks'] as List? ?? []);
+                final totalSubtasks = subtasks.length;
+                final completedSubtasks = subtasks
+                    .where((subtask) => subtask['status'] == 'Hoàn Thành')
+                    .length;
 
-          // Nhóm công việc theo độ ưu tiên trong ngày
-          Map<String, List<Map<String, dynamic>>> groupedTasks = {};
-          for (var task in tasks) {
-            String priority = task['priority'];
-            if (groupedTasks[priority] == null) {
-              groupedTasks[priority] = [];
-            }
-            groupedTasks[priority]?.add(task);
-          }
+                bool isCompleted = subtasks.isNotEmpty
+                    ? completedSubtasks == totalSubtasks
+                    : task['status'] == 'Hoàn Thành';
 
-          // Sắp xếp các độ ưu tiên theo thứ tự
-          List<String> priorities = ['Cao', 'Trung Bình', 'Thấp'];
-          List<String> existingPriorities = priorities
-              .where((priority) => groupedTasks.containsKey(priority))
-              .toList();
+                Color priorityColor = _getPriorityColor(task['priority']);
 
-          return StickyHeader(
-            header: Container(
-              color: Colors.grey[200],
-              padding:
-                  const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      '${date.day}/${date.month} · ${_getDayName(date)}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Colors.black,
+                return Card(
+                  margin: const EdgeInsets.all(8.0),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: GestureDetector(
+                      onTap: () {
+                        _showTaskDetailsDialog(
+                          context,
+                          task,
+                          subtasks,
+                          priorityColor,
+                          completedSubtasks,
+                          totalSubtasks,
+                        );
+                      },
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    // Cập nhật trạng thái của task chính
+                                    task['status'] = isCompleted
+                                        ? 'Chưa Hoàn Thành'
+                                        : 'Hoàn Thành';
+
+                                    // Cập nhật trạng thái của tất cả subtasks
+                                    for (var subtask in subtasks) {
+                                      subtask['status'] = isCompleted
+                                          ? 'Chưa Hoàn Thành'
+                                          : 'Hoàn Thành';
+                                      for (var subsubtask
+                                          in subtask['subsubtasks']) {
+                                        subsubtask['status'] = isCompleted
+                                            ? 'Chưa Hoàn Thành'
+                                            : 'Hoàn Thành';
+                                      }
+                                    }
+
+                                    // Cập nhật lại số lượng subtask hoàn thành
+                                    final completedSubtasks = subtasks
+                                        .where((subtask) =>
+                                            subtask['status'] == 'Hoàn Thành')
+                                        .length;
+
+                                    // Kiểm tra trạng thái của task chính sau khi thay đổi subtasks
+                                    bool allSubtasksCompleted =
+                                        completedSubtasks == subtasks.length;
+                                    task['status'] = allSubtasksCompleted
+                                        ? 'Hoàn Thành'
+                                        : 'Chưa Hoàn Thành';
+
+                                    // Cập nhật lại trạng thái `isCompleted` của task
+                                    isCompleted = allSubtasksCompleted;
+                                  });
+                                },
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  width: 16,
+                                  height: 16,
+                                  decoration: BoxDecoration(
+                                    color: isCompleted
+                                        ? Colors.green
+                                        : Colors.transparent,
+                                    border: Border.all(
+                                      color: priorityColor,
+                                      width: 2,
+                                    ),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: isCompleted
+                                      ? const Icon(
+                                          Icons.check,
+                                          color: Colors.white,
+                                          size: 10,
+                                        )
+                                      : null,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  task['task'],
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                    decoration: isCompleted
+                                        ? TextDecoration.lineThrough
+                                        : null,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8.0),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              if (totalSubtasks > 0)
+                                Text(
+                                  '$completedSubtasks / $totalSubtasks',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              Expanded(
+                                child: Align(
+                                  alignment: Alignment.centerRight,
+                                  child: Text(
+                                    task['type'],
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: priorityColor,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8.0),
+                          if (task['description'] != null)
+                            Text(
+                              task['description'],
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  fontSize: 14, color: Colors.grey[600]),
+                            ),
+                        ],
                       ),
+                    ),
+                  ),
+                );
+              },
+            )
+          : Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        CupertinoIcons
+                            .calendar_badge_plus, // Biểu tượng lịch với dấu cộng
+                        size: 50,
+                        color: CupertinoColors.activeGreen, // Màu xanh iOS
+                      ),
+                      const SizedBox(width: 10), // Khoảng cách giữa các icon
+                      Icon(
+                        CupertinoIcons
+                            .check_mark_circled, // Biểu tượng tick tròn
+                        size: 50,
+                        color: CupertinoColors.activeGreen, // Màu xanh iOS
+                      ),
+                    ],
+                  ),
+                  const SizedBox(
+                      height: 10), // Khoảng cách giữa icon và văn bản
+                  Text(
+                    'Bạn có một ngày rảnh rỗi',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: CupertinoColors
+                          .secondaryLabel, // Màu sắc theo giao diện iOS
+                    ),
+                  ),
+                  const SizedBox(
+                      height:
+                          10), // Khoảng cách giữa dòng chữ và "Hãy thư giãn"
+                  Text(
+                    'Hãy thư giãn',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.normal,
+                      color: CupertinoColors
+                          .secondaryLabel, // Màu sắc theo giao diện iOS
                     ),
                   ),
                 ],
               ),
             ),
-            content: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: List.generate(existingPriorities.length, (i) {
-                String priority = existingPriorities[i];
-                final tasksWithPriority = groupedTasks[priority] ?? [];
-
-                return Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Text(
-                        '$priority',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue,
-                        ),
-                      ),
-                    ),
-                    ...tasksWithPriority.map((taskData) {
-                      bool isCompleted = taskData['status'] == 'Hoàn Thành';
-
-                      return StatefulBuilder(
-                        builder: (context, setState) {
-                          return Column(
-                            children: [
-                              Row(
-                                children: [
-                                  IconButton(
-                                    icon: Icon(
-                                      isCompleted
-                                          ? Icons.check_circle
-                                          : Icons.circle_outlined,
-                                      color: isCompleted
-                                          ? Colors.green
-                                          : Colors.grey,
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        // Toggle task completion status
-                                        isCompleted = !isCompleted;
-                                        taskData['status'] = isCompleted
-                                            ? 'Hoàn Thành'
-                                            : 'Chưa Hoàn Thành';
-                                      });
-                                    },
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      // Xử lý khi nhấn vào nội dung công việc
-                                      print(
-                                          'Clicked on task: ${taskData['task']}');
-                                    },
-                                    child: Text(
-                                      taskData['task'],
-                                      style: TextStyle(
-                                        color: isCompleted
-                                            ? Colors.green
-                                            : Colors.black,
-                                        decoration: isCompleted
-                                            ? TextDecoration.lineThrough
-                                            : null,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    }).toList(),
-                    // Chỉ hiển thị Divider giữa các nhóm công việc có độ ưu tiên khác nhau
-                    if (i < existingPriorities.length - 1) Divider(),
-                  ],
-                );
-              }),
-            ),
-          );
-        },
-      ),
     );
   }
 
-  String _getDayName(DateTime date) {
-    switch (date.weekday) {
-      case DateTime.monday:
-        return 'Thứ 2';
-      case DateTime.tuesday:
-        return 'Thứ 3';
-      case DateTime.wednesday:
-        return 'Thứ 4';
-      case DateTime.thursday:
-        return 'Thứ 5';
-      case DateTime.friday:
-        return 'Thứ 6';
-      case DateTime.saturday:
-        return 'Thứ 7';
-      case DateTime.sunday:
-        return 'Chủ Nhật';
-      default:
-        return '';
+  void _showTaskDetailsDialog(BuildContext context, Map task, List subtasks,
+      Color priorityColor, int completedSubtasks, int totalSubtasks) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setStateDialog) {
+            return AlertDialog(
+              title: Text(task['task']),
+              content: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Priority: ${task['priority']}',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8.0),
+                    if (task['type'] != null)
+                      Text(
+                        'Project: ${task['type']}',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    const SizedBox(height: 8.0),
+                    if (task['description'] != null)
+                      Text(
+                        'Description: ${task['description']}',
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      ),
+                    const SizedBox(height: 16.0),
+                    if (subtasks.isNotEmpty)
+                      Row(children: [
+                        Text(
+                          'Completed Subtasks: $completedSubtasks / $totalSubtasks',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                      ]),
+                    const SizedBox(height: 16.0),
+                    if (subtasks.isNotEmpty) ...[
+                      const Divider(),
+                      Text('Subtasks:',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      for (var subtask in subtasks) ...[
+                        const SizedBox(height: 16.0),
+                        Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                setStateDialog(() {
+                                  subtask['status'] =
+                                      subtask['status'] == 'Hoàn Thành'
+                                          ? 'Chưa Hoàn Thành'
+                                          : 'Hoàn Thành';
+                                  for (var subsubtask
+                                      in subtask['subsubtasks']) {
+                                    subsubtask['status'] = subtask['status'];
+                                  }
+
+                                  // Cập nhật lại trạng thái của subtask dựa trên subsubtasks
+                                  _updateSubtaskStatus(subtask);
+
+                                  // Cập nhật lại số lượng subtask hoàn thành
+                                  completedSubtasks = subtasks
+                                      .where((subtask) =>
+                                          subtask['status'] == 'Hoàn Thành')
+                                      .length;
+
+                                  // Cập nhật trạng thái task chính
+                                  if (completedSubtasks == subtasks.length) {
+                                    task['status'] = 'Hoàn Thành';
+                                  } else {
+                                    task['status'] = 'Chưa Hoàn Thành';
+                                  }
+                                });
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                width: 16,
+                                height: 16,
+                                decoration: BoxDecoration(
+                                  color: subtask['status'] == 'Hoàn Thành'
+                                      ? Colors.green
+                                      : Colors.transparent,
+                                  border: Border.all(
+                                    color:
+                                        _getPriorityColor(subtask['priority']),
+                                    width: 2,
+                                  ),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: subtask['status'] == 'Hoàn Thành'
+                                    ? const Icon(
+                                        Icons.check,
+                                        color: Colors.white,
+                                        size: 10,
+                                      )
+                                    : null,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '${subtask['subtask']}'
+                                '${subtask['subsubtasks'] != null && subtask['subsubtasks'].isNotEmpty ? ' (${_getCompletedSubsubtasks(subtask['subsubtasks'])}/${subtask['subsubtasks'].length})' : ''}',
+                                style: TextStyle(
+                                  color: subtask['status'] == 'Hoàn Thành'
+                                      ? Colors.green
+                                      : Colors.black,
+                                  decoration: subtask['status'] == 'Hoàn Thành'
+                                      ? TextDecoration.lineThrough
+                                      : null,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (subtask['subsubtasks'] != null) ...[
+                          const SizedBox(height: 8.0),
+                          Column(
+                            children: [
+                              for (var subsubtask
+                                  in subtask['subsubtasks']) ...[
+                                const SizedBox(height: 8.0),
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 24.0),
+                                  child: Row(
+                                    children: [
+                                      GestureDetector(
+                                        onTap: () {
+                                          setStateDialog(() {
+                                            subsubtask['status'] =
+                                                subsubtask['status'] ==
+                                                        'Hoàn Thành'
+                                                    ? 'Chưa Hoàn Thành'
+                                                    : 'Hoàn Thành';
+                                          });
+
+                                          // Cập nhật lại trạng thái của subtask khi subsubtask thay đổi
+                                          _updateSubtaskStatus(subtask);
+
+                                          // Cập nhật lại số lượng subtask hoàn thành
+                                          completedSubtasks = subtasks
+                                              .where((subtask) =>
+                                                  subtask['status'] ==
+                                                  'Hoàn Thành')
+                                              .length;
+
+                                          // Cập nhật trạng thái task chính
+                                          if (completedSubtasks ==
+                                              subtasks.length) {
+                                            task['status'] = 'Hoàn Thành';
+                                          } else {
+                                            task['status'] = 'Chưa Hoàn Thành';
+                                          }
+                                        },
+                                        child: AnimatedContainer(
+                                          duration:
+                                              const Duration(milliseconds: 200),
+                                          width: 16,
+                                          height: 16,
+                                          decoration: BoxDecoration(
+                                            color: subsubtask['status'] ==
+                                                    'Hoàn Thành'
+                                                ? Colors.green
+                                                : Colors.transparent,
+                                            border: Border.all(
+                                                color: _getPriorityColor(
+                                                    subsubtask['priority']),
+                                                width: 2),
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                          ),
+                                          child: subsubtask['status'] ==
+                                                  'Hoàn Thành'
+                                              ? const Icon(
+                                                  Icons.check,
+                                                  color: Colors.white,
+                                                  size: 10,
+                                                )
+                                              : null,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Text(
+                                          subsubtask['subsubtask'],
+                                          style: TextStyle(
+                                            color: subsubtask['status'] ==
+                                                    'Hoàn Thành'
+                                                ? Colors.green
+                                                : Colors.black,
+                                            decoration: subsubtask['status'] ==
+                                                    'Hoàn Thành'
+                                                ? TextDecoration.lineThrough
+                                                : null,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ]
+                      ]
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context); // Đóng dialog
+                    setState(() {}); // Cập nhật lại UI sau khi đóng dialog
+                  },
+                  child: const Text('Close'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _updateSubtaskStatus(Map subtask) {
+    // Kiểm tra và cập nhật trạng thái của subtask dựa trên subsubtasks
+    if (subtask['subsubtasks'] != null && subtask['subsubtasks'].isNotEmpty) {
+      bool allCompleted = true;
+      for (var subsubtask in subtask['subsubtasks']) {
+        if (subsubtask['status'] != 'Hoàn Thành') {
+          allCompleted = false;
+          break;
+        }
+      }
+      subtask['status'] = allCompleted ? 'Hoàn Thành' : 'Chưa Hoàn Thành';
     }
   }
 
-  Widget _buildFloatingActionButton() {
+  int _getCompletedSubsubtasks(List subsubtasks) {
+    return subsubtasks
+        .where((subsubtask) => subsubtask['status'] == 'Hoàn Thành')
+        .length;
+  }
+
+  FloatingActionButton _buildFloatingActionButton() {
     return FloatingActionButton(
       onPressed: () {
         // Xử lý khi nhấn nút thêm công việc
-        print('Add new task');
+        print('Add');
       },
       child:
           Icon(Icons.add, color: Colors.white), // Đặt màu biểu tượng là trắng
       backgroundColor: Colors.red, // Đặt nền màu đỏ
       shape: CircleBorder(), // Đảm bảo hình tròn
     );
+  }
+
+  String _getDayName(DateTime date) {
+    final dayNames = [
+      'Chủ Nhật',
+      'Thứ Hai',
+      'Thứ Ba',
+      'Thứ Tư',
+      'Thứ Năm',
+      'Thứ Sáu',
+      'Thứ Bảy'
+    ];
+    return dayNames[date.weekday % 7];
   }
 }
