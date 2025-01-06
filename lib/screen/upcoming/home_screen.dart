@@ -24,7 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
         'description':
             'Ngủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtv',
         'type': 'Work',
-        'email': '', // Email added here for the task
+        'email': 'user8@example.com', // Email added here for the task
         'subtasks': [
           {
             'subtask': 'Đi ngủ đúng giờ',
@@ -78,7 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
         'priority': 'Trung bình',
         'description': 'Chạy bộ 30 phút vào buổi sáng',
         'type': 'Inbox',
-        'email': 'user8@example.com', // Email added here for the task
+        'email': '', // Email added here for the task
         'subtasks': [
           {
             'subtask': 'Khởi động',

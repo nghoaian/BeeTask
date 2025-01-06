@@ -37,6 +37,21 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
     }
   }
 
+  void _updateTaskStatus() {
+    bool allCompleted = true;
+
+    for (var subtask in widget.subtasks) {
+      if (subtask['status'] != 'Hoàn Thành') {
+        allCompleted = false;
+        break;
+      }
+    }
+
+    setState(() {
+      widget.task['status'] = allCompleted ? 'Hoàn Thành' : 'Chưa Hoàn Thành';
+    });
+  }
+
   // Cập nhật trạng thái của subtask sau khi thay đổi trạng thái của subsubtask
   void _updateSubtaskStatus(Map subtask) {
     if (subtask['subsubtasks'] != null && subtask['subsubtasks'].isNotEmpty) {
@@ -100,16 +115,33 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
             ),
           );
         },
-        child: Text(
-          widget.task['task'],
-          style: const TextStyle(fontWeight: FontWeight.bold),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                widget.task['task'],
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            if (widget.task['email']?.isNotEmpty ?? false)
+              CircleAvatar(
+                radius: 16,
+                backgroundColor: Colors.white,
+                child: Text(
+                  widget.task['email'][0].toUpperCase(),
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
       content: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Task Priority (with editing ability)
             GestureDetector(
               onTap: () {
                 showDialog(
@@ -122,7 +154,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                         setState(() {
                           widget.task['priority'] = newValue!;
                         });
-                        Navigator.pop(context); // Close dialog
+                        Navigator.pop(context);
                         widget.onDataUpdated();
                       },
                       items: ['Cao', 'Trung bình', 'Thấp']
@@ -141,16 +173,12 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
               ),
             ),
             const SizedBox(height: 8.0),
-
-            // Task Project Type (if available)
             if (widget.task['type'] != null)
               Text(
                 'Project: ${widget.task['type']}',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             const SizedBox(height: 8.0),
-
-            // Task Description (with editing ability)
             GestureDetector(
               onTap: () {
                 showDialog(
@@ -159,8 +187,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                     title: const Text('Edit Description'),
                     content: SingleChildScrollView(
                       child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                            maxHeight: 300), // Giới hạn chiều cao của TextField
+                        constraints: BoxConstraints(maxHeight: 300),
                         child: TextField(
                           controller: TextEditingController(
                               text: widget.task['description']),
@@ -169,7 +196,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                               widget.task['description'] = value;
                             });
                           },
-                          maxLines: null, // Cho phép TextField tự động mở rộng
+                          maxLines: null,
                           decoration: const InputDecoration(
                             labelText: 'Description',
                           ),
@@ -179,7 +206,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                     actions: [
                       TextButton(
                         onPressed: () {
-                          Navigator.pop(context); // Đóng dialog
+                          Navigator.pop(context);
                           widget.onDataUpdated();
                         },
                         child: const Text('Save'),
@@ -194,8 +221,6 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
               ),
             ),
             const SizedBox(height: 16.0),
-
-            // Display Completed Subtasks
             if (widget.subtasks.isNotEmpty)
               Row(
                 children: [
@@ -207,8 +232,6 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                 ],
               ),
             const SizedBox(height: 16.0),
-
-            // Subtasks List
             if (widget.subtasks.isNotEmpty) ...[
               const Divider(),
               Text('Subtasks:', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -222,15 +245,22 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                             ? 'Chưa Hoàn Thành'
                             : 'Hoàn Thành';
 
-                        subtask['status'] = newStatus;
+                        setState(() {
+                          // Cập nhật trạng thái của subtask
+                          subtask['status'] = newStatus;
 
-                        if (subtask['subsubtasks'] != null) {
-                          for (var subsubtask in subtask['subsubtasks']) {
-                            subsubtask['status'] = newStatus;
+                          // Cập nhật trạng thái của các subsubtask nếu có
+                          if (subtask['subsubtasks'] != null) {
+                            for (var subsubtask in subtask['subsubtasks']) {
+                              subsubtask['status'] = newStatus;
+                            }
                           }
-                        }
+                          _updateSubtaskStatus(subtask);
+                          _updateTaskStatus();
+                          widget.onDataUpdated();
 
-                        setState(() {});
+                          setState(() {});
+                        });
                       },
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
@@ -271,6 +301,24 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                         ),
                       ),
                     ),
+                    // Thêm Expanded và căn chỉnh CircleAvatar xuống cuối cùng
+                    if (subtask['email']?.isNotEmpty ?? false)
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: CircleAvatar(
+                            radius: 16,
+                            backgroundColor: Colors.white,
+                            child: Text(
+                              subtask['email'][0].toUpperCase(),
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
                 if (subtask['subsubtasks'] != null) ...[
@@ -329,6 +377,24 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                                   ),
                                 ),
                               ),
+                              // Thêm Expanded và căn chỉnh CircleAvatar xuống cuối cùng
+                              if (subsubtask['email']?.isNotEmpty ?? false)
+                                Expanded(
+                                  child: Align(
+                                    alignment: Alignment.centerRight,
+                                    child: CircleAvatar(
+                                      radius: 16,
+                                      backgroundColor: Colors.white,
+                                      child: Text(
+                                        subsubtask['email'][0].toUpperCase(),
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
                         ),
@@ -342,7 +408,6 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
         ),
       ),
       actions: [
-        // Add Subtask button
         Padding(
           padding: const EdgeInsets.only(bottom: 10.0),
           child: Container(
@@ -375,7 +440,6 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
             ),
           ),
         ),
-        // Add Comment Section with Upload File Icon
         Padding(
           padding: const EdgeInsets.only(bottom: 10.0),
           child: Container(
@@ -413,7 +477,6 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
             ),
           ),
         ),
-        // Close button (always at the bottom)
         TextButton(
           onPressed: () {
             Navigator.pop(context);
