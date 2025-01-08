@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 class AddTaskDialog extends StatefulWidget {
-  final Function(Map<String, dynamic>) onTaskAdded;
-  final List<Map<String, dynamic>> data;
-  final DateTime selectDay;
+  final Function(Map<String, dynamic>)
+      onTaskAdded; // Hàm callback để xử lý khi thêm task
+  final List<Map<String, dynamic>>
+      data; // Danh sách các project và thông tin chi tiết
+  final DateTime selectDay; // Ngày được chọn để thêm task
 
   const AddTaskDialog({
     Key? key,
@@ -18,25 +20,30 @@ class AddTaskDialog extends StatefulWidget {
 
 class _AddTaskDialogState extends State<AddTaskDialog> {
   // Initialize controllers
-  final TextEditingController taskNameController = TextEditingController();
-  final TextEditingController descriptionController = TextEditingController();
-  final TextEditingController priorityController =
-      TextEditingController(text: 'Thấp');
-  final TextEditingController dateController = TextEditingController();
-  final TextEditingController projectController =
-      TextEditingController(text: 'Inbox');
-  final TextEditingController assigneeController = TextEditingController();
+  final TextEditingController taskNameController =
+      TextEditingController(); // Controller cho tên công việc
+  final TextEditingController descriptionController =
+      TextEditingController(); // Controller cho mô tả
+  final TextEditingController priorityController = TextEditingController(
+      text:
+          'Thấp'); // Controller cho mức độ ưu tiên có giá trị mặc định là Thấp
+  final TextEditingController dateController =
+      TextEditingController(); // Controller cho ngày
+  final TextEditingController projectController = TextEditingController(
+      text: 'Inbox'); // Controller cho project có giá trị mặc định là Inbox
+  final TextEditingController assigneeController =
+      TextEditingController(); // Controller cho người được giao việc
 
   DateTime? _selectedDay;
 
   @override
   void initState() {
     super.initState();
-    dateController.text = _selectedDay != null
-        ? "${_selectedDay!.toLocal()}".split(' ')[0]
-        : DateTime.now().toString().split(' ')[0];
+    _selectedDay = widget.selectDay;
+    dateController.text = "${_selectedDay!.toLocal()}".split(' ')[0];
   }
 
+  // Widget chung để tạo trường nhập văn bản
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -64,6 +71,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     );
   }
 
+  // Widget chung để tạo dropdown
   Widget _buildDropdown<T>({
     required String label,
     required T? value,
@@ -86,6 +94,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     );
   }
 
+  // Trường nhập tên công việc
   Widget _buildTaskNameField() {
     return _buildTextField(
       controller: taskNameController,
@@ -93,6 +102,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     );
   }
 
+  // Dropdown chọn project
   Widget _buildProjectDropdown() {
     return _buildDropdown<String>(
       label: 'Project',
@@ -111,6 +121,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     );
   }
 
+  // Dropdown chọn người được giao việc
   Widget _buildAssigneeDropdown() {
     final selectedProject = widget.data.firstWhere(
         (project) => project['type'] == projectController.text,
@@ -138,6 +149,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     return const SizedBox.shrink();
   }
 
+  // Dropdown chọn mức độ ưu tiên
   Widget _buildPriorityDropdown() {
     return _buildDropdown<String>(
       label: 'Priority',
@@ -154,6 +166,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     );
   }
 
+  // Trường nhập mô tả
   Widget _buildDescriptionField() {
     return _buildTextField(
       controller: descriptionController,
@@ -162,6 +175,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     );
   }
 
+  // Trường nhập ngày
   Widget _buildDateField() {
     return _buildTextField(
       controller: dateController,
@@ -181,6 +195,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     );
   }
 
+  // Nút hành động của dialog
   Widget _buildDialogActions() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
