@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:bee_task/screen/upcoming/taskdetail_dialog.dart';
+import 'package:bee_task/screen/upcoming/addtask_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -14,126 +15,160 @@ class _HomeScreenState extends State<HomeScreen> {
   CalendarFormat _calendarFormat = CalendarFormat.month; // Mặc định là tháng
   DateTime _focusedDay = DateTime.now(); // Mặc định là ngày hiện tại
   DateTime? _selectedDay;
+  bool showCompletedTasks =
+      true; // Biến trạng thái để hiển thị/ẩn task hoàn thành
 
-  final Map<DateTime, List<Map<String, dynamic>>> _tasks = {
-    DateTime(2025, 1, 2): [
-      {
-        'task': 'Ngủ',
-        'status': 'Chưa Hoàn Thành',
-        'priority': 'Cao',
-        'description':
-            'Ngủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng để có sức khỏe tốtv',
-        'type': 'Work',
-        'email': 'user8@example.com',
-        'subtasks': [
-          {
-            'subtask': 'Đi ngủ đúng giờ',
-            'status': 'Chưa Hoàn Thành',
-            'priority': 'Cao',
-            'email': '',
-            'subsubtasks': [
-              {
-                'subsubtask': 'Tắt máy tính',
-                'status': 'Chưa Hoàn Thành',
-                'priority': 'Trung bình',
-                'email': 'user3@example.com',
-              },
-              {
-                'subsubtask': 'Đi vệ sinh',
-                'status': 'Chưa Hoàn Thành',
-                'priority': 'Thấp',
-                'email': 'user4@example.com',
-              },
-            ],
-          },
-          {
-            'subtask': 'Đi ngủ đúng giờ',
-            'status': 'Chưa Hoàn Thành',
-            'priority': 'Cao',
-            'email': 'user5@example.com', // Email added here for the subtask
-            'subsubtasks': [
-              {
-                'subsubtask': 'Tắt máy tính',
-                'status': 'Chưa Hoàn Thành',
-                'priority': 'Trung bình',
-                'email':
-                    'user6@example.com', // Email added here for the subsubtask
-              },
-              {
-                'subsubtask': 'Đi vệ sinh',
-                'status': 'Chưa Hoàn Thành',
-                'priority': 'Thấp',
-                'email':
-                    'user7@example.com', // Email added here for the subsubtask
-              },
-            ],
-          },
-        ],
-      },
-      {
-        'task': 'Tập thể dục',
-        'status': 'Chưa Hoàn Thành',
-        'priority': 'Trung bình',
-        'description': 'Chạy bộ 30 phút vào buổi sáng',
-        'type': 'Inbox',
-        'email': '', // Email added here for the task
-        'subtasks': [
-          {
-            'subtask': 'Khởi động',
-            'status': 'Chưa Hoàn Thành',
-            'priority': 'Cao',
-            'email': 'user9@example.com', // Email added here for the subtask
-            'subsubtasks': [
-              {
-                'subsubtask': 'Giãn cơ',
-                'status': 'Chưa Hoàn Thành',
-                'priority': 'Cao',
-                'email':
-                    'user10@example.com', // Email added here for the subsubtask
-              },
-            ],
-          },
-        ],
-      },
-    ],
-    DateTime(2025, 1, 3): [
-      {
-        'task': 'Học lập trình',
-        'status': 'Chưa Hoàn Thành',
-        'priority': 'Cao',
-        'description': 'Học Flutter và Dart',
-        'type': 'Work',
-        'email': 'user11@example.com', // Email added here for the task
-        'subtasks': [
-          {
-            'subtask': 'Xem video tutorial',
-            'status': 'Chưa Hoàn Thành',
-            'priority': 'Cao',
-            'email': 'user12@example.com', // Email added here for the subtask
-            'subsubtasks': [],
-          },
-          {
-            'subtask': 'Thực hành viết mã',
-            'status': 'Chưa Hoàn Thành',
-            'priority': 'Trung bình',
-            'email': 'user13@example.com', // Email added here for the subtask
-            'subsubtasks': [],
-          },
-        ],
-      },
-    ],
-    DateTime(2025, 1, 4): [
-      {
-        'task': 'Học lập trình',
-        'status': 'Chưa Hoàn Thành',
-        'priority': 'Cao',
-        'description': 'Học Flutter và Dart',
-        'type': 'Work',
-        'email': 'user14@example.com', // Email added here for the task
-        'subtasks': [],
-      },
-    ],
-  };
+  final List<Map<String, dynamic>> _tasks = [
+    {
+      'task': 'Ngủ',
+      'status': 'Chưa Hoàn Thành',
+      'priority': 'Cao',
+      'description': 'Ngủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng...',
+      'type': 'Work',
+      'email': 'user8@example.com',
+      'date': DateTime(2025, 1, 2), // Date for the task
+      'subtasks': [
+        {
+          'subtask': 'Đi ngủ đúng giờ',
+          'status': 'Chưa Hoàn Thành',
+          'priority': 'Cao',
+          'email': '',
+          'date': DateTime(2025, 1, 2), // Date for the subtask
+          'subsubtasks': [
+            {
+              'subsubtask': 'Tắt máy tính',
+              'status': 'Chưa Hoàn Thành',
+              'priority': 'Trung bình',
+              'email': 'user3@example.com',
+              'date': DateTime(2025, 1, 2), // Date for the subsubtask
+            },
+            {
+              'subsubtask': 'Đi vệ sinh',
+              'status': 'Chưa Hoàn Thành',
+              'priority': 'Thấp',
+              'email': 'user4@example.com',
+              'date': DateTime(2025, 1, 2), // Date for the subsubtask
+            },
+          ],
+        },
+        {
+          'subtask': 'Đi ngủ đúng giờ',
+          'status': 'Chưa Hoàn Thành',
+          'priority': 'Cao',
+          'email': 'user5@example.com',
+          'date': DateTime(2025, 1, 2), // Date for the subtask
+          'subsubtasks': [
+            {
+              'subsubtask': 'Tắt máy tính',
+              'status': 'Chưa Hoàn Thành',
+              'priority': 'Trung bình',
+              'email': 'user6@example.com',
+              'date': DateTime(2025, 1, 2), // Date for the subsubtask
+            },
+            {
+              'subsubtask': 'Đi vệ sinh',
+              'status': 'Chưa Hoàn Thành',
+              'priority': 'Thấp',
+              'email': 'user7@example.com',
+              'date': DateTime(2025, 1, 2), // Date for the subsubtask
+            },
+          ],
+        },
+      ],
+    },
+    {
+      'task': 'Tập thể dục',
+      'status': 'Chưa Hoàn Thành',
+      'priority': 'Trung bình',
+      'description': 'Chạy bộ 30 phút vào buổi sáng',
+      'type': 'Inbox',
+      'email': '', // Email for task
+      'date': DateTime(2025, 1, 2), // Date for the task
+      'subtasks': [
+        {
+          'subtask': 'Khởi động',
+          'status': 'Chưa Hoàn Thành',
+          'priority': 'Cao',
+          'email': 'user9@example.com', // Email for subtask
+          'date': DateTime(2025, 1, 2), // Date for subtask
+          'subsubtasks': [
+            {
+              'subsubtask': 'Giãn cơ',
+              'status': 'Chưa Hoàn Thành',
+              'priority': 'Cao',
+              'email': 'user10@example.com', // Email for subsubtask
+              'date': DateTime(2025, 1, 2), // Date for subsubtask
+            },
+          ],
+        },
+      ],
+    },
+    {
+      'task': 'Học lập trình',
+      'status': 'Chưa Hoàn Thành',
+      'priority': 'Cao',
+      'description': 'Học Flutter và Dart',
+      'type': 'Work',
+      'email': 'user11@example.com', // Email for task
+      'date': DateTime(2025, 1, 3), // Date for task
+      'subtasks': [
+        {
+          'subtask': 'Xem video tutorial',
+          'status': 'Chưa Hoàn Thành',
+          'priority': 'Cao',
+          'email': 'user12@example.com', // Email for subtask
+          'date': DateTime(2025, 1, 3), // Date for subtask
+          'subsubtasks': [],
+        },
+        {
+          'subtask': 'Thực hành viết mã',
+          'status': 'Chưa Hoàn Thành',
+          'priority': 'Trung bình',
+          'email': 'user13@example.com', // Email for subtask
+          'date': DateTime(2025, 1, 3), // Date for subtask
+          'subsubtasks': [],
+        },
+      ],
+    },
+    {
+      'task': 'Học lập trình',
+      'status': 'Chưa Hoàn Thành',
+      'priority': 'Cao',
+      'description': 'Học Flutter và Dart',
+      'type': 'Work',
+      'email': 'user14@example.com', // Email for task
+      'date': DateTime(2025, 1, 4), // Date for task
+      'subtasks': [],
+    },
+  ];
+  List<Map<String, dynamic>> data = [
+    {
+      'type': 'Work',
+      'members': [
+        {
+          'email': 'user14@example.com',
+        },
+        {
+          'email': 'user14@example.com',
+        },
+      ],
+    },
+    {
+      'type': 'Inbox',
+      'members': [], // Không có thành viên nào
+    },
+    {
+      'type': 'Test',
+      'members': [
+        {
+          'email': 'thong@example.com',
+        },
+        {
+          'email': 'an@example.com',
+        },
+      ], // Không có thành viên nào
+    },
+  ];
 
   @override
   void initState() {
@@ -150,11 +185,14 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           _buildCalendar(), // Xây dựng giao diện lịch
           Divider(height: 1, thickness: 1, color: Colors.grey[200]),
-          _buildTaskList(), // Danh sách các công việc theo ngày
+          _buildToggleCompletedButton(), // Nút chuyển đổi hiển thị task hoàn thành
+
+          Expanded(
+              child: _buildTaskList()), // Danh sách các công việc theo ngày
         ],
       ),
       floatingActionButton:
-          _buildFloatingActionButton(), // Nút thả nổi thêm công việc
+          _buildFloatingActionButton(context), // Nút thả nổi thêm công việc
     );
   }
 
@@ -226,6 +264,29 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildToggleCompletedButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            'Show Completed Tasks',
+            style: TextStyle(fontSize: 16.0),
+          ),
+          Switch(
+            value: showCompletedTasks,
+            onChanged: (value) {
+              setState(() {
+                showCompletedTasks = value;
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   // Hàm lấy màu sắc ưu tiên cho task
   Color _getPriorityColor(String priority) {
     switch (priority) {
@@ -242,17 +303,22 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Xây dựng danh sách công việc theo ngày đã chọn
   Widget _buildTaskList() {
-    final selectedDateTasks = _tasks.entries
-        .firstWhere(
-          (entry) =>
-              entry.key.year == _selectedDay!.year &&
-              entry.key.month == _selectedDay!.month &&
-              entry.key.day == _selectedDay!.day,
-          orElse: () => MapEntry(DateTime(2000), []),
-        )
-        .value;
+    final selectedDateTasks = _tasks
+        .where((task) =>
+            task['date'].year == _selectedDay!.year &&
+            task['date'].month == _selectedDay!.month &&
+            task['date'].day == _selectedDay!.day)
+        .toList();
 
-    selectedDateTasks.sort((a, b) {
+    // Lọc các task dựa trên trạng thái hiển thị
+    final filteredTasks = showCompletedTasks
+        ? selectedDateTasks
+        : selectedDateTasks
+            .where((task) => task['status'] != 'Hoàn Thành')
+            .toList();
+
+    // Sắp xếp để các task "Chưa Hoàn Thành" hiển thị trước
+    filteredTasks.sort((a, b) {
       String statusA = a['status'] ?? '';
       String statusB = b['status'] ?? '';
       if (statusA == 'Chưa Hoàn Thành' && statusB != 'Chưa Hoàn Thành') {
@@ -264,11 +330,11 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     return Expanded(
-      child: selectedDateTasks.isNotEmpty
+      child: filteredTasks.isNotEmpty
           ? ListView.builder(
-              itemCount: selectedDateTasks.length,
+              itemCount: filteredTasks.length,
               itemBuilder: (context, index) {
-                final task = selectedDateTasks[index];
+                final task = filteredTasks[index];
                 return _buildTaskCard(task);
               },
             )
@@ -502,6 +568,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   : 'Hoàn Thành';
             });
           },
+          onShowCompletedTasksChanged: _toggleShowCompletedTasks,
+          showCompletedTasks: showCompletedTasks,
           onDataUpdated: () {
             setState(() {});
           },
@@ -510,16 +578,35 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _toggleShowCompletedTasks(bool newStatus) {
+    setState(() {
+      showCompletedTasks = newStatus;
+    });
+  }
+
   // Widget xây dựng nút thả nổi thêm công việc
-  FloatingActionButton _buildFloatingActionButton() {
+  FloatingActionButton _buildFloatingActionButton(BuildContext context) {
     return FloatingActionButton(
       onPressed: () {
-        // Xử lý khi nhấn nút thêm công việc
-        print('Add');
+        _showAddTaskDialog(context);
       },
       child: Icon(Icons.add, color: Colors.white),
       backgroundColor: Colors.red,
       shape: CircleBorder(),
+    );
+  }
+
+  void _showAddTaskDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AddTaskDialog(
+        data: data,
+        selectDay: _selectedDay ?? DateTime.now(),
+        onTaskAdded: (task) {
+          _tasks.add(task);
+          setState(() {});
+        },
+      ),
     );
   }
 }

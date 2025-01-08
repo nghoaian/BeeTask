@@ -8,6 +8,9 @@ class TaskDetailsDialog extends StatefulWidget {
   final int totalSubtasks; // Tổng số lượng subtasks
   final Function onStatusChanged; // Callback để thay đổi trạng thái của subtask
   final Function onDataUpdated; // Callback để cập nhật dữ liệu khi có thay đổi
+  bool showCompletedTasks;
+  final Function(bool)
+      onShowCompletedTasksChanged; // Callback để thay đổi trạng thái
 
   TaskDetailsDialog({
     required this.task,
@@ -17,6 +20,8 @@ class TaskDetailsDialog extends StatefulWidget {
     required this.totalSubtasks,
     required this.onStatusChanged,
     required this.onDataUpdated,
+    required this.showCompletedTasks,
+    required this.onShowCompletedTasksChanged,
   });
 
   @override
@@ -189,20 +194,68 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
             ),
           ),
           if (widget.task['email']?.isNotEmpty ?? false)
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: Colors.white,
-              child: Text(
-                widget.task['email'][0].toUpperCase(),
-                style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
+            buildCircleAvatar(widget.task['email']),
+          const SizedBox(width: 8),
+          IconButton(
+            icon: const Icon(Icons.more_vert),
+            onPressed: () {
+              showMenu(
+                context: context,
+                position: const RelativeRect.fromLTRB(
+                    100, 100, 0, 0), // Adjust menu position
+                items: [
+                  if (widget.task['type'] !=
+                      'Inbox') // Chỉ hiển thị nếu không phải "Inbox"
+                    PopupMenuItem(
+                      value: 'assignUser',
+                      child: const Text(
+                          'Change Assignee'), // Thay đổi người làm task
+                    ),
+                  PopupMenuItem(
+                    value: 'toggleCompletedTasksVisibility',
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                            'Show Completed Sub-Tasks'), // Ẩn/hiện công việc đã hoàn thành
+                        if (widget.showCompletedTasks)
+                          const Icon(
+                            Icons
+                                .check, // Dấu check nếu công việc hoàn thành đang hiển thị
+                            color: Colors.green,
+                          ),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'deleteTask',
+                    child: const Text('Delete Task'), // Xóa task
+                  ),
+                ],
+              ).then((value) {
+                if (value == 'assignUser') {
+                  // Logic for changing the assignee of the task
+                } else if (value == 'toggleCompletedTasksVisibility') {
+                  _toggleShowCompletedTasks();
+                } else if (value == 'deleteTask') {
+                  // Logic for deleting the task
+                }
+              });
+            },
+          ),
         ],
       ),
     );
+  }
+
+  void _toggleShowCompletedTasks() {
+    bool newStatus =
+        !widget.showCompletedTasks; // thay đổi giá trị show completed tasks
+    widget.onShowCompletedTasksChanged(
+        newStatus); // Gọi callback để cập nhật lại trong widget cha
+    setState(() {
+      widget.showCompletedTasks = newStatus;
+    });
   }
 
   //Widget để hiển thị priority và dialog chỉnh sửa
@@ -311,6 +364,11 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
 
   // Widget để hiển thị subtask
   Widget buildSubtaskRow(var subtask) {
+    // Kiểm tra nếu `showCompletedTasks` là false và subtask đã "Hoàn Thành", không hiển thị
+    if (!widget.showCompletedTasks && subtask['status'] == 'Hoàn Thành') {
+      return const SizedBox.shrink(); // Trả về một widget rỗng
+    }
+
     return Row(
       children: [
         GestureDetector(
@@ -332,8 +390,6 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
               _updateSubtaskStatus(subtask); // cập nhật trạng thái subtask
               _updateTaskStatus(); // cập nhật trạng thái task
               widget.onDataUpdated(); // cập nhật dữ liệu
-
-              setState(() {});
             });
           },
           child: AnimatedContainer(
@@ -383,9 +439,16 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
 
   // Widget để hiển thị các subsubtasks bên trong một subtask
   Widget buildSubsubtasks(Map subtask) {
+    // Lọc subsubtasks dựa trên trạng thái và widget.showCompletedTasks
+    final filteredSubsubtasks = widget.showCompletedTasks
+        ? subtask['subsubtasks']
+        : subtask['subsubtasks']
+            .where((subsubtask) => subsubtask['status'] != 'Hoàn Thành')
+            .toList();
+
     return Column(
       children: [
-        for (var subsubtask in subtask['subsubtasks']) ...[
+        for (var subsubtask in filteredSubsubtasks) ...[
           const SizedBox(height: 8.0),
           Padding(
             padding: const EdgeInsets.only(left: 24.0),
