@@ -19,7 +19,6 @@ class AddTaskDialog extends StatefulWidget {
 }
 
 class _AddTaskDialogState extends State<AddTaskDialog> {
-  // Initialize controllers
   final TextEditingController taskNameController =
       TextEditingController(); // Controller cho tên công việc
   final TextEditingController descriptionController =
