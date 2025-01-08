@@ -248,9 +248,20 @@ class _HomeScreenState extends State<HomeScreen> {
               entry.key.year == _selectedDay!.year &&
               entry.key.month == _selectedDay!.month &&
               entry.key.day == _selectedDay!.day,
-          orElse: () => MapEntry(DateTime(2000), []), // Nếu không có công việc
+          orElse: () => MapEntry(DateTime(2000), []),
         )
         .value;
+
+    selectedDateTasks.sort((a, b) {
+      String statusA = a['status'] ?? '';
+      String statusB = b['status'] ?? '';
+      if (statusA == 'Chưa Hoàn Thành' && statusB != 'Chưa Hoàn Thành') {
+        return -1;
+      } else if (statusA != 'Chưa Hoàn Thành' && statusB == 'Chưa Hoàn Thành') {
+        return 1;
+      }
+      return 0;
+    });
 
     return Expanded(
       child: selectedDateTasks.isNotEmpty
@@ -258,11 +269,10 @@ class _HomeScreenState extends State<HomeScreen> {
               itemCount: selectedDateTasks.length,
               itemBuilder: (context, index) {
                 final task = selectedDateTasks[index];
-                return _buildTaskCard(
-                    task); // Gọi hàm để xây dựng từng thẻ công việc
+                return _buildTaskCard(task);
               },
             )
-          : _buildNoTaskMessage(), // Nếu không có công việc, hiển thị thông báo
+          : _buildNoTaskMessage(),
     );
   }
 
@@ -511,18 +521,5 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.red,
       shape: CircleBorder(),
     );
-  }
-
-  String _getDayName(DateTime date) {
-    final dayNames = [
-      'Chủ Nhật',
-      'Thứ Hai',
-      'Thứ Ba',
-      'Thứ Tư',
-      'Thứ Năm',
-      'Thứ Sáu',
-      'Thứ Bảy'
-    ];
-    return dayNames[date.weekday % 7];
   }
 }
