@@ -95,11 +95,18 @@ class _ProjectScreenState extends State<ProjectScreen> {
       ),
       elevation: 0,
       child: ExpansionTile(
+        collapsedShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: BorderSide.none,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: BorderSide.none,
+        ),
         title: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Checkbox(
-              margin
               value: task.completed,
               onChanged: (value) {
                 // setState(() {
@@ -152,7 +159,21 @@ class _ProjectScreenState extends State<ProjectScreen> {
   Widget _buildSubtaskItem(Task subtask) {
     return Card(
       margin: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide.none,
+      ),
+      elevation: 0,
       child: ExpansionTile(
+        collapsedShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: BorderSide.none,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: BorderSide.none,
+        ),
         title: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
