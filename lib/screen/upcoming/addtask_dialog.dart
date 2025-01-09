@@ -101,47 +101,60 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     );
   }
 
-  // Dropdown chọn project
+// Dropdown chọn project
   Widget _buildProjectDropdown() {
-    return _buildDropdown<String>(
+    return _buildDropdown<int>(
       label: 'Project',
-      value: projectController.text.isEmpty ? null : projectController.text,
+      value: projectController.text.isEmpty
+          ? null
+          : int.tryParse(projectController.text),
       items: widget.data.map((project) {
-        return DropdownMenuItem<String>(
-          value: project['type'],
-          child: Text(project['type']),
+        return DropdownMenuItem<int>(
+          value: project['id'], // Lưu id vào giá trị
+          child: Text(project['type']), // Hiển thị type (tên dự án)
         );
       }).toList(),
       onChanged: (value) {
-        projectController.text = value!;
-        setState(() {});
-        assigneeController.clear();
+        setState(() {
+          projectController.text = value.toString(); // Lưu id của project
+          assigneeController.clear(); // Xóa dữ liệu của assignee
+        });
       },
     );
   }
 
-  // Dropdown chọn người được giao việc
+// Dropdown chọn người được giao việc
   Widget _buildAssigneeDropdown() {
-    final selectedProject = widget.data.firstWhere(
-        (project) => project['type'] == projectController.text,
-        orElse: () => {});
+    // Lấy id dự án từ projectController
+    final int? selectedProjectId = int.tryParse(projectController.text);
 
-    if (projectController.text != 'Inbox' &&
+    // Tìm dự án bằng id
+    final selectedProject = widget.data.firstWhere(
+      (project) => project['id'] == selectedProjectId,
+      orElse: () => {},
+    );
+
+    if (selectedProject.isNotEmpty &&
         selectedProject['members'] != null &&
         selectedProject['members'].isNotEmpty) {
       return _buildDropdown<String>(
         label: 'Assignee',
-        value: assigneeController.text.isEmpty ? null : assigneeController.text,
+        value: selectedProject['members']
+                .any((member) => member['assignee'] == assigneeController.text)
+            ? assigneeController.text
+            : null, // Đồng bộ giá trị Assignee
         items: selectedProject['members']
-            .where((member) => member['email'] != null)
+            .where((member) => member['assignee'] != null)
             .map<DropdownMenuItem<String>>((member) {
           return DropdownMenuItem<String>(
-            value: member['email'],
-            child: Text(member['email']),
+            value: member['assignee'],
+            child: Text(member['assignee']),
           );
         }).toList(),
         onChanged: (value) {
-          assigneeController.text = value!;
+          setState(() {
+            assigneeController.text = value!;
+          });
         },
       );
     }
@@ -214,15 +227,47 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
         const SizedBox(width: 16),
         ElevatedButton(
           onPressed: () {
+            // Tìm thông tin project và assignee
+            String type = '';
+            String avatar = '';
+            String assignee = '';
+
+            // Lấy id từ projectController
+            final int? projectId = int.tryParse(projectController.text);
+
+            // Tìm type của project dựa trên id
+            final project = widget.data.firstWhere(
+              (proj) => proj['id'] == projectId,
+              orElse: () => {},
+            );
+            if (project.isNotEmpty) {
+              type = project['type'] ?? '';
+            }
+
+            if (assigneeController.text.isNotEmpty) {
+              for (var project in widget.data) {
+                if (project['members'] != null &&
+                    project['members'].isNotEmpty) {
+                  for (var member in project['members']) {
+                    if (member['assignee'] == assigneeController.text) {
+                      avatar = member['avatar'] ?? ''; // Gán avatar
+                      assignee = member['assignee'] ?? ''; // Gán mail assignee
+
+                      break;
+                    }
+                  }
+                }
+              }
+            }
             final task = {
+              'id': DateTime.now().millisecondsSinceEpoch,
               'task': taskNameController.text,
               'status': 'Chưa Hoàn Thành',
               'priority': priorityController.text,
               'description': descriptionController.text,
-              'type': projectController.text,
-              'email': assigneeController.text.isNotEmpty
-                  ? assigneeController.text
-                  : '',
+              'type': type,
+              'assignee': assignee,
+              'avatar': avatar,
               'date': _selectedDay ?? DateTime.now(),
               'subtasks': [],
             };

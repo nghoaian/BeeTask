@@ -1,25 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:bee_task/util/colors.dart';
 
 class TaskDetailsDialog extends StatefulWidget {
-  final Map task; // Dữ liệu của task hiện tại
-  final List subtasks; // Danh sách các subtasks của task
+  final Map task; // Dữ liệu của task
+  final String taskName;
+  final String project;
+  final Map subtasks; // Danh sách các subtasks của task
+  final Map subsubtasks; // Danh sách các subtasks của task
   final Color priorityColor; // Màu sắc của ưu tiên task
   final int completedSubtasks; // Số lượng subtasks đã hoàn thành
   final int totalSubtasks; // Tổng số lượng subtasks
   final Function onStatusChanged; // Callback để thay đổi trạng thái của subtask
   final Function onDataUpdated; // Callback để cập nhật dữ liệu khi có thay đổi
   bool showCompletedTasks;
+  final Function resetScreen;
   final Function(bool)
       onShowCompletedTasksChanged; // Callback để thay đổi trạng thái
 
   TaskDetailsDialog({
     required this.task,
+    required this.taskName,
+    required this.project,
     required this.subtasks,
+    required this.subsubtasks,
     required this.priorityColor,
     required this.completedSubtasks,
     required this.totalSubtasks,
     required this.onStatusChanged,
     required this.onDataUpdated,
+    required this.resetScreen,
     required this.showCompletedTasks,
     required this.onShowCompletedTasksChanged,
   });
@@ -31,29 +40,23 @@ class TaskDetailsDialog extends StatefulWidget {
 class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
   // Hàm lấy màu sắc cho ưu tiên của task
   Color _getPriorityColor(String priority) {
-    switch (priority) {
-      case 'Cao':
-        return Colors.red;
-      case 'Trung bình':
-        return Colors.orange;
-      case 'Thấp':
-        return Colors.blue;
-      default:
-        return Colors.grey;
-    }
+    return AppColors.getPriorityColor(priority);
   }
 
   // Cập nhật trạng thái của task dựa trên trạng thái các subtasks
   void _updateTaskStatus() {
     bool allCompleted = true;
-    // Kiểm tra tất cả subtasks, nếu có bất kỳ subtask nào chưa hoàn thành thì đánh dấu task là chưa hoàn thành
-    for (var subtask in widget.subtasks) {
+
+    // Duyệt qua tất cả các subtask trong Map
+    widget.subtasks.forEach((key, subtask) {
+      // Kiểm tra trạng thái của từng subtask
       if (subtask['status'] != 'Hoàn Thành') {
         allCompleted = false;
-        break;
+        return; // Nếu có subtask chưa hoàn thành, thoát khỏi vòng lặp
       }
-    }
+    });
 
+    // Cập nhật trạng thái của task chính
     setState(() {
       widget.task['status'] = allCompleted ? 'Hoàn Thành' : 'Chưa Hoàn Thành';
     });
@@ -80,33 +83,57 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
         .length;
   }
 
-  // Cập nhật lại số lượng completedSubtasks sau mỗi thao tác
   int _getCompletedSubtasks() {
     int count = 0;
-    for (var subtask in widget.subtasks) {
-      if (subtask['status'] == 'Hoàn Thành') {
-        count++;
+    if (widget.task.isNotEmpty) {
+      for (var subtask in widget.task['subtasks']) {
+        // Kiểm tra từng subtask trong task
+        // Kiểm tra trạng thái của subtask
+        if (subtask['status'] == 'Hoàn Thành') {
+          count++;
+        }
+      }
+    } else if (widget.subtasks.isNotEmpty) {
+      for (var subtask in widget.subtasks['subsubtasks']) {
+        // Kiểm tra từng subtask trong task
+        // Kiểm tra trạng thái của subtask
+        if (subtask['status'] == 'Hoàn Thành') {
+          count++;
+        }
       }
     }
+
     return count;
   }
 
   // Tạo CircleAvatar với chữ cái đầu tiên của email
-  Widget buildCircleAvatar(String email) {
+  Widget buildCircleAvatar(String assignment, String avatar) {
+    if (avatar.isEmpty && assignment.isEmpty) {
+      return SizedBox
+          .shrink(); // Không hiển thị gì nếu cả avatar và assignment đều rỗng
+    }
+
     return Expanded(
       child: Align(
         alignment: Alignment.centerRight,
-        child: CircleAvatar(
-          radius: 16,
-          backgroundColor: Colors.white,
-          child: Text(
-            email[0].toUpperCase(),
-            style: TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
+        child: avatar.isNotEmpty
+            ? CircleAvatar(
+                radius: 16,
+                backgroundColor: Colors.white,
+                backgroundImage: NetworkImage(avatar), // Hiển thị ảnh từ avatar
+              )
+            : CircleAvatar(
+                radius: 16,
+                backgroundColor: Colors.white,
+                child: Text(
+                  assignment[0]
+                      .toUpperCase(), // Hiển thị ký tự đầu của assignment
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
       ),
     );
   }
@@ -114,43 +141,58 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-        title: _buildTaskNameEditDialog(
-            context), // Hiển thị tên task và dialog chỉnh sửa
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildPriorityEditDialog(
-                  context), //Hiển thị priority và dialog chỉnh sửa
-              const SizedBox(height: 8.0),
-              _buildProjectText(), // Hiển thị thông tin Project
-              const SizedBox(height: 8.0),
+      title: _buildTaskNameEditDialog(
+          context), // Hiển thị tên task và dialog chỉnh sửa
+      content: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildPriorityEditDialog(
+                context), // Hiển thị priority và dialog chỉnh sửa
+            const SizedBox(height: 8.0),
+            _buildProjectText(), // Hiển thị thông tin Project
+            const SizedBox(height: 8.0),
+            if (widget.task.isNotEmpty) ...[
               _buildDescriptionEdit(
                   context), // Hiển thị description và dialog chỉnh sửa
               const SizedBox(height: 16.0),
-              if (widget.subtasks.isNotEmpty)
-                buildCompletedSubtasksRow(), //Hiển thị số subtask hoàn thành
-              const SizedBox(height: 16.0),
-              if (widget.subtasks.isNotEmpty) ...[
+            ],
+            if (widget.subtasks.isNotEmpty || widget.task.isNotEmpty)
+              if (widget.totalSubtasks != 0) ...[
+                buildCompletedSubtasksRow(), // Hiển thị số subtask hoàn thành
+                const SizedBox(height: 16.0),
                 const Divider(),
                 Text('Subtasks:',
                     style: TextStyle(fontWeight: FontWeight.bold)),
-                for (var subtask in widget.subtasks) ...[
-                  const SizedBox(height: 16.0),
-                  buildSubtaskRow(subtask), // Hiển thị các subtasks
-                  if (subtask['subsubtasks'] != null) ...[
-                    buildSubsubtasks(subtask), // Hiển thị các subsubtasks
+                if (widget.task.isNotEmpty) ...[
+                  for (var subtask in widget.task['subtasks']) ...[
+                    const SizedBox(height: 16.0),
+                    // Kiểm tra subtask có thông tin hợp lệ hay không trước khi hiển thị
+                    buildSubtaskRow(subtask), // Hiển thị các subtasks
+                    if (subtask['subsubtasks'] != null &&
+                        subtask['subsubtasks'].isNotEmpty) ...[
+                      const SizedBox(height: 8.0),
+                      buildSubsubtasks(subtask), // Hiển thị các subsubtasks
+                    ]
                   ],
                 ],
-              ],
-            ],
-          ),
+                if (widget.subtasks.isNotEmpty)
+                  if (widget.subtasks['subsubtasks'] != null) ...[
+                    const SizedBox(height: 16.0),
+                    buildSubsubtasks(
+                        widget.subtasks), // Hiển thị các subsubtasks
+                  ]
+              ]
+          ],
         ),
-        actions: [
+      ),
+      actions: [
+        if (widget.subsubtasks.isEmpty)
           buildAddSubtaskButton(), // Nút thêm subtask
-          buildAddCommentAndUploadButton(), // Nút thêm comment và upload file
-          buildCloseButton(context), // Nút đóng dialog
-        ]);
+        buildAddCommentAndUploadButton(), // Nút thêm comment và upload file
+        buildCloseButton(context), // Nút đóng dialog
+      ],
+    );
   }
 
   // Widget để hiển thị tên task và dialog chỉnh sửa
@@ -159,43 +201,96 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
       onTap: () {
         showDialog(
           context: context,
-          builder: (_) => AlertDialog(
-            title: const Text('Edit Task Name'),
-            content: TextField(
-              controller: TextEditingController(text: widget.task['task']),
-              onChanged: (value) {
-                setState(() {
-                  widget.task['task'] = value;
-                });
-              },
-              decoration: const InputDecoration(
-                labelText: 'Task Name',
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context); // Đóng dialog
-                  widget
-                      .onDataUpdated(); // Cập nhật lại dữ liệu sau khi thay đổi
+          builder: (_) {
+            String initialValue = '';
+            if (widget.task.isNotEmpty) {
+              initialValue = widget.task['task'] ?? '';
+            } else if (widget.subtasks.isNotEmpty) {
+              initialValue = widget.subtasks['subtask'] ?? '';
+            } else if (widget.subsubtasks.isNotEmpty) {
+              initialValue = widget.subsubtasks['subsubtask'] ?? '';
+            }
+
+            // Tạo TextEditingController để quản lý giá trị nhập
+            final TextEditingController _controller = TextEditingController(
+              text: initialValue,
+            );
+
+            return AlertDialog(
+              title: const Text('Edit Name'),
+              content: TextField(
+                controller: _controller,
+                onChanged: (value) {
+                  setState(() {
+                    // Cập nhật giá trị tương ứng
+                    if (widget.task.isNotEmpty) {
+                      widget.task['task'] = value;
+                    } else if (widget.subtasks.isNotEmpty) {
+                      widget.subtasks['subtask'] = value;
+                    } else if (widget.subsubtasks.isNotEmpty) {
+                      widget.subsubtasks['subsubtask'] = value;
+                    }
+                  });
                 },
-                child: const Text('Save'),
+                decoration: const InputDecoration(
+                  labelText: 'Name',
+                ),
               ),
-            ],
-          ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context); // Đóng dialog
+                    if (widget.task.isNotEmpty) {
+                      widget.onDataUpdated(
+                          widget.task); // Gọi lại hàm cập nhật dữ liệu
+                    } else if (widget.subtasks.isNotEmpty) {
+                      widget.onDataUpdated(
+                          widget.subtasks); // Gọi lại hàm cập nhật dữ liệu
+                    } else if (widget.subsubtasks.isNotEmpty) {
+                      widget.onDataUpdated(
+                          widget.subsubtasks); // Gọi lại hàm cập nhật dữ liệu
+                    }
+                    widget.resetScreen(); // cập nhật dữ liệu
+                  },
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
         );
       },
       child: Row(
         children: [
           Expanded(
-            child: Text(
-              widget.task['task'],
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
+            child: (widget.task.isNotEmpty)
+                ? Text(
+                    widget.task['task'],
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  )
+                : (widget.subtasks.isNotEmpty)
+                    ? Text(
+                        widget.subtasks['subtask'],
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      )
+                    : (widget.subsubtasks.isNotEmpty)
+                        ? Text(
+                            widget.subsubtasks['subsubtask'],
+                            style: const TextStyle(fontStyle: FontStyle.italic),
+                          )
+                        : Container(), // Trả về một Container rỗng nếu không có task, subtask hoặc subsubtask
           ),
-          if (widget.task['email']?.isNotEmpty ?? false)
-            buildCircleAvatar(widget.task['email']),
-          const SizedBox(width: 8),
+          if (widget.task.isNotEmpty) ...[
+            buildCircleAvatar(widget.task['assignee'], widget.task['avatar']),
+            const SizedBox(width: 8),
+          ] else if (widget.subtasks.isNotEmpty) ...[
+            buildCircleAvatar(
+                widget.subtasks['assignee'], widget.subtasks['avatar']),
+            const SizedBox(width: 8),
+          ] else ...[
+            buildCircleAvatar(
+                widget.subsubtasks['assignee'], widget.subsubtasks['avatar']),
+            const SizedBox(width: 8),
+          ],
           IconButton(
             icon: const Icon(Icons.more_vert),
             onPressed: () {
@@ -267,13 +362,34 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
           builder: (_) => AlertDialog(
             title: const Text('Edit Priority'),
             content: DropdownButton<String>(
-              value: widget.task['priority'],
+              // Kiểm tra để hiển thị priority từ task, subtask hoặc subsubtask
+              value: _getPriority(),
               onChanged: (String? newValue) {
                 setState(() {
-                  widget.task['priority'] = newValue!;
+                  // Cập nhật priority tương ứng
+                  if (widget.task.isNotEmpty) {
+                    // Cập nhật cho subtask nếu có
+                    widget.task['priority'] = newValue!;
+                  } else if (widget.subtasks.isNotEmpty) {
+                    // Cập nhật cho subsubtask nếu có
+                    widget.subtasks['priority'] = newValue!;
+                  } else {
+                    // Cập nhật cho task nếu không có subtask hay subsubtask
+                    widget.subsubtasks['priority'] = newValue!;
+                  }
                 });
-                Navigator.pop(context); // Đóng dialog
-                widget.onDataUpdated(); // Cập nhật dữ liệu sau khi thay đổi
+                Navigator.pop(context); // Đóng dialog
+                if (widget.task.isNotEmpty) {
+                  widget.onDataUpdated(
+                      widget.task); // Cập nhật dữ liệu sau khi thay đổi
+                } else if (widget.subtasks.isNotEmpty) {
+                  widget.onDataUpdated(
+                      widget.subtasks); // Cập nhật dữ liệu sau khi thay đổi
+                } else {
+                  widget.onDataUpdated(
+                      widget.subsubtasks); // Cập nhật dữ liệu sau khi thay đổi
+                }
+                widget.resetScreen(); // cập nhật dữ liệu
               },
               items: ['Cao', 'Trung bình', 'Thấp']
                   .map((priority) => DropdownMenuItem<String>(
@@ -286,17 +402,35 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
         );
       },
       child: Text(
-        'Priority: ${widget.task['priority']}',
+        'Priority: ${_getPriority()}', // Hiển thị priority phù hợp
         style: const TextStyle(fontWeight: FontWeight.bold),
       ),
     );
   }
 
+  String _getPriority() {
+    if (widget.task.isNotEmpty) {
+      // Trả về priority của subtask nếu có
+      return widget.task['priority'];
+    } else if (widget.subtasks.isNotEmpty) {
+      // Trả về priority của subsubtask nếu có
+      return widget.subtasks['priority'];
+    } else {
+      // Trả về priority của task nếu không có subtask hay subsubtask
+      return widget.subsubtasks['priority'];
+    }
+  }
+
   // Widget để hiển thị thông tin Project
   Widget _buildProjectText() {
-    if (widget.task['type'] != null) {
+    if (widget.task.isNotEmpty) {
       return Text(
         'Project: ${widget.task['type']}',
+        style: const TextStyle(fontWeight: FontWeight.bold),
+      );
+    } else if (widget.task.isEmpty) {
+      return Text(
+        'Project: ${widget.project} - SubTask',
         style: const TextStyle(fontWeight: FontWeight.bold),
       );
     } else {
@@ -334,8 +468,9 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
               TextButton(
                 onPressed: () {
                   Navigator.pop(context); // Đóng dialog
-                  widget
-                      .onDataUpdated(); // Cập nhật lại dữ liệu sau khi thay đổi
+                  widget.onDataUpdated(
+                      widget.task); // Cập nhật lại dữ liệu sau khi thay đổi
+                  widget.resetScreen(); // cập nhật dữ liệu
                 },
                 child: const Text('Save'),
               ),
@@ -369,71 +504,113 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
       return const SizedBox.shrink(); // Trả về một widget rỗng
     }
 
-    return Row(
-      children: [
-        GestureDetector(
-          onTap: () {
-            String newStatus = subtask['status'] == 'Hoàn Thành'
-                ? 'Chưa Hoàn Thành'
-                : 'Hoàn Thành';
+    return GestureDetector(
+      onTap: () {
+        // Mở thêm dialog mới với dữ liệu khác
+        int completedSubtasks = 0;
+        int totalSubtasks = 0;
+        totalSubtasks = subtask['subsubtasks'].length;
+        completedSubtasks = subtask['subsubtasks']
+            .where((subtask) => subtask['status'] == 'Hoàn Thành')
+            .length;
 
-            setState(() {
-              // Cập nhật trạng thái của subtask
-              subtask['status'] = newStatus;
+        showDialog(
+          context: context,
+          builder: (context) => TaskDetailsDialog(
+            task: {},
+            taskName: subtask['subtask'],
+            subtasks: subtask,
+            subsubtasks: {},
+            project: widget.project,
+            priorityColor: _getPriorityColor(subtask['priority']),
+            completedSubtasks: completedSubtasks,
+            totalSubtasks: totalSubtasks,
+            onStatusChanged: (subtask) {
+              setState(() {
+                subtask['status'] = subtask['status'] == 'Hoàn Thành'
+                    ? 'Chưa Hoàn Thành'
+                    : 'Hoàn Thành';
+              });
+            },
+            resetScreen: () {
+              setState(() {});
+            },
+            onShowCompletedTasksChanged: widget.onShowCompletedTasksChanged,
+            showCompletedTasks: widget.showCompletedTasks,
+            onDataUpdated: (updatedData) {
+              setState(() {
+                widget.onDataUpdated(updatedData);
+              });
+            },
+          ),
+        );
+      },
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () {
+              String newStatus = subtask['status'] == 'Hoàn Thành'
+                  ? 'Chưa Hoàn Thành'
+                  : 'Hoàn Thành';
 
-              // Cập nhật trạng thái của các subsubtask nếu có
-              if (subtask['subsubtasks'] != null) {
-                for (var subsubtask in subtask['subsubtasks']) {
-                  subsubtask['status'] = newStatus;
+              setState(() {
+                // Cập nhật trạng thái của subtask
+                subtask['status'] = newStatus;
+
+                // Cập nhật trạng thái của các subsubtask nếu có
+                if (subtask['subsubtasks'] != null) {
+                  for (var subsubtask in subtask['subsubtasks']) {
+                    subsubtask['status'] = newStatus;
+                  }
                 }
-              }
-              _updateSubtaskStatus(subtask); // cập nhật trạng thái subtask
-              _updateTaskStatus(); // cập nhật trạng thái task
-              widget.onDataUpdated(); // cập nhật dữ liệu
-            });
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: 16,
-            height: 16,
-            decoration: BoxDecoration(
-              color: subtask['status'] == 'Hoàn Thành'
-                  ? Colors.green
-                  : Colors.transparent,
-              border: Border.all(
-                color: _getPriorityColor(subtask['priority']),
-                width: 2,
+                _updateSubtaskStatus(subtask); // Cập nhật trạng thái subtask
+                _updateTaskStatus(); // Cập nhật trạng thái task
+                widget.resetScreen(); // Cập nhật dữ liệu
+              });
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 16,
+              height: 16,
+              decoration: BoxDecoration(
+                color: subtask['status'] == 'Hoàn Thành'
+                    ? Colors.green
+                    : Colors.transparent,
+                border: Border.all(
+                  color: _getPriorityColor(subtask['priority']),
+                  width: 2,
+                ),
+                borderRadius: BorderRadius.circular(4),
               ),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: subtask['status'] == 'Hoàn Thành'
-                ? const Icon(
-                    Icons.check,
-                    color: Colors.white,
-                    size: 10,
-                  )
-                : null,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            '${subtask['subtask']}'
-            '${subtask['subsubtasks'] != null && subtask['subsubtasks'].isNotEmpty ? ' (${_getCompletedSubsubtasks(subtask['subsubtasks'])}/${subtask['subsubtasks'].length})' : ''}',
-            style: TextStyle(
-              color: subtask['status'] == 'Hoàn Thành'
-                  ? Colors.green
-                  : Colors.black,
-              decoration: subtask['status'] == 'Hoàn Thành'
-                  ? TextDecoration.lineThrough
+              child: subtask['status'] == 'Hoàn Thành'
+                  ? const Icon(
+                      Icons.check,
+                      color: Colors.white,
+                      size: 10,
+                    )
                   : null,
-              fontWeight: FontWeight.bold,
             ),
           ),
-        ),
-        if (subtask['email']?.isNotEmpty ?? false)
-          buildCircleAvatar(subtask['email']),
-      ],
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '${subtask['subtask']}'
+              '${subtask['subsubtasks'] != null && subtask['subsubtasks'].isNotEmpty ? ' (${_getCompletedSubsubtasks(subtask['subsubtasks'])}/${subtask['subsubtasks'].length})' : ''}',
+              style: TextStyle(
+                color: subtask['status'] == 'Hoàn Thành'
+                    ? Colors.green
+                    : Colors.black,
+                decoration: subtask['status'] == 'Hoàn Thành'
+                    ? TextDecoration.lineThrough
+                    : null,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          if (subtask['assignee']?.isNotEmpty ?? false)
+            buildCircleAvatar(subtask['assignee'], subtask['avatar']),
+        ],
+      ),
     );
   }
 
@@ -452,17 +629,52 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
           const SizedBox(height: 8.0),
           Padding(
             padding: const EdgeInsets.only(left: 24.0),
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    widget.onStatusChanged(
-                        subsubtask); // Thay đổi trạng thái của subsubtask
-                    _updateSubtaskStatus(
-                        subtask); // Cập nhật trạng thái của subtask
-                    setState(() {}); // Cập nhật lại trạng thái
-                  },
-                  child: AnimatedContainer(
+            child: GestureDetector(
+              onTap: () {
+                // Mở dialog khi nhấn vào bất kỳ dòng subsubtask nào
+                // Mở thêm dialog mới với dữ liệu khác
+                int completedSubtasks = 0;
+                int totalSubtasks = 0;
+                totalSubtasks = subtask['subsubtasks'].length;
+                completedSubtasks = subtask['subsubtasks']
+                    .where((subtask) => subtask['status'] == 'Hoàn Thành')
+                    .length;
+
+                showDialog(
+                  context: context,
+                  builder: (context) => TaskDetailsDialog(
+                    task: {},
+                    taskName: subsubtask['subsubtask'],
+                    subtasks: {},
+                    subsubtasks: subsubtask,
+                    project: widget.project,
+                    priorityColor: _getPriorityColor(subsubtask['priority']),
+                    completedSubtasks: completedSubtasks,
+                    totalSubtasks: totalSubtasks,
+                    onStatusChanged: (subtask) {
+                      setState(() {
+                        subtask['status'] = subtask['status'] == 'Hoàn Thành'
+                            ? 'Chưa Hoàn Thành'
+                            : 'Hoàn Thành';
+                      });
+                    },
+                    resetScreen: () {
+                      setState(() {});
+                    },
+                    onShowCompletedTasksChanged:
+                        widget.onShowCompletedTasksChanged,
+                    showCompletedTasks: widget.showCompletedTasks,
+                    onDataUpdated: (updatedData) {
+                      setState(() {
+                        widget.onDataUpdated(updatedData);
+                      });
+                    },
+                  ),
+                );
+              },
+              child: Row(
+                children: [
+                  AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     width: 16,
                     height: 16,
@@ -484,25 +696,26 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                           )
                         : null,
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    subsubtask['subsubtask'],
-                    style: TextStyle(
-                      color: subsubtask['status'] == 'Hoàn Thành'
-                          ? Colors.green
-                          : Colors.black,
-                      decoration: subsubtask['status'] == 'Hoàn Thành'
-                          ? TextDecoration.lineThrough
-                          : null,
-                      fontWeight: FontWeight.bold,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      subsubtask['subsubtask'],
+                      style: TextStyle(
+                        color: subsubtask['status'] == 'Hoàn Thành'
+                            ? Colors.green
+                            : Colors.black,
+                        decoration: subsubtask['status'] == 'Hoàn Thành'
+                            ? TextDecoration.lineThrough
+                            : null,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                ),
-                if (subsubtask['email']?.isNotEmpty ?? false)
-                  buildCircleAvatar(subsubtask['email']),
-              ],
+                  if (subsubtask['assignee']?.isNotEmpty ?? false)
+                    buildCircleAvatar(
+                        subsubtask['assignee'], subsubtask['avatar']),
+                ],
+              ),
             ),
           ),
         ],
