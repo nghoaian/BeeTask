@@ -1,161 +1,145 @@
+import 'package:bee_task/bloc/task/task_bloc.dart';
+import 'package:bee_task/bloc/task/task_event.dart';
+import 'package:bee_task/bloc/task/task_state.dart';
+import 'package:bee_task/data/model/task.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-
-void main() {
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: ProjectScreen(),
-    );
-  }
-}
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ProjectScreen extends StatefulWidget {
+  final String projectId;
+
+  ProjectScreen({required this.projectId});
+
   @override
   _ProjectScreenState createState() => _ProjectScreenState();
 }
 
 class _ProjectScreenState extends State<ProjectScreen> {
-  final List<Map<String, dynamic>> tasks = [
-    {
-      "title": "Do homework",
-      "description": "Complete math and science homework",
-      "dueDate": "Jan 3",
-      "avatar": "https://via.placeholder.com/40",
-      "completed": false,
-      "subtasks": [
-        {
-          "title": "Math exercises",
-          "description": "Solve algebra problems",
-          "dueDate": "Today",
-          "avatar": "https://via.placeholder.com/40",
-          "completed": false,
-          "subtasks": [
-            {"title": "Equations", "description": "", "dueDate": "Today", "avatar": "", "completed": false},
-            {"title": "Graph plotting", "description": "", "dueDate": "", "avatar": "", "completed": false},
-          ],
-        },
-        {
-          "title": "Science project",
-          "description": "Prepare presentation",
-          "dueDate": "Tomorrow",
-          "avatar": "https://via.placeholder.com/40",
-          "completed": false,
-          "subtasks": [],
-        },
-      ],
-    },
-    {
-      "title": "Workout",
-      "description": "Let's workout",
-      "dueDate": "Thursday",
-      "avatar": "https://via.placeholder.com/40",
-      "completed": false,
-      "subtasks": [
-        {
-          "title": "Morning run",
-          "description": "Run for 30 minutes",
-          "dueDate": "Today",
-          "avatar": "https://via.placeholder.com/40",
-          "completed": false,
-          "subtasks": [
-            {"title": "Stretching", "description": "", "dueDate": "", "avatar": "", "completed": false},
-            {"title": "Run 5km", "description": "", "dueDate": "", "avatar": "", "completed": false},
-          ],
-        },
-      ],
-    },
-  ];
+  late TaskBloc _taskBloc;
 
-  void toggleCompletion(Map<String, dynamic> task) {
-    setState(() {
-      task["completed"] = !task["completed"];
-    });
+  @override
+  void initState() {
+    super.initState();
+    _taskBloc = TaskBloc(FirebaseFirestore.instance);
+    _taskBloc.add(
+        LoadTasks(widget.projectId)); // Gọi sự kiện LoadTasks với projectId
+  }
+
+  @override
+  void dispose() {
+    _taskBloc.close();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
+    return BlocProvider(
+      create: (context) => _taskBloc,
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          title: Text(
+            "Testproject",
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          ),
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+          actions: [
+            IconButton(
+              icon: Icon(Icons.group, color: Colors.black),
+              onPressed: () {},
+            ),
+            IconButton(
+              icon: Icon(Icons.more_vert, color: Colors.black),
+              onPressed: () {},
+            ),
+          ],
+        ),
         backgroundColor: Colors.white,
-        elevation: 0,
-        title: Text(
-          "Testproject",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        body: BlocBuilder<TaskBloc, TaskState>(
+          builder: (context, state) {
+            if (state is TaskLoading) {
+              return Center(child: CircularProgressIndicator());
+            } else if (state is TaskLoaded) {
+              return ListView.builder(
+                itemCount: state.tasks.length,
+                itemBuilder: (context, index) {
+                  final task = state.tasks[index];
+                  return _buildTaskItem(task);
+                },
+              );
+            } else if (state is TaskError) {
+              return Center(child: Text('Error: ${state.error}'));
+            } else {
+              return Center(child: Text('No tasks available'));
+            }
+          },
         ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {},
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.group, color: Colors.black),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: Icon(Icons.more_vert, color: Colors.black),
-            onPressed: () {},
-          ),
-        ],
-      ),
-      body: ListView.builder(
-        itemCount: tasks.length,
-        itemBuilder: (context, index) {
-          final task = tasks[index];
-          return _buildTaskItem(task);
-        },
       ),
     );
   }
 
-  Widget _buildTaskItem(Map<String, dynamic> task) {
+  Widget _buildTaskItem(Task task) {
     return Card(
       margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide.none,
+      ),
+      elevation: 0,
       child: ExpansionTile(
         title: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Checkbox(
-              value: task["completed"],
-              onChanged: (value) => toggleCompletion(task),
+              margin
+              value: task.completed,
+              onChanged: (value) {
+                // setState(() {
+                //   task.completed = value!;
+                // });
+              },
             ),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    task["title"],
+                    task.title,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       decoration:
-                          task["completed"] ? TextDecoration.lineThrough : null,
+                          task.completed ? TextDecoration.lineThrough : null,
                     ),
                   ),
-                  if (task["description"] != null && task["description"].isNotEmpty)
+                  if (task.description.isNotEmpty)
                     Text(
-                      task["description"],
+                      task.description,
                       style: TextStyle(color: Colors.grey, fontSize: 14),
                     ),
-                  if (task["dueDate"] != null && task["dueDate"].isNotEmpty)
+                  if (task.dueDate.isNotEmpty)
                     Text(
-                      task["dueDate"],
+                      task.dueDate,
                       style: TextStyle(color: Colors.purple, fontSize: 14),
                     ),
                 ],
               ),
             ),
-            if (task["avatar"] != null && task["avatar"].isNotEmpty)
+            if (task.avatar.isNotEmpty)
               CircleAvatar(
-                backgroundImage: NetworkImage(task["avatar"]),
+                backgroundImage: NetworkImage(task.avatar),
                 radius: 15,
               ),
           ],
         ),
-        children: task["subtasks"].map<Widget>((subtask) {
+        children: task.subtasks.map<Widget>((subtask) {
           return Padding(
             padding: const EdgeInsets.only(left: 20.0),
             child: _buildSubtaskItem(subtask),
@@ -165,7 +149,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
     );
   }
 
-  Widget _buildSubtaskItem(Map<String, dynamic> subtask) {
+  Widget _buildSubtaskItem(Task subtask) {
     return Card(
       margin: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
       child: ExpansionTile(
@@ -173,80 +157,82 @@ class _ProjectScreenState extends State<ProjectScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Checkbox(
-              value: subtask["completed"],
-              onChanged: (value) => toggleCompletion(subtask),
+              value: subtask.completed,
+              onChanged: (value) {
+                // setState(() {
+                //   subtask.completed = value!;
+                // });
+              },
             ),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    subtask["title"],
+                    subtask.title,
                     style: TextStyle(
                       decoration:
-                          subtask["completed"] ? TextDecoration.lineThrough : null,
+                          subtask.completed ? TextDecoration.lineThrough : null,
                     ),
                   ),
-                  if (subtask["description"] != null && subtask["description"].isNotEmpty)
+                  if (subtask.description.isNotEmpty)
                     Text(
-                      subtask["description"],
+                      subtask.description,
                       style: TextStyle(color: Colors.grey, fontSize: 14),
                     ),
-                  if (subtask["dueDate"] != null && subtask["dueDate"].isNotEmpty)
+                  if (subtask.dueDate.isNotEmpty)
                     Text(
-                      subtask["dueDate"],
+                      subtask.dueDate,
                       style: TextStyle(color: Colors.purple, fontSize: 14),
                     ),
                 ],
               ),
             ),
-            if (subtask["avatar"] != null && subtask["avatar"].isNotEmpty)
+            if (subtask.avatar.isNotEmpty)
               CircleAvatar(
-                backgroundImage: NetworkImage(subtask["avatar"]),
+                backgroundImage: NetworkImage(subtask.avatar),
                 radius: 15,
               ),
           ],
         ),
-        children: subtask["subtasks"].map<Widget>((subsubtask) {
+        children: subtask.subtasks.map<Widget>((subsubtask) {
           return Padding(
             padding: const EdgeInsets.only(left: 20.0),
             child: ListTile(
               leading: Checkbox(
-                value: subsubtask["completed"],
+                value: subsubtask.completed,
                 onChanged: (value) {
-                  setState(() {
-                    subsubtask["completed"] = value!;
-                  });
+                  // setState(() {
+                  //   subsubtask.completed = value!;
+                  // });
                 },
               ),
               title: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    subsubtask["title"],
+                    subsubtask.title,
                     style: TextStyle(
-                      decoration: subsubtask["completed"]
+                      decoration: subsubtask.completed
                           ? TextDecoration.lineThrough
                           : null,
                     ),
                   ),
-                  if (subsubtask["description"] != null &&
-                      subsubtask["description"].isNotEmpty)
+                  if (subsubtask.description.isNotEmpty)
                     Text(
-                      subsubtask["description"],
+                      subsubtask.description,
                       style: TextStyle(color: Colors.grey, fontSize: 14),
                     ),
-                  if (subsubtask["dueDate"] != null && subsubtask["dueDate"].isNotEmpty)
+                  if (subsubtask.dueDate.isNotEmpty)
                     Text(
-                      subsubtask["dueDate"],
+                      subsubtask.dueDate,
                       style: TextStyle(color: Colors.purple, fontSize: 14),
                     ),
                 ],
               ),
-              trailing: (subsubtask["avatar"] != null &&
-                      subsubtask["avatar"].isNotEmpty)
+              trailing: (subsubtask.avatar.isNotEmpty)
                   ? CircleAvatar(
-                      backgroundImage: NetworkImage(subsubtask["avatar"]),
+                      backgroundImage: NetworkImage(subsubtask.avatar),
                       radius: 15,
                     )
                   : null,

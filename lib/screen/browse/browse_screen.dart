@@ -1,13 +1,26 @@
+import 'package:bee_task/bloc/project/project_bloc.dart';
+import 'package:bee_task/bloc/project/project_event.dart';
+import 'package:bee_task/bloc/project/project_state.dart';
+import 'package:bee_task/screen/project/project_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-class BrowseScreen extends StatelessWidget {
+class BrowseScreen extends StatefulWidget {
+  @override
+  _BrowseScreenState createState() => _BrowseScreenState();
+}
+
+class _BrowseScreenState extends State<BrowseScreen> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: buildAppBar(),
-      body: buildBody(),
-      floatingActionButton: buildFloatingActionButton(),
-      backgroundColor: Colors.grey[200], // Light grey background
+    return BlocProvider(
+      create: (context) => ProjectBloc()..add(LoadProjectsEvent()),
+      child: Scaffold(
+        appBar: buildAppBar(),
+        body: buildBody(),
+        floatingActionButton: buildFloatingActionButton(),
+        backgroundColor: Colors.grey[200],
+      ),
     );
   }
 
@@ -64,17 +77,27 @@ class BrowseScreen extends StatelessWidget {
               // Dòng "My Projects" nằm giữa các khối
               buildMyProjectsSection(),
 
-              // Khối 2: Home, Project Tracker, Testproject
-              buildSectionGroup(
-                [
-                  buildButton("Home🏡", Icons.tag, count: 5),
-                  buildDividerWithPadding(),
-                  buildButton("Project Tracker", Icons.tag, count: 35),
-                  buildDividerWithPadding(),
-                  buildButton("Testproject 👥", Icons.tag, count: 2),
-                  buildDividerWithPadding(),
-                  buildButton("Manage Projects", Icons.edit),
-                ],
+              // Hiển thị các project
+              BlocBuilder<ProjectBloc, ProjectState>(
+                builder: (context, state) {
+                  if (state is ProjectLoading) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (state is ProjectLoaded) {
+                    return buildSectionGroup(
+                      state.projects.map((project) {
+                        return buildButton(
+                          project["name"],
+                          Icons.tag,
+                          projectId: project["id"],
+                        );
+                      }).toList(),
+                    );
+                  } else if (state is ProjectError) {
+                    return Center(child: Text(state.message));
+                  } else {
+                    return SizedBox.shrink();
+                  }
+                },
               ),
 
               // Dòng "Browse Templates" với nền trắng và bo tròn
@@ -99,11 +122,17 @@ class BrowseScreen extends StatelessWidget {
     );
   }
 
-  Widget buildButton(String title, IconData icon, {int? count}) {
+  Widget buildButton(String title, IconData icon,
+      {int? count, String? projectId}) {
     return TextButton(
       onPressed: () {
-        // Xử lý sự kiện khi bấm vào nút
-        print('Button "$title" clicked!');
+        // Điều hướng đến ProjectScreen với projectId
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProjectScreen(projectId: projectId!),
+          ),
+        );
       },
       style: TextButton.styleFrom(
         padding: EdgeInsets.zero,
