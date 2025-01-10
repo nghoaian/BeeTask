@@ -1,35 +1,30 @@
 import 'package:flutter/material.dart';
 
-class AddTaskDialog extends StatefulWidget {
-  final Function(Map<String, dynamic>)
-      onTaskAdded; // Hàm callback để xử lý khi thêm task
-  final List<Map<String, dynamic>>
-      data; // Danh sách các project và thông tin chi tiết
-  final DateTime selectDay; // Ngày được chọn để thêm task
-
-  const AddTaskDialog({
+class AddSubTaskDialog extends StatefulWidget {
+  final List data;
+  final DateTime selectDay; // Ngày được chọn để thêm subtask
+  final String typeID;
+  const AddSubTaskDialog({
     Key? key,
-    required this.onTaskAdded,
     required this.data,
     required this.selectDay,
+    required this.typeID,
   }) : super(key: key);
 
   @override
-  _AddTaskDialogState createState() => _AddTaskDialogState();
+  _AddSubTaskDialogState createState() => _AddSubTaskDialogState();
 }
 
-class _AddTaskDialogState extends State<AddTaskDialog> {
+class _AddSubTaskDialogState extends State<AddSubTaskDialog> {
   final TextEditingController taskNameController =
       TextEditingController(); // Controller cho tên công việc
-  final TextEditingController descriptionController =
-      TextEditingController(); // Controller cho mô tả
+
   final TextEditingController priorityController = TextEditingController(
       text:
           'Thấp'); // Controller cho mức độ ưu tiên có giá trị mặc định là Thấp
   final TextEditingController dateController =
       TextEditingController(); // Controller cho ngày
-  final TextEditingController projectController = TextEditingController(
-      text: 'type1'); // Controller cho project có giá trị mặc định là Inbox
+
   final TextEditingController assigneeController =
       TextEditingController(); // Controller cho người được giao việc
 
@@ -40,6 +35,9 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     super.initState();
     _selectedDay = widget.selectDay;
     dateController.text = "${_selectedDay!.toLocal()}".split(' ')[0];
+    final TextEditingController projectController = TextEditingController(
+        text: widget
+            .typeID); // Controller cho project có giá trị mặc định là TypeID
   }
 
   // Widget chung để tạo trường nhập văn bản
@@ -101,68 +99,31 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     );
   }
 
-  /// Dropdown chọn project
   Widget _buildProjectDropdown() {
-    return _buildDropdown<String>(
-      // Chỉnh sửa kiểu dữ liệu thành String
-      label: 'Project',
-      value: projectController.text.isEmpty
-          ? null
-          : projectController.text, // Giá trị của projectController là chuỗi
-      items: widget.data.map((project) {
-        return DropdownMenuItem<String>(
-          value: project['id'], // Lưu id là chuỗi vào giá trị
-          child: Text(project['type']), // Hiển thị type (tên dự án)
-        );
-      }).toList(),
-      onChanged: (value) {
-        setState(() {
-          projectController.text = value ?? ''; // Lưu id của project
-          assigneeController.clear(); // Xóa dữ liệu của assignee
-        });
-      },
+    // Tìm kiếm project trong data dựa trên widget.typeID
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey),
+        color: Colors.grey[100],
+      ),
+      child: Text(
+        widget.typeID, // Hiển thị type của project
+        style: TextStyle(
+          color: widget.typeID == 'No Project Selected'
+              ? Colors.grey
+              : Colors.black,
+        ),
+      ),
     );
   }
 
 // Dropdown chọn người được giao việc
   Widget _buildAssigneeDropdown() {
-    // Lấy id dự án từ projectController
-    final String? selectedProjectId = projectController.text.isEmpty
-        ? null
-        : projectController.text; // Gán id dự án là chuỗi từ projectController
-
     // Tìm dự án bằng id
-    final selectedProject = widget.data.firstWhere(
-      (project) => project['id'] == selectedProjectId,
-      orElse: () => {}, // Trả về một Map rỗng khi không tìm thấy
-    );
-
-    // Kiểm tra nếu dự án có thành viên và danh sách members không rỗng
-    if (selectedProject.isNotEmpty &&
-        selectedProject['members'] != null &&
-        selectedProject['members'].isNotEmpty) {
-      return _buildDropdown<String>(
-        label: 'Assignee',
-        value: selectedProject['members']
-                .any((member) => member['assignee'] == assigneeController.text)
-            ? assigneeController.text // Đồng bộ giá trị Assignee
-            : null,
-        items: selectedProject['members']
-            .where((member) => member['assignee'] != null)
-            .map<DropdownMenuItem<String>>((member) {
-          return DropdownMenuItem<String>(
-            value: member['assignee'], // Giá trị là assignee
-            child: Text(member['assignee']), // Hiển thị assignee
-          );
-        }).toList(),
-        onChanged: (value) {
-          setState(() {
-            assigneeController.text = value ?? ''; // Cập nhật assignee
-          });
-        },
-      );
-    }
-
+    print(widget.data);
     // Trả về widget rỗng khi không có thành viên
     return const SizedBox.shrink();
   }
@@ -181,15 +142,6 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
       onChanged: (value) {
         priorityController.text = value!;
       },
-    );
-  }
-
-  // Trường nhập mô tả
-  Widget _buildDescriptionField() {
-    return _buildTextField(
-      controller: descriptionController,
-      label: 'Description',
-      isMultiline: true,
     );
   }
 
@@ -238,18 +190,6 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
             String avatar = '';
             String assignee = '';
 
-            // Lấy id từ projectController
-            final String? projectId = projectController.text;
-
-            // Tìm type của project dựa trên id
-            final project = widget.data.firstWhere(
-              (proj) => proj['id'] == projectId,
-              orElse: () => {},
-            );
-            if (project.isNotEmpty) {
-              type = project['id'] ?? '';
-            }
-
             if (assigneeController.text.isNotEmpty) {
               for (var project in widget.data) {
                 if (project['members'] != null &&
@@ -270,14 +210,12 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
               'task': taskNameController.text,
               'status': 'Chưa Hoàn Thành',
               'priority': priorityController.text,
-              'description': descriptionController.text,
-              'typeID': type,
+              'typeID': widget.typeID,
               'assignee': assignee,
               'avatar': avatar,
               'date': _selectedDay ?? DateTime.now(),
               'subtasks': [],
             };
-            widget.onTaskAdded(task);
             Navigator.pop(context); // Close dialog
           },
           style: ElevatedButton.styleFrom(
@@ -311,8 +249,6 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
             _buildAssigneeDropdown(),
             const SizedBox(height: 12),
             _buildPriorityDropdown(),
-            const SizedBox(height: 12),
-            _buildDescriptionField(),
             const SizedBox(height: 12),
             _buildDateField(),
           ],

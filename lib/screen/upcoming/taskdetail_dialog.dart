@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:bee_task/util/colors.dart';
+import 'package:bee_task/screen/upcoming/addsubtask_dialog.dart';
 
 class TaskDetailsDialog extends StatefulWidget {
   final Map task; // Dữ liệu của task
@@ -16,22 +17,27 @@ class TaskDetailsDialog extends StatefulWidget {
   final Function resetScreen;
   final Function(bool)
       onShowCompletedTasksChanged; // Callback để thay đổi trạng thái
+  final List data;
+  final DateTime selectedDate;
+  final String typeID;
 
-  TaskDetailsDialog({
-    required this.task,
-    required this.taskName,
-    required this.project,
-    required this.subtasks,
-    required this.subsubtasks,
-    required this.priorityColor,
-    required this.completedSubtasks,
-    required this.totalSubtasks,
-    required this.onStatusChanged,
-    required this.onDataUpdated,
-    required this.resetScreen,
-    required this.showCompletedTasks,
-    required this.onShowCompletedTasksChanged,
-  });
+  TaskDetailsDialog(
+      {required this.task,
+      required this.taskName,
+      required this.project,
+      required this.subtasks,
+      required this.subsubtasks,
+      required this.priorityColor,
+      required this.completedSubtasks,
+      required this.totalSubtasks,
+      required this.onStatusChanged,
+      required this.onDataUpdated,
+      required this.resetScreen,
+      required this.showCompletedTasks,
+      required this.onShowCompletedTasksChanged,
+      required this.data,
+      required this.selectedDate,
+      required this.typeID});
 
   @override
   _TaskDetailsDialogState createState() => _TaskDetailsDialogState();
@@ -329,11 +335,11 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                 ],
               ).then((value) {
                 if (value == 'assignUser') {
-                  // Logic for changing the assignee of the task
+                  _changeAssignee(); // Gọi hàm thay đổi người làm task
                 } else if (value == 'toggleCompletedTasksVisibility') {
                   _toggleShowCompletedTasks();
                 } else if (value == 'deleteTask') {
-                  // Logic for deleting the task
+                  _deleteTask(); // Gọi hàm xóa task
                 }
               });
             },
@@ -425,7 +431,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
   Widget _buildProjectText() {
     if (widget.task.isNotEmpty) {
       return Text(
-        'Project: ${widget.task['type']}',
+        'Project: ${widget.project}',
         style: const TextStyle(fontWeight: FontWeight.bold),
       );
     } else if (widget.task.isEmpty) {
@@ -525,6 +531,9 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
             priorityColor: _getPriorityColor(subtask['priority']),
             completedSubtasks: completedSubtasks,
             totalSubtasks: totalSubtasks,
+            data: widget.data,
+            typeID: widget.typeID,
+            selectedDate: widget.selectedDate,
             onStatusChanged: (subtask) {
               setState(() {
                 subtask['status'] = subtask['status'] == 'Hoàn Thành'
@@ -649,8 +658,11 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                     subsubtasks: subsubtask,
                     project: widget.project,
                     priorityColor: _getPriorityColor(subsubtask['priority']),
+                    data: widget.data,
                     completedSubtasks: completedSubtasks,
                     totalSubtasks: totalSubtasks,
+                    selectedDate: widget.selectedDate,
+                    typeID: widget.typeID,
                     onStatusChanged: (subtask) {
                       setState(() {
                         subtask['status'] = subtask['status'] == 'Hoàn Thành'
@@ -735,7 +747,14 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
         ),
         child: TextButton(
           onPressed: () {
-            // Add your logic to add a subtask
+            // showDialog(
+            //   context: context,
+            //   builder: (context) => AddSubTaskDialog(
+            //     data: widget.data,
+            //     selectDay: widget.selectedDate,
+            //     typeID: widget.typeID,
+            //   ),
+            // );
           },
           style: TextButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -805,4 +824,8 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
       child: const Text('Close'),
     );
   }
+
+  void _changeAssignee() {}
+
+  void _deleteTask() {}
 }

@@ -21,18 +21,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Map<String, dynamic>> _tasks = [
     {
-      "id": 1,
+      "id": 'task1',
       "task": "Ngủ",
       "status": "Chưa Hoàn Thành",
       "priority": "Cao",
       "description": "Ngủ đủ 8 tiếng để có sức khỏe tốtNgủ đủ 8 tiếng...",
-      "type": "Test",
+      "typeID": "type3",
       "assignee": "thong@example.com",
       "avatar": "",
       "date": "2025-01-02",
       "subtasks": [
         {
-          "id": 101,
+          "id": 'subtask11',
           "subtask": "Đi ngủ đúng giờ",
           "status": "Chưa Hoàn Thành",
           "priority": "Cao",
@@ -41,7 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
           "date": "2025-01-02",
           "subsubtasks": [
             {
-              "id": 1001,
+              "id": 'subbsubtask111',
               "subsubtask": "Tắt máy tính",
               "status": "Chưa Hoàn Thành",
               "priority": "Trung bình",
@@ -50,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
               "date": "2025-01-02"
             },
             {
-              "id": 1002,
+              "id": 'subsubtask112',
               "subsubtask": "Đi vệ sinh",
               "status": "Chưa Hoàn Thành",
               "priority": "Thấp",
@@ -61,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ]
         },
         {
-          "id": 102,
+          "id": 'subtask12',
           "subtask": "Đi ngủ đúng giờ",
           "status": "Chưa Hoàn Thành",
           "priority": "Cao",
@@ -70,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
           "date": "2025-01-02",
           "subsubtasks": [
             {
-              "id": 1003,
+              "id": 'subsubtask121',
               "subsubtask": "Tắt máy tính",
               "status": "Chưa Hoàn Thành",
               "priority": "Trung bình",
@@ -79,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
               "date": "2025-01-02"
             },
             {
-              "id": 1004,
+              "id": 'subsubtask122',
               "subsubtask": "Đi vệ sinh",
               "status": "Chưa Hoàn Thành",
               "priority": "Thấp",
@@ -92,18 +92,18 @@ class _HomeScreenState extends State<HomeScreen> {
       ]
     },
     {
-      "id": 2,
+      "id": 'task2',
       "task": "Tập thể dục",
       "status": "Chưa Hoàn Thành",
       "priority": "Trung bình",
       "description": "Chạy bộ 30 phút vào buổi sáng",
-      "type": "Inbox",
+      "typeID": "type1",
       "assignee": "",
       "avatar": "",
       "date": "2025-01-02",
       "subtasks": [
         {
-          "id": 103,
+          "id": 'subtask21',
           "subtask": "Khởi động",
           "status": "Chưa Hoàn Thành",
           "priority": "Cao",
@@ -112,7 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
           "date": "2025-01-02",
           "subsubtasks": [
             {
-              "id": 1005,
+              "id": 'subsubtask211',
               "subsubtask": "Giãn cơ",
               "status": "Chưa Hoàn Thành",
               "priority": "Cao",
@@ -125,18 +125,18 @@ class _HomeScreenState extends State<HomeScreen> {
       ]
     },
     {
-      "id": 3,
+      "id": 'task3',
       "task": "Học lập trình",
       "status": "Chưa Hoàn Thành",
       "priority": "Cao",
       "description": "Học Flutter và Dart",
-      "type": "Work",
+      "typeID": "type2",
       "assignee": "user11@example.com",
       "avatar": "",
       "date": "2025-01-03",
       "subtasks": [
         {
-          "id": 104,
+          "id": 'subtask31',
           "subtask": "Xem video tutorial",
           "status": "Chưa Hoàn Thành",
           "priority": "Cao",
@@ -146,7 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
           "subsubtasks": []
         },
         {
-          "id": 105,
+          "id": 'subtask32',
           "subtask": "Thực hành viết mã",
           "status": "Chưa Hoàn Thành",
           "priority": "Trung bình",
@@ -158,12 +158,12 @@ class _HomeScreenState extends State<HomeScreen> {
       ]
     },
     {
-      "id": 4,
+      "id": 'task4',
       "task": "Học lập trình",
       "status": "Chưa Hoàn Thành",
       "priority": "Cao",
       "description": "Học Flutter và Dart",
-      "type": "Work",
+      "typeID": "type2",
       "assignee": "user14@example.com",
       "avatar": "",
       "date": "2025-01-04",
@@ -172,21 +172,21 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   List<Map<String, dynamic>> data = [
-    {"id": 1, "type": "Inbox", "members": []},
+    {"id": 'type1', "type": "Inbox", "members": []},
     {
-      "id": 2,
+      "id": 'type2',
       "type": "Work",
       "members": [
-        {"id": 101, "assignee": "user8@example.com", "avatar": ""},
-        {"id": 102, "assignee": "user14@example.com", "avatar": ""}
+        {"id": 'member101', "assignee": "user8@example.com", "avatar": ""},
+        {"id": 'member102', "assignee": "user14@example.com", "avatar": ""}
       ]
     },
     {
-      "id": 3,
+      "id": 'type3',
       "type": "Test",
       "members": [
-        {"id": 103, "assignee": "thong@example.com", "avatar": ""},
-        {"id": 104, "assignee": "an@example.com", "avatar": ""}
+        {"id": 'member103', "assignee": "thong@example.com", "avatar": ""},
+        {"id": 'member104', "assignee": "an@example.com", "avatar": ""}
       ]
     }
   ];
@@ -375,14 +375,17 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: () {
           if (item['type'] == 'subtask') {
             _showTaskDetailsDialog(
-                {},
-                item['subtask'],
-                item,
-                {},
-                item['category'],
-                priorityColor,
-                completedSubtasks,
-                totalSubtasks);
+              {},
+              item['subtask'],
+              item,
+              {},
+              item['category'],
+              priorityColor,
+              completedSubtasks,
+              totalSubtasks,
+              data,
+              item['typeID'],
+            );
           } else if (item['type'] == 'subsubtask') {
             _showTaskDetailsDialog(
                 {},
@@ -392,10 +395,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 item['category'],
                 priorityColor,
                 completedSubtasks,
-                totalSubtasks);
+                totalSubtasks,
+                data,
+                item['typeID']);
           } else {
-            _showTaskDetailsDialog(item, item['task'], {}, {}, item['type'],
-                priorityColor, completedSubtasks, totalSubtasks);
+            _showTaskDetailsDialog(
+                item,
+                item['task'],
+                {},
+                {},
+                item['category'],
+                priorityColor,
+                completedSubtasks,
+                totalSubtasks,
+                data,
+                item['typeID']);
           }
         },
         child: Padding(
@@ -437,7 +451,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     avatar),
                 const SizedBox(height: 8.0),
                 _buildSubtaskAndTypeRow(totalSubtasks, completedSubtasks,
-                    item['type'], priorityColor),
+                    item['category'], priorityColor),
                 const SizedBox(height: 8.0),
                 if (item['description'] != null)
                   _buildTaskDescription(item['description']),
@@ -633,14 +647,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Hàm hiển thị dialog chi tiết công việc
   void _showTaskDetailsDialog(
-      Map<String, dynamic> task,
-      String taskName,
-      Map<String, dynamic> subtasks,
-      Map<String, dynamic> subsubtasks,
-      String project,
-      Color priorityColor,
-      int completedSubtasks,
-      int totalSubtasks) {
+    Map<String, dynamic> task,
+    String taskName,
+    Map<String, dynamic> subtasks,
+    Map<String, dynamic> subsubtasks,
+    String project,
+    Color priorityColor,
+    int completedSubtasks,
+    int totalSubtasks,
+    List<Map<String, dynamic>> data,
+    String typeID,
+  ) {
     showDialog(
       context: context,
       builder: (context) {
@@ -653,6 +670,9 @@ class _HomeScreenState extends State<HomeScreen> {
           priorityColor: priorityColor,
           completedSubtasks: completedSubtasks,
           totalSubtasks: totalSubtasks,
+          typeID: typeID,
+          data: data,
+          selectedDate: _selectedDay ?? DateTime.now(),
           onStatusChanged: (subtask) {
             setState(() {
               subtask['status'] = subtask['status'] == 'Hoàn Thành'
@@ -713,6 +733,7 @@ class _HomeScreenState extends State<HomeScreen> {
         // Add the task to the results
         results.add({
           'type': 'task',
+          'category': findTypeById(task['typeID']), // Add task type here
           ...task, // Include all task information
         });
       }
@@ -730,7 +751,8 @@ class _HomeScreenState extends State<HomeScreen> {
           // Add the subtask to the results, including the task type
           results.add({
             'type': 'subtask',
-            'category': task['type'], // Add task type here
+            'typeID': task['typeID'],
+            'category': findTypeById(task['typeID']), // Add task type here
             ...subtask, // Include all subtask information
           });
 
@@ -746,7 +768,8 @@ class _HomeScreenState extends State<HomeScreen> {
               // Add the subsubtask to the results, including the task type
               results.add({
                 'type': 'subsubtask',
-                'category': task['type'], // Add task type here
+                'typeID': task['typeID'],
+                'category': findTypeById(task['typeID']), // Add task type here
                 ...subsubtask, // Include all subsubtask information
               });
             }
@@ -756,6 +779,16 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return results;
+  }
+
+  String findTypeById(String id) {
+    try {
+      // Tìm kiếm trong danh sách data
+      var project = data.firstWhere((project) => project['id'] == id);
+      return project['type']; // Trả về giá trị type
+    } catch (e) {
+      return 'Project not found'; // Trường hợp không tìm thấy
+    }
   }
 
   void updateTaskById(int id, Map<String, dynamic> updatedData) {
