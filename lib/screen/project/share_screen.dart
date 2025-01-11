@@ -10,82 +10,112 @@ class _ShareScreenState extends State<ShareScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.grey[200],
         elevation: 0,
         title: Text(
           "Share",
-          style: TextStyle(color: Colors.black, fontSize: 18),
+          style: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          TextButton(
-            onPressed: () {},
-            child: Text(
-              "Done",
-              style: TextStyle(color: Colors.red, fontSize: 16),
-            ),
-          )
-        ],
+        // actions: [
+        //   TextButton(
+        //     onPressed: () {},
+        //     child: Text(
+        //       "Done",
+        //       style: TextStyle(color: Ap, fontSize: 16),
+        //     ),
+        //   )
+        // ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      backgroundColor:
+          Colors.grey[200], // Đặt màu nền của toàn màn hình là màu grey 200
+      body: Container(
+        margin: const EdgeInsets.symmetric(
+            horizontal: 8), // Thay đổi từ padding sang margin
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "Testproject",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                minimumSize: Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
+            Container(
+              margin: EdgeInsets.all(8), // Thêm margin 8 cho Text
               child: Text(
-                "Share Link",
-                style: TextStyle(color: Colors.white, fontSize: 16),
+                "Testproject",
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
-            ),
-            SizedBox(height: 30),
-            Text(
-              "ACCESS",
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey),
-            ),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Icon(Icons.lock, color: Colors.black),
-              title: Text(
-                "Restricted",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text(
-                "Only invited people can access",
-                style: TextStyle(color: Colors.grey, fontSize: 14),
-              ),
-            ),
-            SizedBox(height: 20),
-            Text(
-              "IN THIS PROJECT",
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey),
             ),
             SizedBox(height: 10),
+            GestureDetector(
+              onTap: () {
+                print("Invite via name or email tapped");
+              },
+              child: Container(
+                margin: EdgeInsets.symmetric(
+                    horizontal: 8), // Thêm margin horizontal 16
+                padding: EdgeInsets.symmetric(vertical: 15, horizontal: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.add, color: Colors.red),
+                    SizedBox(width: 10),
+                    Text(
+                      "Invite via name or email",
+                      style: TextStyle(
+                          color: Colors.red,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(height: 20),
+            Container(
+              margin: EdgeInsets.symmetric(
+                  horizontal: 8), // Thêm margin horizontal 16
+              child: Text(
+                "IN THIS PROJECT",
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey),
+              ),
+            ),
+            SizedBox(height: 10),
+            ProjectMembersCard(), // Sử dụng widget ProjectMembersCard
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ProjectMembersCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      // margin: EdgeInsets.symmetric(horizontal: 0), // Thêm margin horizontal 16
+      child: Card(
+        color: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          children: const [
             ListTile(
-              contentPadding: EdgeInsets.zero,
+              // contentPadding: EdgeInsets.symmetric(horizontal: 8),
               leading: CircleAvatar(
                 radius: 18,
                 backgroundColor: Colors.blue,
                 child: Text(
                   "A",
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold),
                 ),
               ),
               title: Text(
@@ -93,16 +123,18 @@ class _ShareScreenState extends State<ShareScreen> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               subtitle: Text("an66528@gmail.com"),
-              trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
+              trailing:
+                  Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
             ),
             ListTile(
-              contentPadding: EdgeInsets.zero,
+              // contentPadding: EdgeInsets.zero,
               leading: CircleAvatar(
                 radius: 18,
                 backgroundColor: Colors.orange,
                 child: Text(
                   "T",
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold),
                 ),
               ),
               title: Text(
@@ -117,4 +149,10 @@ class _ShareScreenState extends State<ShareScreen> {
       ),
     );
   }
+}
+
+void main() {
+  runApp(MaterialApp(
+    home: ShareScreen(),
+  ));
 }

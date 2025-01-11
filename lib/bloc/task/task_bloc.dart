@@ -16,7 +16,6 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       : super(TaskInitial()) {
     on<FetchTasksByDate>(_onFetchTasksByDate);
     on<AddTask>(_onAddTask);
-    on<UpdateTask>(_onUpdateTask);
     on<DeleteTask>(_onDeleteTask);
     on<LoadTasks>(_loadTasks);
   }
@@ -107,15 +106,6 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     try {
       await taskRepository.addTask(event.task);
       add(FetchTasksByDate(event.task['date'])); // Refresh the task list
-    } catch (e) {
-      emit(TaskError(e.toString()));
-    }
-  }
-
-  Future<void> _onUpdateTask(UpdateTask event, Emitter<TaskState> emit) async {
-    try {
-      await taskRepository.updateTask(event.taskId, event.updatedTask);
-      add(FetchTasksByDate(event.updatedTask['date'])); // Refresh the task list
     } catch (e) {
       emit(TaskError(e.toString()));
     }

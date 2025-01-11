@@ -7,7 +7,6 @@ abstract class TaskRepository {
   Future<List<Map<String, dynamic>>> fetchTasksByDate(
       String date, String email);
   Future<void> addTask(Map<String, dynamic> task);
-  Future<void> updateTask(String taskId, Map<String, dynamic> updatedTask);
   Future<void> deleteTask(String taskId);
 }
 
@@ -76,50 +75,6 @@ class FirebaseTaskRepository implements TaskRepository {
       await firestore.collection('tasks').add(task);
     } catch (e) {
       throw Exception('Error adding task: $e');
-    }
-  }
-
-  Future<void> updateTask(String taskId, Task updatedTask, String type) async {
-    switch (type) {
-      case 'task':
-        var firestore
-            .collection('projects')
-            .doc(taskId)
-            .collection('tasks')
-            .doc(updatedTask.id);
-        break;
-
-      case 'subtask':
-        
-        docRef = firestore
-            .collection('projects')
-            .collection('tasks')
-            .doc(taskId)
-            .collection('subtasks')
-            .doc(updatedTask.id);
-        break;
-
-      case 'subsubtask':
-       
-        docRef = firestore
-            .collection('projects')
-            .doc(grandparentId)
-            .collection('tasks')
-            .doc(parentId)
-            .collection('subtasks')
-            .doc(parentId)
-            .collection('subsubtasks')
-            .doc(id);
-        break;
-
-      default:
-        throw Exception('Unknown type: $type');
-    }
-
-    try {
-      await firestore.collection('tasks').doc(taskId).update(updatedTask);
-    } catch (e) {
-      throw Exception('Error updating task: $e');
     }
   }
 

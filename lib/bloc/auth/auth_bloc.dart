@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:bee_task/data/repository/UserRepository.dart';
 import 'package:bloc/bloc.dart';
+import 'package:flutter/material.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -43,6 +44,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       LoginRequested event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
     try {
+      // Kiểm tra định dạng email
+      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(event.email)) {
+        emit(AuthFailure(errorMessage: "Email is not valid!"));
+        debugPrint("Email is not valid!");
+        return;
+      }
+
+      // Kiểm tra email đã được đăng ký chưa
+      bool useremailExists =
+          await userRepository.checkIfUserEmailExist(event.email);
+      if (!useremailExists) {
+        emit(AuthFailure(errorMessage: "Email is not registered!"));
+        return;
+      }
+
       await firebaseAuth.signInWithEmailAndPassword(
         email: event.email.trim(),
         password: event.password.trim(),
@@ -50,7 +66,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       emit(AuthAuthenticated(user: firebaseAuth.currentUser!));
     } on FirebaseAuthException catch (e) {
-      emit(AuthFailure(errorMessage: e.message ?? "Unknown error"));
+      if (e.code == 'wrong-password') {
+        emit(AuthFailure(errorMessage: "Wrong password!"));
+      } else {
+        emit(AuthFailure(errorMessage: e.message ?? "Unknown error"));
+      }
     }
   }
 
@@ -63,7 +83,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       bool useremailExists =
           await userRepository.checkIfUserEmailExist(event.email);
       if (useremailExists) {
-        emit(AuthSignUpFailure(errorMessage: "Email đã tồn tại!"));
+        debugPrint("Email đã tồn tại!");
+        emit(AuthFailure(errorMessage: "Email đã tồn tại!"));
         return;
       }
 
@@ -78,9 +99,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       String userId = userCredential.user!.uid;
       await userRepository.addUser(userId, event.username, event.email);
 
-      emit(AuthSignedUp());
+      emit(AuthAuthenticated(user: userCredential.user!));
+      debugPrint("Đã phát trạng thái AuthAuthenticated");
     } on FirebaseAuthException catch (e) {
-      emit(AuthSignUpFailure(errorMessage: e.message ?? "Unknown error"));
+      emit(AuthFailure(errorMessage: e.message ?? "Unknown error"));
     }
   }
 
