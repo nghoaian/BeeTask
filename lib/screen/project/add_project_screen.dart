@@ -1,116 +1,159 @@
 import 'package:flutter/material.dart';
 
-class NewProjectPage extends StatefulWidget {
+class AddProjectScreen extends StatefulWidget {
+  final Function(Map<String, dynamic>) onProjectAdded; // Callback khi thêm project
+
+  const AddProjectScreen({Key? key, required this.onProjectAdded})
+      : super(key: key);
+
   @override
-  _NewProjectPageState createState() => _NewProjectPageState();
+  _AddProjectScreenState createState() => _AddProjectScreenState();
 }
 
-class _NewProjectPageState extends State<NewProjectPage> {
-  String projectName = '';
-  String selectedColor = 'Charcoal';
-  bool isFavorite = false;
+class _AddProjectScreenState extends State<AddProjectScreen> {
+  final TextEditingController projectNameController =
+      TextEditingController(); // Controller cho tên project
+  String selectedColor = 'Charcoal'; // Màu mặc định
+  bool isFavorite = false; // Trạng thái yêu thích mặc định
 
   final List<String> colors = ['Charcoal', 'Red', 'Blue', 'Green'];
+
+  // Widget chung để tạo trường nhập văn bản
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+  }) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: Colors.grey[600]),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        filled: true,
+        fillColor: Colors.grey[100],
+      ),
+    );
+  }
+
+  // Dropdown chọn màu sắc
+  Widget _buildColorDropdown() {
+    return DropdownButtonFormField<String>(
+      value: selectedColor,
+      decoration: InputDecoration(
+        labelText: 'Color',
+        labelStyle: TextStyle(color: Colors.grey[600]),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        filled: true,
+        fillColor: Colors.grey[100],
+      ),
+      items: colors.map((color) {
+        return DropdownMenuItem<String>(
+          value: color,
+          child: Text(color),
+        );
+      }).toList(),
+      onChanged: (value) {
+        setState(() {
+          selectedColor = value!;
+        });
+      },
+    );
+  }
+
+  // Switch để đánh dấu yêu thích
+  Widget _buildFavoriteSwitch() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          'Favorite',
+          style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+        ),
+        Switch(
+          value: isFavorite,
+          onChanged: (value) {
+            setState(() {
+              isFavorite = value;
+            });
+          },
+        ),
+      ],
+    );
+  }
+
+  // Nút hành động
+  Widget _buildDialogActions() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context); // Đóng màn hình
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.grey[400],
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          child: const Text('Cancel'),
+        ),
+        const SizedBox(width: 16),
+        ElevatedButton(
+          onPressed: projectNameController.text.isNotEmpty
+              ? () {
+                  final project = {
+                    'id': DateTime.now().millisecondsSinceEpoch.toString(),
+                    'name': projectNameController.text,
+                    'color': selectedColor,
+                    'isFavorite': isFavorite,
+                  };
+                  widget.onProjectAdded(project); // Gửi dữ liệu project
+                  Navigator.pop(context); // Đóng màn hình
+                }
+              : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: projectNameController.text.isNotEmpty
+                ? Colors.blue
+                : Colors.grey,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          child: const Text('Save'),
+        ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('New Project'),
-        actions: [
-          TextButton(
-            onPressed: projectName.isNotEmpty ? () {} : null,
-            child: Text(
-              'Done',
-              style: TextStyle(color: projectName.isNotEmpty ? Colors.blue : Colors.grey),
-            ),
-          ),
-        ],
-        leading: TextButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          child: Text(
-            'Cancel',
-            style: TextStyle(color: Colors.red),
-          ),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
+        title: const Text('Add New Project'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Name Input
-            TextField(
-              decoration: InputDecoration(
-                labelText: 'Name',
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (value) {
-                setState(() {
-                  projectName = value;
-                });
-              },
+            _buildTextField(
+              controller: projectNameController,
+              label: 'Project Name',
             ),
-            SizedBox(height: 16),
-            // Color Picker
-            ListTile(
-              leading: Icon(Icons.palette),
-              title: Text('Color'),
-              trailing: DropdownButton<String>(
-                value: selectedColor,
-                items: colors.map((color) {
-                  return DropdownMenuItem<String>(
-                    value: color,
-                    child: Text(color),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    selectedColor = value!;
-                  });
-                },
-              ),
-            ),
-            Divider(),
-            // Parent Project Selector
-            ListTile(
-              leading: Icon(Icons.list),
-              title: Text('Parent project'),
-              trailing: TextButton(
-                onPressed: () {
-                  // Handle Parent Project Selection
-                },
-                child: Text('No Parent'),
-              ),
-            ),
-            Divider(),
-            // Favorite Toggle
-            ListTile(
-              leading: Icon(Icons.favorite_border),
-              title: Text('Favorite'),
-              trailing: Switch(
-                value: isFavorite,
-                onChanged: (value) {
-                  setState(() {
-                    isFavorite = value;
-                  });
-                },
-              ),
-            ),
+            const SizedBox(height: 16),
+            _buildColorDropdown(),
+            const SizedBox(height: 16),
+            _buildFavoriteSwitch(),
+            const SizedBox(height: 32),
+            Center(child: _buildDialogActions()),
           ],
         ),
       ),
     );
   }
-}
-
-void main() {
-  runApp(MaterialApp(
-    home: NewProjectPage(),
-  ));
 }

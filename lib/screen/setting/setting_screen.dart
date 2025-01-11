@@ -60,19 +60,10 @@ class _SettingScreenState extends State<SettingScreen> {
             _buildSection(
               children: [
                 _buildListTile(
-                  icon: Icons.palette,
-                  title: 'Theme',
-                  trailingText: 'Todoist',
-                ),
-                _buildListTile(
-                  icon: Icons.apps,
-                  title: 'App Icon',
-                  trailingText: 'Todoist',
-                ),
-                _buildListTile(
                   icon: Icons.menu,
                   title: 'Navigation',
                 ),
+                // buildDividerWithPadding(),
                 _buildListTile(
                   icon: Icons.add_circle_outline,
                   title: 'Quick Add',
@@ -110,7 +101,7 @@ class _SettingScreenState extends State<SettingScreen> {
       margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(25),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         children: children,
@@ -196,6 +187,15 @@ class _SettingScreenState extends State<SettingScreen> {
       context,
       MaterialPageRoute(builder: (context) => WelcomeScreen()),
       (route) => false,
+    );
+  }
+
+  Widget buildDividerWithPadding() {
+    return Row(
+      children: [
+        SizedBox(width: 55), // Điều chỉnh độ thụt lề
+        Expanded(child: Divider()),
+      ],
     );
   }
 }

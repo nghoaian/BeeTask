@@ -2,6 +2,7 @@ import 'package:bee_task/bloc/project/project_bloc.dart';
 import 'package:bee_task/bloc/project/project_event.dart';
 import 'package:bee_task/bloc/project/project_state.dart';
 import 'package:bee_task/screen/project/project_screen.dart';
+import 'package:bee_task/util/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -16,7 +17,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
     return BlocProvider(
       create: (context) => ProjectBloc()..add(LoadProjectsEvent()),
       child: Scaffold(
-        appBar: buildAppBar(),
+        //appBar: buildAppBar(),
         body: buildBody(),
         floatingActionButton: buildFloatingActionButton(),
         backgroundColor: Colors.grey[200],
@@ -44,11 +45,11 @@ class _BrowseScreenState extends State<BrowseScreen> {
       ),
       actions: [
         IconButton(
-          icon: Icon(Icons.notifications, color: Colors.red),
+          icon: Icon(Icons.notifications, color: AppColors.primary),
           onPressed: () {},
         ),
         IconButton(
-          icon: Icon(Icons.settings, color: Colors.red),
+          icon: Icon(Icons.settings, color: AppColors.primary),
           onPressed: () {},
         ),
       ],
@@ -101,7 +102,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
               ),
 
               // Dòng "Browse Templates" với nền trắng và bo tròn
-              buildBrowseTemplates(),
+              //buildBrowseTemplates(),
             ],
           ),
         ),
@@ -117,7 +118,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
       },
       child:
           Icon(Icons.add, color: Colors.white), // Đặt màu biểu tượng là trắng
-      backgroundColor: Colors.red, // Đặt nền màu đỏ
+      backgroundColor: AppColors.primary, // Đặt nền màu đỏ
       shape: CircleBorder(), // Đảm bảo hình tròn
     );
   }
@@ -138,7 +139,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
         padding: EdgeInsets.zero,
       ),
       child: ListTile(
-        leading: Icon(icon, color: Colors.red),
+        leading: Icon(icon, color: AppColors.primary),
         title: Text(
           title,
           style: TextStyle(color: Colors.black),
@@ -203,7 +204,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(16),
         color: Colors.white,
       ),
       child: Column(
@@ -222,30 +223,30 @@ class _BrowseScreenState extends State<BrowseScreen> {
     );
   }
 
-  // Phần "Browse Templates" với nền trắng và bo tròn
-  Widget buildBrowseTemplates() {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: TextButton(
-        onPressed: () {
-          // Xử lý sự kiện khi bấm vào Browse Templates
-          print("Browse Templates clicked!");
-        },
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.zero,
-        ),
-        child: ListTile(
-          leading: Icon(Icons.palette, color: Colors.black),
-          title: Text(
-            "Browse Templates",
-            style: TextStyle(color: Colors.black),
-          ),
-        ),
-      ),
-    );
-  }
+  // // Phần "Browse Templates" với nền trắng và bo tròn
+  // Widget buildBrowseTemplates() {
+  //   return Container(
+  //     margin: const EdgeInsets.symmetric(vertical: 20),
+  //     decoration: BoxDecoration(
+  //       color: Colors.white,
+  //       borderRadius: BorderRadius.circular(10),
+  //     ),
+  //     child: TextButton(
+  //       onPressed: () {
+  //         // Xử lý sự kiện khi bấm vào Browse Templates
+  //         print("Browse Templates clicked!");
+  //       },
+  //       style: TextButton.styleFrom(
+  //         padding: EdgeInsets.zero,
+  //       ),
+  //       child: ListTile(
+  //         leading: Icon(Icons.palette, color: Colors.black),
+  //         title: Text(
+  //           "Browse Templates",
+  //           style: TextStyle(color: Colors.black),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 }
