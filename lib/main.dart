@@ -1,5 +1,6 @@
 import 'package:bee_task/bloc/account/account_bloc.dart';
 import 'package:bee_task/bloc/auth/auth_bloc.dart';
+import 'package:bee_task/bloc/project/project_bloc.dart';
 import 'package:bee_task/bloc/task/task_bloc.dart';
 import 'package:bee_task/firebase/firebase_options.dart';
 import 'package:bee_task/screen/auth/forget_password.dart';
@@ -48,6 +49,11 @@ class MyApp extends StatelessWidget {
             ),
           ),
           child: MyApp(),
+        ),
+        BlocProvider(
+          create: (context) => ProjectBloc(
+            FirebaseFirestore.instance,
+          ),
         ),
       ],
       child: MaterialApp(

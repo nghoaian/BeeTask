@@ -1,8 +1,10 @@
 import 'package:bee_task/bloc/project/project_bloc.dart';
 import 'package:bee_task/bloc/project/project_event.dart';
 import 'package:bee_task/bloc/project/project_state.dart';
+import 'package:bee_task/screen/project/add_project_screen.dart';
 import 'package:bee_task/screen/project/project_screen.dart';
 import 'package:bee_task/util/colors.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -15,9 +17,9 @@ class _BrowseScreenState extends State<BrowseScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => ProjectBloc()..add(LoadProjectsEvent()),
+      create: (context) =>
+          ProjectBloc(FirebaseFirestore.instance)..add(LoadProjectsEvent()),
       child: Scaffold(
-        //appBar: buildAppBar(),
         body: buildBody(),
         floatingActionButton: buildFloatingActionButton(),
         backgroundColor: Colors.grey[200],
@@ -169,7 +171,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
               // Xử lý khi bấm vào "My Projects"
               print("My Projects clicked!");
             },
-            icon: Text(
+            icon: const Text(
               "My Projects",
               style: TextStyle(
                 fontSize: 18,
@@ -187,7 +189,27 @@ class _BrowseScreenState extends State<BrowseScreen> {
           children: [
             IconButton(
               icon: Icon(Icons.add, color: Colors.grey),
-              onPressed: () {},
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return Dialog(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: AddProjectScreen(
+                        onProjectAdded: (project) {
+                          // Thêm logic xử lý sau khi nhận project mới
+                          print('New project added: $project');
+                          // Có thể dispatch event thêm project tại đây
+                          BlocProvider.of<ProjectBloc>(context)
+                              .add(AddProjectEvent(project));
+                        },
+                      ),
+                    );
+                  },
+                );
+              },
             ),
             IconButton(
               icon: Icon(Icons.expand_more, color: Colors.grey),

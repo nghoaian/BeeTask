@@ -1,7 +1,13 @@
+import 'package:bee_task/bloc/project/project_bloc.dart';
+import 'package:bee_task/bloc/project/project_event.dart';
+import 'package:bee_task/data/repository/UserRepository.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class AddProjectScreen extends StatefulWidget {
-  final Function(Map<String, dynamic>) onProjectAdded; // Callback khi thêm project
+  final Function(Map<String, dynamic>)
+      onProjectAdded; // Callback khi thêm project
 
   const AddProjectScreen({Key? key, required this.onProjectAdded})
       : super(key: key);
@@ -15,8 +21,10 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
       TextEditingController(); // Controller cho tên project
   String selectedColor = 'Charcoal'; // Màu mặc định
   bool isFavorite = false; // Trạng thái yêu thích mặc định
+  late final FirebaseUserRepository userRepository;
 
   final List<String> colors = ['Charcoal', 'Red', 'Blue', 'Green'];
+
 
   // Widget chung để tạo trường nhập văn bản
   Widget _buildTextField({
@@ -104,18 +112,33 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
         ),
         const SizedBox(width: 16),
         ElevatedButton(
-          onPressed: projectNameController.text.isNotEmpty
-              ? () {
-                  final project = {
-                    'id': DateTime.now().millisecondsSinceEpoch.toString(),
-                    'name': projectNameController.text,
-                    'color': selectedColor,
-                    'isFavorite': isFavorite,
-                  };
-                  widget.onProjectAdded(project); // Gửi dữ liệu project
-                  Navigator.pop(context); // Đóng màn hình
-                }
-              : null,
+          onPressed: () async{
+            if (projectNameController.text.isNotEmpty) {
+              String? userEmail = FirebaseAuth.instance.currentUser?.email;
+              final project = {
+                //'id': DateTime.now().millisecondsSinceEpoch.toString(),
+                'name': projectNameController.text,
+                'color': selectedColor,
+                'isFavorite': isFavorite,
+                'owner': userEmail,
+                'members': userEmail,
+              };
+
+              print(
+                  'Project to be added: $project'); // Debug: In ra thông tin project
+
+              try {
+                widget.onProjectAdded(project); // Gửi dữ liệu project
+                print(
+                    'Project added successfully'); // Debug: Thành công gửi dữ liệu
+                Navigator.pop(context); // Đóng màn hình
+              } catch (e) {
+                print('Error adding project: $e'); // Debug: In lỗi
+              }
+            } else {
+              print('Project name is empty'); // Debug: Tên project trống
+            }
+          },
           style: ElevatedButton.styleFrom(
             backgroundColor: projectNameController.text.isNotEmpty
                 ? Colors.blue

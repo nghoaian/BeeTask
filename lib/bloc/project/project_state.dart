@@ -26,3 +26,13 @@ class ProjectError extends ProjectState {
   @override
   List<Object?> get props => [message];
 }
+
+class ProjectColorLoaded extends ProjectState {
+  final String color;
+
+  ProjectColorLoaded({required this.color});
+
+  @override
+  List<Object?> get props => [color];
+}
+
