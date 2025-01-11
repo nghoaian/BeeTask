@@ -2,7 +2,6 @@ import 'package:bee_task/data/repository/UserRepository.dart';
 import 'package:bloc/bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
 import 'account_event.dart';
 import 'account_state.dart';
 

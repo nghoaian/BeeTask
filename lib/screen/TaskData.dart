@@ -18,6 +18,7 @@ class TaskData {
 
   // Lắng nghe dữ liệu từ Firestore
   void listenToAllData(String userEmail) {
+    resetData();
     listenToUserChanges();
     firestore
         .collection('projects')
@@ -28,11 +29,10 @@ class TaskData {
         _updateProjects(projectChange);
 
         String projectId = projectChange.doc.id;
-        String projectName = projectChange.doc.id;
+        String projectName = projectChange.doc['name'];
         // Lắng nghe sự thay đổi của các thành viên trong project
 
         _listenToTasks(projectId, projectName);
-        print(users);
       }
     });
   }
@@ -136,7 +136,7 @@ class TaskData {
         .snapshots()
         .listen((subtaskSnapshot) {
       for (var subtaskChange in subtaskSnapshot.docChanges) {
-        _updateSubtasks(subtaskChange, taskId, projectName);
+        _updateSubtasks(subtaskChange, taskId, projectName, projectId);
 
         String subtaskId = subtaskChange.doc.id;
         _listenToSubsubtasks(projectId, projectName, taskId, subtaskId);
@@ -145,12 +145,13 @@ class TaskData {
   }
 
   // Cập nhật danh sách subtasks
-  void _updateSubtasks(
-      DocumentChange subtaskChange, String taskId, String projectName) {
+  void _updateSubtasks(DocumentChange subtaskChange, String taskId,
+      String projectName, String projectId) {
     String subtaskId = subtaskChange.doc.id;
     var subtaskData = subtaskChange.doc.data() as Map<String, dynamic>;
     subtaskData['id'] = subtaskId;
     subtaskData['taskId'] = taskId;
+    subtaskData['projectId'] = taskId;
     subtaskData['type'] = 'subtask';
     subtaskData['projectName'] = projectName;
 
@@ -178,20 +179,23 @@ class TaskData {
         .snapshots()
         .listen((subsubtaskSnapshot) {
       for (var subsubtaskChange in subsubtaskSnapshot.docChanges) {
-        _updateSubsubtasks(subsubtaskChange, subtaskId, projectName);
+        _updateSubsubtasks(
+            subsubtaskChange, subtaskId, projectName, projectId, taskId);
       }
     });
   }
 
   // Cập nhật danh sách subsubtasks
-  void _updateSubsubtasks(
-      DocumentChange subsubtaskChange, String subtaskId, String projectName) {
+  void _updateSubsubtasks(DocumentChange subsubtaskChange, String subtaskId,
+      String projectName, String projectId, String taskId) {
     String subsubtaskId = subsubtaskChange.doc.id;
     var subsubtaskData = subsubtaskChange.doc.data() as Map<String, dynamic>;
     subsubtaskData['id'] = subsubtaskId;
     subsubtaskData['subtaskId'] = subtaskId;
     subsubtaskData['type'] = 'subsubtask';
     subsubtaskData['projectName'] = projectName;
+    subsubtaskData['projectId'] = projectId;
+    subsubtaskData['taskId'] = taskId;
 
     if (subsubtaskChange.type == DocumentChangeType.added) {
       subsubtasks.add(subsubtaskData);
@@ -226,5 +230,35 @@ class TaskData {
     } catch (e) {
       return '';
     }
+  }
+
+  // Tính tổng số subtasks tương ứng với taskId
+  int getSubtaskCount(String taskId) {
+    int count = subtasks.where((subtask) => subtask['taskId'] == taskId).length;
+    return count;
+  }
+
+  // Tính tổng số subsubtasks tương ứng với subtaskId
+  int getSubsubtaskCount(String subtaskId) {
+    int count = subsubtasks
+        .where((subsubtask) => subsubtask['subtaskId'] == subtaskId)
+        .length;
+    return count;
+  }
+
+  int getCompletedSubtaskCount(String taskId) {
+    int count = subtasks
+        .where((subtask) =>
+            subtask['taskId'] == taskId && subtask['completed'] == true)
+        .length;
+    return count;
+  }
+
+  int getCompletedSubSubtaskCount(String subtaskId) {
+    int count = subtasks
+        .where((subtask) =>
+            subtask['subtaskId'] == subtaskId && subtask['completed'] == true)
+        .length;
+    return count;
   }
 }

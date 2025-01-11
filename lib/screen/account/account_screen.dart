@@ -92,21 +92,23 @@ class _AccountScreenState extends State<AccountScreen> {
               _nameController.text = state.userName;
               return Column(
                 children: [
-                  AvatarSection(userName: state.userName, userEmail: state.userEmail),
-                  SizedBox(height: 0),
+                  AvatarSection(
+                      userName: state.userName, userEmail: state.userEmail),
+                  const SizedBox(height: 0),
                   EditButton(),
-                  SizedBox(height: 0),
+                  const SizedBox(height: 0),
                   InfoSection(state.userName, state.userEmail),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   PasswordSection(),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   DeleteAccountButton(),
                 ],
               );
             } else if (state is AccountLoading) {
-              return Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator());
             } else {
-              return Center(child: Text('Error loading account information'));
+              return const Center(
+                  child: Text('Error loading account information'));
             }
           },
         ),
@@ -157,7 +159,8 @@ class _AccountScreenState extends State<AccountScreen> {
         CircleAvatar(
           radius: 50,
           backgroundColor: AppColors.primary,
-          backgroundImage: _avatarPath.isNotEmpty ? FileImage(File(_avatarPath)) : null,
+          backgroundImage:
+              _avatarPath.isNotEmpty ? FileImage(File(_avatarPath)) : null,
           child: Text(
             _avatarPath.isEmpty ? userName[0].toUpperCase() : '',
             style: const TextStyle(color: Colors.white, fontSize: 30),
@@ -174,8 +177,8 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Widget EditButton() {
     return TextButton(
-      onPressed: () {},//_showEditOptions,
-      child: Text('Edit', style: TextStyle(color: Colors.red)),
+      onPressed: () {}, //_showEditOptions,
+      child: const Text('Edit', style: TextStyle(color: Colors.red)),
     );
   }
 
@@ -198,7 +201,8 @@ class _AccountScreenState extends State<AccountScreen> {
             filled: true,
             fillColor: Colors.white,
             border: InputBorder.none,
-            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
@@ -221,12 +225,13 @@ class _AccountScreenState extends State<AccountScreen> {
           padding: const EdgeInsets.only(left: 16.0),
           child: Text('PASSWORD', style: TextStyle(color: Colors.grey[600])),
         ),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
         ElevatedButton(
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const ChangePasswordScreen()),
+              MaterialPageRoute(
+                  builder: (context) => const ChangePasswordScreen()),
             );
           },
           child: Text('Change Password'),

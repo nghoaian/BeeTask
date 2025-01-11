@@ -3,15 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:bee_task/screen/upcoming/taskdetail_dialog.dart';
-import 'package:bee_task/screen/upcoming/addtask_dialog.dart';
 import 'package:bee_task/util/colors.dart';
 import 'package:bee_task/bloc/task/task_bloc.dart';
 import 'package:bee_task/bloc/task/task_event.dart';
 import 'package:bee_task/bloc/task/task_state.dart';
 import 'package:bee_task/data/model/task.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:bee_task/data/repository/TaskRepository.dart';
-import 'package:flutter/material.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -70,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
       elevation: 0,
       actions: [
         IconButton(
-          icon: Icon(Icons.more_vert, color: Colors.black),
+          icon: const Icon(Icons.more_vert, color: Colors.black),
           onPressed: () {},
         ),
       ],
@@ -97,7 +94,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ).toIso8601String().substring(0, 10)
               : DateTime.now().toIso8601String().substring(0, 10)));
         });
-        print(_selectedDay);
       },
       onFormatChanged: (format) {
         setState(() {
@@ -114,7 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
         CalendarFormat.month: 'Week',
         CalendarFormat.week: 'Month',
       },
-      headerStyle: HeaderStyle(
+      headerStyle: const HeaderStyle(
         formatButtonVisible: true,
         titleCentered: true,
         formatButtonTextStyle: TextStyle(color: Colors.black),
@@ -123,7 +119,7 @@ class _HomeScreenState extends State<HomeScreen> {
         leftChevronIcon: Icon(Icons.chevron_left, color: Colors.black),
         rightChevronIcon: Icon(Icons.chevron_right, color: Colors.black),
       ),
-      calendarStyle: CalendarStyle(
+      calendarStyle: const CalendarStyle(
         todayDecoration: BoxDecoration(
           color: Colors.red,
           shape: BoxShape.circle,
@@ -171,7 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, state) {
         if (state is TaskLoading) {
           // Hiển thị vòng tròn loading khi dữ liệu đang được tải
-          return Center(
+          return const Center(
             child: CircularProgressIndicator(),
           );
         } else if (state is TaskLoaded) {
@@ -205,19 +201,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildItemCard(Task item) {
-    int totalSubtasks = 0;
-    int completedSubtasks = 0;
-    String? assignee = item.asssignee;
-    String avatar = item.asssignee ?? '';
-
-    String avatarLetter = assignee != null && assignee.isNotEmpty
-        ? assignee[0].toUpperCase()
-        : '';
-
-    bool isCompleted;
-
-    Color priorityColor = _getPriorityColor(item.priority); // Priority color
-
     return Card(
       margin: const EdgeInsets.all(8.0),
       child: GestureDetector(
@@ -265,7 +248,11 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.all(8.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [_buildTaskHeaderRow(item)],
+            children: [
+              _buildTaskHeaderRow(item),
+              _buildSubtaskAndTypeRow(item),
+              _buildTaskDescription(item.description),
+            ],
           ),
         ),
       ),
@@ -310,19 +297,19 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      if (TaskData().getUserAvatarFromList(task.asssignee) != '') ...[
+      if (TaskData().getUserAvatarFromList(task.assignee) != '') ...[
         CircleAvatar(
           radius: 16,
           backgroundImage: AssetImage(
               'assets/$TaskData().getUserAvatarFromList(task.asssignee)'),
         ),
-      ] else if (task.asssignee != '') ...[
+      ] else if (task.assignee != '') ...[
         CircleAvatar(
           radius: 16,
           backgroundColor: Colors.white,
           child: Text(
-            task.asssignee,
-            style: TextStyle(
+            task.assignee[0].toUpperCase(),
+            style: const TextStyle(
               color: Colors.black,
               fontWeight: FontWeight.bold,
             ),
@@ -333,8 +320,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // Widget hiển thị số subtask hoàn thành và type
-  Widget _buildSubtaskAndTypeRow(int totalSubtasks, int completedSubtasks,
-      String taskType, Color priorityColor) {
+  Widget _buildSubtaskAndTypeRow(Task task) {
+    int completedSubtasks = 0;
+    int totalSubtasks = 0;
+    if (task.type == 'task') {
+      completedSubtasks = TaskData().getCompletedSubtaskCount(task.id);
+      totalSubtasks = TaskData().getSubtaskCount(task.id);
+    } else if (task.type == 'subtask') {
+      completedSubtasks = TaskData().getCompletedSubSubtaskCount(task.id);
+      totalSubtasks = TaskData().getSubsubtaskCount(task.id);
+    }
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -351,11 +346,11 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Align(
             alignment: Alignment.centerRight,
             child: Text(
-              taskType,
+              task.projectName,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: priorityColor,
+                color: _getPriorityColor(task.priority),
               ),
             ),
           ),
@@ -379,7 +374,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Widget hiển thị thông báo không có công việc
   Widget _buildNoTaskMessage() {
-    return Center(
+    return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -391,7 +386,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 size: 50,
                 color: CupertinoColors.activeGreen,
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               Icon(
                 CupertinoIcons.check_mark_circled,
                 size: 50,
@@ -399,7 +394,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Text(
             'Bạn có một ngày rảnh rỗi',
             style: TextStyle(
@@ -408,7 +403,7 @@ class _HomeScreenState extends State<HomeScreen> {
               color: CupertinoColors.secondaryLabel,
             ),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Text(
             'Hãy thư giãn',
             style: TextStyle(
@@ -435,58 +430,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // Hàm hiển thị dialog chi tiết công việc
-  void _showTaskDetailsDialog(
-    Map<String, dynamic> task,
-    String taskName,
-    Map<String, dynamic> subtasks,
-    Map<String, dynamic> subsubtasks,
-    String project,
-    Color priorityColor,
-    int completedSubtasks,
-    int totalSubtasks,
-    List<Map<String, dynamic>> data,
-    String typeID,
-  ) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return TaskDetailsDialog(
-          task: task,
-          taskName: taskName,
-          subtasks: subtasks,
-          subsubtasks: subsubtasks,
-          project: project,
-          priorityColor: priorityColor,
-          completedSubtasks: completedSubtasks,
-          totalSubtasks: totalSubtasks,
-          typeID: typeID,
-          data: data,
-          selectedDate: _selectedDay ?? DateTime.now(),
-          onStatusChanged: (subtask) {
-            setState(() {
-              subtask['status'] = subtask['status'] == 'Hoàn Thành'
-                  ? 'Chưa Hoàn Thành'
-                  : 'Hoàn Thành';
-            });
-          },
-          resetScreen: () {
-            setState(() {});
-          },
-          onShowCompletedTasksChanged: _toggleShowCompletedTasks,
-          showCompletedTasks: showCompletedTasks,
-          onDataUpdated: (updatedData) {
-            setState(() {});
-          },
-        );
-      },
-    );
-  }
-
-  void _toggleShowCompletedTasks(bool newStatus) {
-    setState(() {
-      showCompletedTasks = newStatus;
-    });
-  }
+  void _showTaskDetailsDialog() {}
 
   void _showAddTaskDialog(BuildContext context) {
     // showDialog(
@@ -503,5 +447,4 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   ///Đối trạng thái task,subtask,subsubtask
-  void _toggleTaskCompletion(Map<String, dynamic> item) {}
 }

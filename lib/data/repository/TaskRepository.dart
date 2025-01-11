@@ -1,7 +1,6 @@
 import 'package:bee_task/screen/TaskData.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 
 abstract class TaskRepository {
   FirebaseAuth get firebaseAuth;
@@ -80,8 +79,43 @@ class FirebaseTaskRepository implements TaskRepository {
     }
   }
 
-  Future<void> updateTask(
-      String taskId, Map<String, dynamic> updatedTask) async {
+  Future<void> updateTask(String taskId, Task updatedTask, String type) async {
+    switch (type) {
+      case 'task':
+        var firestore
+            .collection('projects')
+            .doc(taskId)
+            .collection('tasks')
+            .doc(updatedTask.id);
+        break;
+
+      case 'subtask':
+        
+        docRef = firestore
+            .collection('projects')
+            .collection('tasks')
+            .doc(taskId)
+            .collection('subtasks')
+            .doc(updatedTask.id);
+        break;
+
+      case 'subsubtask':
+       
+        docRef = firestore
+            .collection('projects')
+            .doc(grandparentId)
+            .collection('tasks')
+            .doc(parentId)
+            .collection('subtasks')
+            .doc(parentId)
+            .collection('subsubtasks')
+            .doc(id);
+        break;
+
+      default:
+        throw Exception('Unknown type: $type');
+    }
+
     try {
       await firestore.collection('tasks').doc(taskId).update(updatedTask);
     } catch (e) {

@@ -7,8 +7,9 @@ class Task {
   final String dueDate;
   final String priority;
   final bool completed;
-  final String asssignee;
+  final String assignee;
   final String type;
+  final String projectName;
   final List<Task> subtasks;
 
   Task({
@@ -18,8 +19,9 @@ class Task {
     required this.dueDate,
     required this.priority,
     required this.completed,
-    required this.asssignee,
+    required this.assignee,
     required this.type,
+    required this.projectName,
     required this.subtasks,
   });
 
@@ -33,9 +35,10 @@ class Task {
               .toDate()
               .toString() // Nếu là Timestamp, chuyển đổi thành DateTime
           : data['dueDate'] ?? '',
-      asssignee: data['asssignee'] ?? '',
+      assignee: data['assignee'] ?? '',
       priority: data['priority'] ?? '',
       completed: data['completed'] ?? false,
+      projectName: data['projectName'] ?? '',
       type: data['type'] ?? '',
       subtasks: [], // Subtasks sẽ được thêm sau
     );
@@ -51,7 +54,8 @@ class Task {
               .toString() // Nếu là Timestamp, chuyển đổi thành DateTime
           : data['dueDate'] ?? '',
       priority: data['priority'] ?? '',
-      asssignee: data['asssignee'] ?? '',
+      assignee: data['assignee'] ?? '',
+      projectName: data['projectName'] ?? '',
       completed: data['completed'] ?? false,
       type: data['type'] ?? '',
       subtasks: data['subtasks'] ?? data['subsubtasks'] ?? [],
@@ -65,7 +69,9 @@ class Task {
     String? dueDate,
     String? priority,
     String? avatar,
+    String? assignee,
     String? type,
+    String? projectName,
     bool? completed,
     List<Task>? subtasks,
   }) {
@@ -75,8 +81,9 @@ class Task {
       description: description ?? this.description,
       dueDate: dueDate ?? this.dueDate,
       priority: priority ?? this.priority,
-      asssignee: asssignee ?? this.asssignee,
+      assignee: assignee ?? this.assignee,
       type: type ?? this.type,
+      projectName: projectName ?? this.projectName,
       completed: completed ?? this.completed,
       subtasks: subtasks ?? this.subtasks,
     );

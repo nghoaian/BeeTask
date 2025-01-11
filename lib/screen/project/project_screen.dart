@@ -148,10 +148,10 @@ class _ProjectScreenState extends State<ProjectScreen> {
                 ],
               ),
             ),
-            if (TaskData().getUserAvatarFromList(task.asssignee) != '')
+            if (TaskData().getUserAvatarFromList(task.assignee) != '')
               CircleAvatar(
                 backgroundImage: NetworkImage(
-                    TaskData().getUserAvatarFromList(task.asssignee)),
+                    TaskData().getUserAvatarFromList(task.assignee)),
                 radius: 15,
               ),
           ],
@@ -219,10 +219,10 @@ class _ProjectScreenState extends State<ProjectScreen> {
                 ],
               ),
             ),
-            if (TaskData().getUserAvatarFromList(subtask.asssignee) != '')
+            if (TaskData().getUserAvatarFromList(subtask.assignee) != '')
               CircleAvatar(
                 backgroundImage: NetworkImage(
-                    TaskData().getUserAvatarFromList(subtask.asssignee)),
+                    TaskData().getUserAvatarFromList(subtask.assignee)),
                 radius: 15,
               ),
           ],
@@ -263,10 +263,10 @@ class _ProjectScreenState extends State<ProjectScreen> {
                 ],
               ),
               trailing:
-                  (TaskData().getUserAvatarFromList(subsubtask.asssignee) != '')
+                  (TaskData().getUserAvatarFromList(subsubtask.assignee) != '')
                       ? CircleAvatar(
                           backgroundImage: NetworkImage(TaskData()
-                              .getUserAvatarFromList(subsubtask.asssignee)),
+                              .getUserAvatarFromList(subsubtask.assignee)),
                           radius: 15,
                         )
                       : null,

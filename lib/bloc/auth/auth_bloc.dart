@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'package:bee_task/data/repository/UserRepository.dart';
-import 'package:bee_task/screen/TaskData.dart';
 import 'package:bloc/bloc.dart';
-import 'package:flutter/material.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 import 'package:firebase_auth/firebase_auth.dart';
