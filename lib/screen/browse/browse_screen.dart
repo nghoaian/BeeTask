@@ -1,10 +1,13 @@
 import 'package:bee_task/bloc/project/project_bloc.dart';
 import 'package:bee_task/bloc/project/project_event.dart';
 import 'package:bee_task/bloc/project/project_state.dart';
+import 'package:bee_task/data/repository/TaskRepository.dart';
+import 'package:bee_task/data/repository/UserRepository.dart';
 import 'package:bee_task/screen/project/add_project_screen.dart';
 import 'package:bee_task/screen/project/project_screen.dart';
 import 'package:bee_task/util/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -14,6 +17,19 @@ class BrowseScreen extends StatefulWidget {
 }
 
 class _BrowseScreenState extends State<BrowseScreen> {
+late FirebaseTaskRepository taskRepository;
+  late FirebaseUserRepository userRepository;
+
+  @override
+  void initState() {
+    super.initState();
+    taskRepository = FirebaseTaskRepository(firestore: FirebaseFirestore.instance);
+    userRepository = FirebaseUserRepository(
+      firestore: FirebaseFirestore.instance,
+      firebaseAuth: FirebaseAuth.instance,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -129,13 +145,13 @@ class _BrowseScreenState extends State<BrowseScreen> {
       {int? count, String? projectId}) {
     return TextButton(
       onPressed: () {
-        // Điều hướng đến ProjectScreen với projectId
-        // Navigator.push(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (context) => ProjectScreen(projectId: projectId!),
-        //   ),
-        // );
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProjectScreen(projectId: projectId!, taskRepository: taskRepository, userRepository: userRepository),
+          ),
+        );
       },
       style: TextButton.styleFrom(
         padding: EdgeInsets.zero,
