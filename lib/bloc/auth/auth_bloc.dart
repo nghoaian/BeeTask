@@ -1,6 +1,6 @@
 import 'dart:async';
-
 import 'package:bee_task/data/repository/UserRepository.dart';
+import 'package:bee_task/screen/TaskData.dart';
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'auth_event.dart';
@@ -49,6 +49,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         email: event.email.trim(),
         password: event.password.trim(),
       );
+
       emit(AuthAuthenticated(user: firebaseAuth.currentUser!));
     } on FirebaseAuthException catch (e) {
       emit(AuthFailure(errorMessage: e.message ?? "Unknown error"));

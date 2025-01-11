@@ -3,6 +3,7 @@ import 'package:bee_task/screen/auth/welcome_screen.dart';
 import 'package:bee_task/util/colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:bee_task/screen/TaskData.dart';
 
 class SettingScreen extends StatefulWidget {
   @override
@@ -189,6 +190,7 @@ class _SettingScreenState extends State<SettingScreen> {
   }
 
   void signOut() {
+    TaskData().resetData();
     FirebaseAuth.instance.signOut();
     Navigator.pushAndRemoveUntil(
       context,

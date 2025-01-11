@@ -127,12 +127,12 @@ class _BrowseScreenState extends State<BrowseScreen> {
     return TextButton(
       onPressed: () {
         // Điều hướng đến ProjectScreen với projectId
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ProjectScreen(projectId: projectId!),
-          ),
-        );
+        // Navigator.push(
+        //   context,
+        //   MaterialPageRoute(
+        //     builder: (context) => ProjectScreen(projectId: projectId!),
+        //   ),
+        // );
       },
       style: TextButton.styleFrom(
         padding: EdgeInsets.zero,

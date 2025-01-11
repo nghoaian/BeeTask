@@ -5,11 +5,19 @@ import 'package:bee_task/data/model/task.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:bee_task/screen/TaskData.dart';
+import 'package:bee_task/data/repository/TaskRepository.dart';
+import 'package:bee_task/data/repository/UserRepository.dart';
 
 class ProjectScreen extends StatefulWidget {
   final String projectId;
+  FirebaseTaskRepository taskRepository;
+  FirebaseUserRepository userRepository;
 
-  ProjectScreen({required this.projectId});
+  ProjectScreen(
+      {required this.projectId,
+      required this.taskRepository,
+      required this.userRepository});
 
   @override
   _ProjectScreenState createState() => _ProjectScreenState();
@@ -21,7 +29,8 @@ class _ProjectScreenState extends State<ProjectScreen> {
   @override
   void initState() {
     super.initState();
-    _taskBloc = TaskBloc(FirebaseFirestore.instance);
+    _taskBloc = TaskBloc(FirebaseFirestore.instance, widget.taskRepository,
+        widget.userRepository);
     _taskBloc.add(
         LoadTasks(widget.projectId)); // Gọi sự kiện LoadTasks với projectId
   }
@@ -139,9 +148,10 @@ class _ProjectScreenState extends State<ProjectScreen> {
                 ],
               ),
             ),
-            if (task.avatar.isNotEmpty)
+            if (TaskData().getUserAvatarFromList(task.asssignee) != '')
               CircleAvatar(
-                backgroundImage: NetworkImage(task.avatar),
+                backgroundImage: NetworkImage(
+                    TaskData().getUserAvatarFromList(task.asssignee)),
                 radius: 15,
               ),
           ],
@@ -209,9 +219,10 @@ class _ProjectScreenState extends State<ProjectScreen> {
                 ],
               ),
             ),
-            if (subtask.avatar.isNotEmpty)
+            if (TaskData().getUserAvatarFromList(subtask.asssignee) != '')
               CircleAvatar(
-                backgroundImage: NetworkImage(subtask.avatar),
+                backgroundImage: NetworkImage(
+                    TaskData().getUserAvatarFromList(subtask.asssignee)),
                 radius: 15,
               ),
           ],
@@ -251,12 +262,14 @@ class _ProjectScreenState extends State<ProjectScreen> {
                     ),
                 ],
               ),
-              trailing: (subsubtask.avatar.isNotEmpty)
-                  ? CircleAvatar(
-                      backgroundImage: NetworkImage(subsubtask.avatar),
-                      radius: 15,
-                    )
-                  : null,
+              trailing:
+                  (TaskData().getUserAvatarFromList(subsubtask.asssignee) != '')
+                      ? CircleAvatar(
+                          backgroundImage: NetworkImage(TaskData()
+                              .getUserAvatarFromList(subsubtask.asssignee)),
+                          radius: 15,
+                        )
+                      : null,
             ),
           );
         }).toList(),

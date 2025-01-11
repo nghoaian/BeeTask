@@ -4,8 +4,10 @@ import 'package:bee_task/screen/auth/login_screen.dart';
 import 'package:bee_task/screen/auth/signup_screen.dart';
 import 'package:bee_task/screen/nav/nav_ui_screen.dart';
 import 'package:bee_task/util/colors.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:bee_task/screen/TaskData.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({Key? key}) : super(key: key);
@@ -16,6 +18,11 @@ class WelcomeScreen extends StatelessWidget {
       body: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
           if (state is AuthAuthenticated) {
+            User? user = FirebaseAuth.instance.currentUser;
+            TaskData().resetData();
+            if (user != null && user.email != null) {
+              TaskData().listenToAllData(user.email!);
+            }
             return NavUIScreen();
           } else if (state is AuthUnauthenticated) {
             return _buildWelcomeScreen(context);
@@ -57,7 +64,7 @@ class WelcomeScreen extends StatelessWidget {
             //   ),
             // ),
             child: Image.asset(
-              'lib/util/images/beetasklogo.png', 
+              'lib/util/images/beetasklogo.png',
               width: 250,
               height: 250,
               fit: BoxFit.contain,

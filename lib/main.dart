@@ -10,6 +10,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:bee_task/data/repository/TaskRepository.dart';
+import 'package:bee_task/data/repository/UserRepository.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,7 +39,14 @@ class MyApp extends StatelessWidget {
           ),
         ),
         BlocProvider(
-          create: (context) => TaskBloc(FirebaseFirestore.instance),
+          create: (context) => TaskBloc(
+            FirebaseFirestore.instance,
+            FirebaseTaskRepository(firestore: FirebaseFirestore.instance),
+            FirebaseUserRepository(
+              firestore: FirebaseFirestore.instance,
+              firebaseAuth: FirebaseAuth.instance,
+            ),
+          ),
           child: MyApp(),
         ),
       ],
