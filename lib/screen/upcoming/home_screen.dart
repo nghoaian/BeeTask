@@ -292,9 +292,7 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         GestureDetector(
           onTap: () {
-            if (task != null) {
-              task.completed = !task.completed;
-            }
+            task.completed = !task.completed;
             context.read<TaskBloc>().add(UpdateTask(task.id, task, task.type));
 
             context.read<TaskBloc>().add(FetchTasksByDate(
@@ -376,19 +374,23 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Stream<Widget> _buildSubtaskAndTypeRow(Task task) async* {
     try {
+      int completedSubtasks = 0;
+      int totalSubtasks = 0;
       // Sử dụng StreamZip để lắng nghe cả 2 Stream cùng lúc
       await for (var result in StreamZip([
         TaskData().getCountByTypeStream(
             task.id, task.type), // Stream cho số lượng totalSubtasks
         TaskData().getCompletedCountStream(
-            task.id, task.type), // Stream cho  completedSubtasks
+            task.id, task.type), // Stream cho completedSubtasks
       ])) {
-        int completedSubtasks = result[1]; // Số lượng completedSubtasks
-        int totalSubtasks = result[0]; // Số lượng totalSubtasks
+        completedSubtasks = result[1]; // Số lượng completedSubtasks
+        totalSubtasks = result[0]; // Số lượng totalSubtasks
 
+        // Lý do muốn hiển thị luôn projectName, vì vậy đặt ngoài điều kiện
         yield Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            // Hiển thị Text cho số lượng subtasks nếu totalSubtasks > 0
             if (totalSubtasks > 0)
               Text(
                 '$completedSubtasks / $totalSubtasks',
@@ -398,11 +400,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Colors.grey[600],
                 ),
               ),
+            if (totalSubtasks == 0)
+              SizedBox.shrink(), // Nếu không có subtasks, không hiển thị gì
+
             Expanded(
               child: Align(
                 alignment: Alignment.centerRight,
                 child: Text(
-                  task.projectName,
+                  task.projectName, // Luôn hiển thị projectName
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -415,7 +420,8 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
     } catch (e) {
-      yield SizedBox.shrink(); // Trả về SizedBox nếu có lỗi
+      // Nếu có lỗi, trả về SizedBox để không làm UI bị vỡ
+      yield SizedBox.shrink();
     }
   }
 

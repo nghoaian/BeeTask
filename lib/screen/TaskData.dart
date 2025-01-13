@@ -299,6 +299,8 @@ class TaskData {
           // Mỗi khi có thay đổi trong subsubtask, yield giá trị mới
           yield subsubtaskSnapshot.docs.length;
         }
+      } else {
+        yield 0;
       }
     } catch (e) {
       print('Error getting count stream: $e');
@@ -340,6 +342,8 @@ class TaskData {
           // Mỗi khi có thay đổi trong subsubtasks hoàn thành, yield giá trị mới
           yield subsubtasksSnapshot.docs.length;
         }
+      } else {
+        yield 0;
       }
     } catch (e) {
       print('Error fetching completed count stream: $e');

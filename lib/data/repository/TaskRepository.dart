@@ -53,6 +53,8 @@ class FirebaseTaskRepository implements TaskRepository {
             taskData['id'] = doc.id;
             taskData['type'] = 'task';
             taskData['projectId'] = projectId; // Thêm projectId vào task
+            taskData['projectName'] =
+                project['name']; // Thêm projectId vào task
             return taskData;
           }).toList();
         });
@@ -75,6 +77,8 @@ class FirebaseTaskRepository implements TaskRepository {
               var subtaskData = subtaskDoc.data();
               subtaskData['id'] = subtaskDoc.id;
               subtaskData['type'] = 'subtask';
+              subtaskData['projectName'] =
+                  project['name']; // Thêm projectId vào task
 
               // Lấy subsubtasks của subtask
               var subsubtasksSnapshot = await FirebaseFirestore.instance
@@ -92,6 +96,7 @@ class FirebaseTaskRepository implements TaskRepository {
                 var subsubtaskData = subsubtaskDoc.data();
                 subsubtaskData['id'] = subsubtaskDoc.id;
                 subsubtaskData['type'] = 'subsubtask';
+                subsubtaskData['projectName'] = project['name'];
                 allSubtasks.add(subsubtaskData);
               }
 
