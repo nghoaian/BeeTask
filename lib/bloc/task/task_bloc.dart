@@ -16,7 +16,6 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       : super(TaskInitial()) {
     on<FetchTasksByDate>(_onFetchTasksByDate);
     on<AddTask>(_onAddTask);
-    on<UpdateTask>(_onUpdateTask);
     on<DeleteTask>(_onDeleteTask);
     on<LoadTasks>(_loadTasks);
   }
@@ -110,6 +109,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       emit(TaskError(e.toString()));
     }
   }
+
 
   Future<void> _onUpdateTask(UpdateTask event, Emitter<TaskState> emit) async {
     try {

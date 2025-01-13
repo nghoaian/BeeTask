@@ -29,17 +29,6 @@ class AuthAuthenticated extends AuthState {
 
 class AuthUnauthenticated extends AuthState {}
 
-class AuthSignedUp extends AuthState {}
-
-class AuthSignUpFailure extends AuthState {
-  final String errorMessage;
-
-  AuthSignUpFailure({required this.errorMessage});
-
-  @override
-  List<Object> get props => [errorMessage];
-}
-
 class ChangePasswordSuccess extends AuthState {}
 
 class ChangePasswordFailure extends AuthState {

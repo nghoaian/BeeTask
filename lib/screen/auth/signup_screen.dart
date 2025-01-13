@@ -1,7 +1,10 @@
 import 'package:bee_task/bloc/auth/auth_bloc.dart';
 import 'package:bee_task/bloc/auth/auth_event.dart';
 import 'package:bee_task/bloc/auth/auth_state.dart';
+import 'package:bee_task/data/repository/UserRepository.dart';
 import 'package:bee_task/screen/auth/login_screen.dart';
+import 'package:bee_task/screen/nav/nav_ui_screen.dart';
+import 'package:bee_task/screen/upcoming/home_screen.dart';
 import 'package:bee_task/util/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -32,15 +35,30 @@ class _SignupScreenState extends State<SignupScreen> {
       ),
       child: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state is AuthSignedUp) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => LoginScreen()),
+          debugPrint("Đã nhận trạng thái: $state");
+          if (state is AuthAuthenticated) {
+            debugPrint('AuthAuthenticated state emitted');
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Signup successful!'),
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 2),
+              ),
             );
-          } else if (state is AuthSignUpFailure) {
-            debugPrint("email tồn tại");
+
+            Future.delayed(Duration(seconds: 2), () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => NavUIScreen()),
+              );
+            });
+          } else if (state is AuthFailure) {
+            debugPrint('AuthFailure state emitted');
             _showErrorMsg(context, state.errorMessage);
           }
+          // else if (state is AuthUnauthenticated) {
+          //   _showErrorMsg(context, "Email already in use");
+          // }
         },
         child: Scaffold(
           body: Stack(
@@ -159,20 +177,23 @@ class _SignupScreenState extends State<SignupScreen> {
                           const SizedBox(height: 20),
                           // Sign Up Button
                           GestureDetector(
-                            onTap: () {
-                              if (passwordController.text ==
-                                  confirmPasswordController.text) {
-                                BlocProvider.of<AuthBloc>(context).add(
-                                  SignupRequested(
-                                    email: emailController.text,
-                                    password: passwordController.text,
-                                    username: usernameController.text,
-                                  ),
-                                );
-                              } else {
-                                _showErrorMsg(context, "Passwords don't match");
-                              }
+                            onTap: () async {
+                              await _handleSignup(context);
                             },
+                            // {
+                            //   if (passwordController.text ==
+                            //       confirmPasswordController.text) {
+                            //     context.read<AuthBloc>().add(
+                            //           SignupRequested(
+                            //             username: usernameController.text,
+                            //             email: emailController.text,
+                            //             password: passwordController.text,
+                            //           ),
+                            //         );
+                            //   } else {
+                            //     _showErrorMsg(context, "Passwords don't match");
+                            //   }
+                            // },
                             child: Container(
                               height: 55,
                               width: double.infinity,
@@ -237,7 +258,68 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
+  Future<void> _handleSignup(BuildContext context) async {
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
+    final confirmPassword = confirmPasswordController.text.trim();
+    final username = usernameController.text.trim();
+
+    if (username.isEmpty || email.isEmpty || password.isEmpty) {
+      _showErrorMsg(context, "Please fill in all fields");
+      return;
+    }
+
+    // Kiểm tra định dạng email
+    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
+      _showErrorMsg(context, "Email is not valid!");
+      return;
+    }
+
+    if (password != confirmPassword) {
+      _showErrorMsg(context, "Passwords don't match");
+      return;
+    }
+
+    // Kiểm tra email đã tồn tại chưa
+    final userRepository = FirebaseUserRepository(
+      firestore: FirebaseFirestore.instance,
+      firebaseAuth: FirebaseAuth.instance,
+    );
+    bool useremailExists = await userRepository.checkIfUserEmailExist(email);
+    if (useremailExists) {
+      _showErrorMsg(context, "Email already exists!");
+      return;
+    }
+
+    try {
+      UserCredential userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: email, password: password);
+
+      // Thêm thông tin user vào Firestore
+      String userId = userCredential.user!.uid;
+      await userRepository.addUser(userId, username, email);
+
+      Future.delayed(Duration(seconds: 2), () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => NavUIScreen()),
+              );
+            });
+    } on FirebaseAuthException catch (e) {
+      _showErrorMsg(context, e.message ?? "Unknown error");
+    }
+  }
+
   void _showErrorMsg(BuildContext context, String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          msg,
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 }

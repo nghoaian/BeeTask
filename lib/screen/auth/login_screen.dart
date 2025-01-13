@@ -1,6 +1,7 @@
 import 'package:bee_task/bloc/auth/auth_bloc.dart';
 import 'package:bee_task/bloc/auth/auth_event.dart';
 import 'package:bee_task/bloc/auth/auth_state.dart';
+import 'package:bee_task/data/repository/UserRepository.dart';
 import 'package:bee_task/screen/auth/signup_screen.dart';
 import 'package:bee_task/screen/nav/nav_ui_screen.dart';
 import 'package:bee_task/util/colors.dart';
@@ -189,14 +190,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildSignInButton(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        BlocProvider.of<AuthBloc>(context).add(
-          LoginRequested(
-            email: emailController.text,
-            password: passwordController.text,
-          ),
-        );
+      onTap: () async {
+        await _handleLogin(context);
       },
+      // {
+      //   BlocProvider.of<AuthBloc>(context).add(
+      //     LoginRequested(
+      //       email: emailController.text,
+      //       password: passwordController.text,
+      //     ),
+      //   );
+
+      // },
       child: Container(
         height: 55,
         width: 300,
@@ -218,12 +223,52 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  Future<void> _handleLogin(BuildContext context) async {
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      _showErrorMsg(context, "Please fill in all fields!");
+      return;
+    }
+    
+    // Kiểm tra định dạng email
+    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
+      _showErrorMsg(context, "Email is not valid!");
+      return;
+    }
+
+    // Kiểm tra email đã được đăng ký chưa
+    final userRepository = FirebaseUserRepository(
+      firestore: FirebaseFirestore.instance,
+      firebaseAuth: FirebaseAuth.instance,
+    );
+    bool useremailExists = await userRepository.checkIfUserEmailExist(email);
+    if (!useremailExists) {
+      _showErrorMsg(context, "Email is not registered!");
+      return;
+    }
+
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => NavUIScreen()),
+      );
+    } on FirebaseAuthException catch (e) {
+      _showErrorMsg(context, "Invalid email or password!");
+    }
+  }
+
   Widget _buildSignUp() {
-    return Align(
+        return Align(
       alignment: Alignment.bottomRight,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const Text(
             "Not a member?",
@@ -244,11 +289,21 @@ class _LoginScreenState extends State<LoginScreen> {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 17,
-                color: Colors.black,
+                color: AppColors.primary,
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showErrorMsg(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: Duration(seconds: 2),
       ),
     );
   }

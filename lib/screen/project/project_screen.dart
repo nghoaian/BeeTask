@@ -2,6 +2,7 @@ import 'package:bee_task/bloc/task/task_bloc.dart';
 import 'package:bee_task/bloc/task/task_event.dart';
 import 'package:bee_task/bloc/task/task_state.dart';
 import 'package:bee_task/data/model/task.dart';
+import 'package:bee_task/screen/project/share_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -53,8 +54,9 @@ class _ProjectScreenState extends State<ProjectScreen> {
             "Testproject",
             style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
           ),
+          centerTitle: true,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: Colors.black),
+            icon: Icon(Icons.arrow_back_ios, color: Colors.black),
             onPressed: () {
               Navigator.pop(context);
             },
@@ -62,7 +64,14 @@ class _ProjectScreenState extends State<ProjectScreen> {
           actions: [
             IconButton(
               icon: Icon(Icons.group, color: Colors.black),
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ShareScreen(),
+                  ),
+                );
+              },
             ),
             IconButton(
               icon: Icon(Icons.more_vert, color: Colors.black),
