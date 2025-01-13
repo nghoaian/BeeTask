@@ -6,7 +6,7 @@ class Task {
   final String description;
   final String dueDate;
   final String priority;
-  final bool completed;
+  bool completed;
   final String assignee;
   final String type;
   final String projectName;
@@ -87,5 +87,22 @@ class Task {
       completed: completed ?? this.completed,
       subtasks: subtasks ?? this.subtasks,
     );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'dueDate': dueDate,
+      'priority': priority,
+      'completed': completed,
+      'assignee': assignee,
+      'type': type,
+      'projectName': projectName,
+      'subtasks': subtasks
+          .map((subtask) => subtask.toMap())
+          .toList(), // Nếu có subtasks thì đệ quy chuyển thành Map
+    };
   }
 }

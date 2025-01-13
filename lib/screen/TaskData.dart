@@ -15,6 +15,10 @@ class TaskData {
   List<Map<String, dynamic>> subtasks = [];
   List<Map<String, dynamic>> subsubtasks = [];
   List<Map<String, dynamic>> users = [];
+  void loadData(String email) {
+    resetData();
+    listenToAllData(email);
+  }
 
   // Lắng nghe dữ liệu từ Firestore
   void listenToAllData(String userEmail) {
@@ -51,22 +55,21 @@ class TaskData {
     String userEmail = userChange.doc['userEmail'];
     var userData = userChange.doc.data() as Map<String, dynamic>;
 
-    // Kiểm tra xem người dùng đã có trong danh sách chưa
     int index = users.indexWhere((user) => user['userEmail'] == userEmail);
 
     if (userChange.type == DocumentChangeType.added) {
-      // Thêm người dùng mới vào danh sách
       if (index == -1) {
+        // Kiểm tra nếu chưa tồn tại
         users.add(userData);
       }
     } else if (userChange.type == DocumentChangeType.modified) {
-      // Cập nhật thông tin người dùng trong danh sách
       if (index != -1) {
+        // Cập nhật nếu đã tồn tại
         users[index] = userData;
       }
     } else if (userChange.type == DocumentChangeType.removed) {
-      // Xóa người dùng khỏi danh sách
       if (index != -1) {
+        // Xóa nếu đã tồn tại
         users.removeAt(index);
       }
     }
@@ -78,13 +81,23 @@ class TaskData {
     var projectData = projectChange.doc.data() as Map<String, dynamic>;
     projectData['id'] = projectId;
 
+    int index = projects.indexWhere((project) => project['id'] == projectId);
+
     if (projectChange.type == DocumentChangeType.added) {
-      projects.add(projectData);
+      if (index == -1) {
+        // Kiểm tra nếu chưa tồn tại
+        projects.add(projectData);
+      }
     } else if (projectChange.type == DocumentChangeType.modified) {
-      int index = projects.indexWhere((project) => project['id'] == projectId);
-      if (index != -1) projects[index] = projectData;
+      if (index != -1) {
+        // Cập nhật nếu đã tồn tại
+        projects[index] = projectData;
+      }
     } else if (projectChange.type == DocumentChangeType.removed) {
-      projects.removeWhere((project) => project['id'] == projectId);
+      if (index != -1) {
+        // Xóa nếu đã tồn tại
+        projects.removeAt(index);
+      }
     }
   }
 
@@ -116,11 +129,18 @@ class TaskData {
     taskData['projectName'] = projectName;
 
     if (taskChange.type == DocumentChangeType.added) {
-      tasks.add(taskData);
+      // Kiểm tra xem task đã tồn tại hay chưa
+      if (!tasks.any((task) => task['id'] == taskId)) {
+        tasks.add(taskData);
+      }
     } else if (taskChange.type == DocumentChangeType.modified) {
+      // Cập nhật task nếu đã tồn tại
       int index = tasks.indexWhere((task) => task['id'] == taskId);
-      if (index != -1) tasks[index] = taskData;
+      if (index != -1) {
+        tasks[index] = taskData;
+      }
     } else if (taskChange.type == DocumentChangeType.removed) {
+      // Xóa task khỏi danh sách nếu tồn tại
       tasks.removeWhere((task) => task['id'] == taskId);
     }
   }
@@ -151,16 +171,23 @@ class TaskData {
     var subtaskData = subtaskChange.doc.data() as Map<String, dynamic>;
     subtaskData['id'] = subtaskId;
     subtaskData['taskId'] = taskId;
-    subtaskData['projectId'] = taskId;
+    subtaskData['projectId'] = projectId;
     subtaskData['type'] = 'subtask';
     subtaskData['projectName'] = projectName;
 
     if (subtaskChange.type == DocumentChangeType.added) {
-      subtasks.add(subtaskData);
+      // Kiểm tra xem subtask đã tồn tại hay chưa
+      if (!subtasks.any((subtask) => subtask['id'] == subtaskId)) {
+        subtasks.add(subtaskData);
+      }
     } else if (subtaskChange.type == DocumentChangeType.modified) {
+      // Cập nhật subtask nếu đã tồn tại
       int index = subtasks.indexWhere((subtask) => subtask['id'] == subtaskId);
-      if (index != -1) subtasks[index] = subtaskData;
+      if (index != -1) {
+        subtasks[index] = subtaskData;
+      }
     } else if (subtaskChange.type == DocumentChangeType.removed) {
+      // Xóa subtask khỏi danh sách nếu tồn tại
       subtasks.removeWhere((subtask) => subtask['id'] == subtaskId);
     }
   }
@@ -198,12 +225,19 @@ class TaskData {
     subsubtaskData['taskId'] = taskId;
 
     if (subsubtaskChange.type == DocumentChangeType.added) {
-      subsubtasks.add(subsubtaskData);
+      // Kiểm tra xem subsubtask đã tồn tại hay chưa
+      if (!subsubtasks.any((subsubtask) => subsubtask['id'] == subsubtaskId)) {
+        subsubtasks.add(subsubtaskData);
+      }
     } else if (subsubtaskChange.type == DocumentChangeType.modified) {
+      // Cập nhật subsubtask nếu đã tồn tại
       int index = subsubtasks
           .indexWhere((subsubtask) => subsubtask['id'] == subsubtaskId);
-      if (index != -1) subsubtasks[index] = subsubtaskData;
+      if (index != -1) {
+        subsubtasks[index] = subsubtaskData;
+      }
     } else if (subsubtaskChange.type == DocumentChangeType.removed) {
+      // Xóa subsubtask khỏi danh sách nếu tồn tại
       subsubtasks.removeWhere((subsubtask) => subsubtask['id'] == subsubtaskId);
     }
   }
@@ -233,32 +267,83 @@ class TaskData {
   }
 
   // Tính tổng số subtasks tương ứng với taskId
-  int getSubtaskCount(String taskId) {
-    int count = subtasks.where((subtask) => subtask['taskId'] == taskId).length;
-    return count;
+  Stream<int> getCountByTypeStream(String id, String type) async* {
+    try {
+      if (type == 'task') {
+        var taskData = tasks.firstWhere((task) => task['id'] == id);
+
+        // Lắng nghe sự thay đổi số lượng subtasks của task
+        await for (var subtaskSnapshot in FirebaseFirestore.instance
+            .collection('projects')
+            .doc(taskData['projectId'])
+            .collection('tasks')
+            .doc(taskData['id'])
+            .collection('subtasks')
+            .snapshots()) {
+          // Mỗi khi có thay đổi trong subtask, yield giá trị mới
+          yield subtaskSnapshot.docs.length;
+        }
+      } else if (type == 'subtask') {
+        var subtaskData = subtasks.firstWhere((task) => task['id'] == id);
+
+        // Lắng nghe sự thay đổi số lượng subsubtasks của subtask
+        await for (var subsubtaskSnapshot in FirebaseFirestore.instance
+            .collection('projects')
+            .doc(subtaskData['projectId'])
+            .collection('tasks')
+            .doc(subtaskData['taskId'])
+            .collection('subtasks')
+            .doc(subtaskData['id'])
+            .collection('subsubtasks')
+            .snapshots()) {
+          // Mỗi khi có thay đổi trong subsubtask, yield giá trị mới
+          yield subsubtaskSnapshot.docs.length;
+        }
+      }
+    } catch (e) {
+      print('Error getting count stream: $e');
+      yield 0; // Trả về giá trị mặc định nếu có lỗi
+    }
   }
 
-  // Tính tổng số subsubtasks tương ứng với subtaskId
-  int getSubsubtaskCount(String subtaskId) {
-    int count = subsubtasks
-        .where((subsubtask) => subsubtask['subtaskId'] == subtaskId)
-        .length;
-    return count;
-  }
+  Stream<int> getCompletedCountStream(String id, String type) async* {
+    try {
+      if (type == 'task') {
+        var taskData = tasks.firstWhere((task) => task['id'] == id);
 
-  int getCompletedSubtaskCount(String taskId) {
-    int count = subtasks
-        .where((subtask) =>
-            subtask['taskId'] == taskId && subtask['completed'] == true)
-        .length;
-    return count;
-  }
+        // Lắng nghe sự thay đổi số lượng subtasks hoàn thành của task
+        await for (var subtasksSnapshot in FirebaseFirestore.instance
+            .collection('projects')
+            .doc(taskData['projectId']) // Lấy projectId từ task
+            .collection('tasks')
+            .doc(taskData['id']) // Lấy taskId từ task
+            .collection('subtasks')
+            .where('completed', isEqualTo: true)
+            .snapshots()) {
+          // Mỗi khi có thay đổi trong subtasks hoàn thành, yield giá trị mới
+          yield subtasksSnapshot.docs.length;
+        }
+      } else if (type == 'subtask') {
+        var subtaskData = subtasks.firstWhere((task) => task['id'] == id);
 
-  int getCompletedSubSubtaskCount(String subtaskId) {
-    int count = subtasks
-        .where((subtask) =>
-            subtask['subtaskId'] == subtaskId && subtask['completed'] == true)
-        .length;
-    return count;
+        // Lắng nghe sự thay đổi số lượng subsubtasks hoàn thành của subtask
+        await for (var subsubtasksSnapshot in FirebaseFirestore.instance
+            .collection('projects')
+            .doc(subtaskData['projectId'])
+            .collection('tasks')
+            .doc(subtaskData['taskId'])
+            .collection('subtasks')
+            .doc(subtaskData['id']) // Lấy subtaskId từ subtask
+            .collection('subsubtasks')
+            .where('completed', isEqualTo: true)
+            .snapshots()) {
+          // Mỗi khi có thay đổi trong subsubtasks hoàn thành, yield giá trị mới
+          yield subsubtasksSnapshot.docs.length;
+        }
+      }
+    } catch (e) {
+      print('Error fetching completed count stream: $e');
+      yield 0; // Trả về giá trị mặc định nếu có lỗi
+    }
   }
 }

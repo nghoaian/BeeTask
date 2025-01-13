@@ -94,8 +94,8 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
         emit(TaskError('User email is null'));
         return;
       }
-      final taskMaps =
-          await taskRepository.fetchTasksByDate(event.date, userEmail);
+      final taskMaps = await taskRepository.fetchTasksByDate(
+          event.date, event.showCompletedTasks, userEmail);
       final tasks = taskMaps.map((taskMap) => Task.copyTasks(taskMap)).toList();
       emit(TaskLoaded(tasks));
     } catch (e) {
@@ -106,7 +106,6 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   Future<void> _onAddTask(AddTask event, Emitter<TaskState> emit) async {
     try {
       await taskRepository.addTask(event.task);
-      add(FetchTasksByDate(event.task['date'])); // Refresh the task list
     } catch (e) {
       emit(TaskError(e.toString()));
     }
@@ -114,8 +113,8 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
   Future<void> _onUpdateTask(UpdateTask event, Emitter<TaskState> emit) async {
     try {
-      await taskRepository.updateTask(event.taskId, event.updatedTask);
-      add(FetchTasksByDate(event.updatedTask['date'])); // Refresh the task list
+      await taskRepository.updateTask(
+          event.taskId, event.updatedTask, event.type);
     } catch (e) {
       emit(TaskError(e.toString()));
     }

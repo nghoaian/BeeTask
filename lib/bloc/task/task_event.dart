@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:bee_task/data/model/task.dart';
 
 abstract class TaskEvent extends Equatable {
   const TaskEvent();
@@ -18,11 +19,12 @@ class LoadTasks extends TaskEvent {
 
 class FetchTasksByDate extends TaskEvent {
   final String date;
+  final bool showCompletedTasks;
 
-  const FetchTasksByDate(this.date);
+  const FetchTasksByDate(this.date, this.showCompletedTasks);
 
   @override
-  List<Object> get props => [date];
+  List<Object> get props => [date, showCompletedTasks];
 }
 
 class AddTask extends TaskEvent {
@@ -36,9 +38,10 @@ class AddTask extends TaskEvent {
 
 class UpdateTask extends TaskEvent {
   final String taskId;
-  final Map<String, dynamic> updatedTask;
+  final Task updatedTask;
+  final String type;
 
-  UpdateTask(this.taskId, this.updatedTask);
+  UpdateTask(this.taskId, this.updatedTask, this.type);
 
   @override
   List<Object> get props => [taskId, updatedTask];

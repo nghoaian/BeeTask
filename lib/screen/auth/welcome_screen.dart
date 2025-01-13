@@ -19,9 +19,8 @@ class WelcomeScreen extends StatelessWidget {
         builder: (context, state) {
           if (state is AuthAuthenticated) {
             User? user = FirebaseAuth.instance.currentUser;
-            TaskData().resetData();
             if (user != null && user.email != null) {
-              TaskData().listenToAllData(user.email!);
+              TaskData().loadData(user.email!);
             }
             return NavUIScreen();
           } else if (state is AuthUnauthenticated) {

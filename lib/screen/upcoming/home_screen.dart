@@ -8,7 +8,7 @@ import 'package:bee_task/bloc/task/task_bloc.dart';
 import 'package:bee_task/bloc/task/task_event.dart';
 import 'package:bee_task/bloc/task/task_state.dart';
 import 'package:bee_task/data/model/task.dart';
-
+import 'package:async/async.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -30,13 +30,15 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _selectedDay = DateTime.now(); // Mặc định ngày được chọn là ngày hiện tại
     _focusedDay = DateTime.now(); // Mặc định ngày được chọn là ngày hiện tại
-    context.read<TaskBloc>().add(FetchTasksByDate(_selectedDay != null
-        ? DateTime(
-            _focusedDay.year,
-            _focusedDay.month,
-            _focusedDay.day,
-          ).toIso8601String().substring(0, 10)
-        : DateTime.now().toIso8601String().substring(0, 10)));
+    context.read<TaskBloc>().add(FetchTasksByDate(
+        (_selectedDay != null
+            ? DateTime(
+                _focusedDay.year,
+                _focusedDay.month,
+                _focusedDay.day,
+              ).toIso8601String().substring(0, 10)
+            : DateTime.now().toIso8601String().substring(0, 10)),
+        showCompletedTasks));
   }
 
   @override
@@ -86,13 +88,15 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           _selectedDay = selectedDay;
           _focusedDay = focusedDay;
-          context.read<TaskBloc>().add(FetchTasksByDate(_selectedDay != null
-              ? DateTime(
-                  _selectedDay!.year,
-                  _selectedDay!.month,
-                  _selectedDay!.day,
-                ).toIso8601String().substring(0, 10)
-              : DateTime.now().toIso8601String().substring(0, 10)));
+          context.read<TaskBloc>().add(FetchTasksByDate(
+              (_selectedDay != null
+                  ? DateTime(
+                      _focusedDay.year,
+                      _focusedDay.month,
+                      _focusedDay.day,
+                    ).toIso8601String().substring(0, 10)
+                  : DateTime.now().toIso8601String().substring(0, 10)),
+              showCompletedTasks));
         });
       },
       onFormatChanged: (format) {
@@ -149,6 +153,15 @@ class _HomeScreenState extends State<HomeScreen> {
             onChanged: (value) {
               setState(() {
                 showCompletedTasks = value;
+                context.read<TaskBloc>().add(FetchTasksByDate(
+                    (_selectedDay != null
+                        ? DateTime(
+                            _focusedDay.year,
+                            _focusedDay.month,
+                            _focusedDay.day,
+                          ).toIso8601String().substring(0, 10)
+                        : DateTime.now().toIso8601String().substring(0, 10)),
+                    showCompletedTasks));
               });
             },
           ),
@@ -166,35 +179,30 @@ class _HomeScreenState extends State<HomeScreen> {
     return BlocBuilder<TaskBloc, TaskState>(
       builder: (context, state) {
         if (state is TaskLoading) {
-          // Hiển thị vòng tròn loading khi dữ liệu đang được tải
           return const Center(
             child: CircularProgressIndicator(),
           );
         } else if (state is TaskLoaded) {
-          // Khi dữ liệu đã được tải, hiển thị danh sách các task
-          final tasks = state.tasks; // Lấy danh sách task từ state
+          final tasks = state.tasks;
 
           if (tasks.isEmpty) {
             return _buildNoTaskMessage();
           }
-          return Expanded(
-            child: ListView.builder(
-              itemCount: tasks.length,
-              itemBuilder: (context, index) {
-                final Task item = tasks[index];
-                return _buildItemCard(item);
-              },
-            ),
+
+          return ListView.builder(
+            itemCount: tasks.length,
+            itemBuilder: (context, index) {
+              final Task item = tasks[index];
+              return _buildItemCard(item);
+            },
           );
         } else if (state is TaskError) {
-          // Khi có lỗi xảy ra, hiển thị thông báo lỗi
           return Center(
-            child: Text('Lỗi: ${state.error}'),
+            child: Text('Lỗi: ${state.error}',
+                style: TextStyle(color: Colors.red)),
           );
         } else {
-          // Mặc định hiển thị màn hình trống
           return _buildNoTaskMessage();
-          ;
         }
       },
     );
@@ -250,7 +258,25 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildTaskHeaderRow(item),
-              _buildSubtaskAndTypeRow(item),
+              StreamBuilder<Widget>(
+                stream: _buildSubtaskAndTypeRow(
+                    item), // Gọi hàm trả về Stream<Widget>
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return CircularProgressIndicator(); // Hiển thị loading khi dữ liệu đang được tải
+                  }
+                  if (snapshot.hasError) {
+                    return Text(
+                        'Error: ${snapshot.error}'); // Hiển thị lỗi nếu có
+                  }
+                  if (snapshot.hasData) {
+                    return snapshot.data ??
+                        SizedBox.shrink(); // Hiển thị widget nếu có dữ liệu
+                  }
+                  return SizedBox
+                      .shrink(); // Nếu không có dữ liệu, trả về SizedBox
+                },
+              ),
               _buildTaskDescription(item.description),
             ],
           ),
@@ -260,103 +286,137 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // Widget xây dựng hàng tiêu đề công việc
-  Widget _buildTaskHeaderRow(Task task) {
-    return Row(children: [
-      GestureDetector(
-        // onTap: () => _toggleTaskCompletion(task),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: 16,
-          height: 16,
-          decoration: BoxDecoration(
-            color: task.completed ? Colors.green : Colors.transparent,
-            border: Border.all(
-              color: _getPriorityColor(task.priority),
-              width: 2,
-            ),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: task.completed
-              ? const Icon(
-                  Icons.check,
-                  color: Colors.white,
-                  size: 10,
-                )
-              : null,
-        ),
-      ),
-      const SizedBox(width: 8),
-      Expanded(
-        child: Text(
-          task.title, // Sử dụng title đã cập nhật
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-            decoration: task.completed ? TextDecoration.lineThrough : null,
-          ),
-        ),
-      ),
-      if (TaskData().getUserAvatarFromList(task.assignee) != '') ...[
-        CircleAvatar(
-          radius: 16,
-          backgroundImage: AssetImage(
-              'assets/$TaskData().getUserAvatarFromList(task.asssignee)'),
-        ),
-      ] else if (task.assignee != '') ...[
-        CircleAvatar(
-          radius: 16,
-          backgroundColor: Colors.white,
-          child: Text(
-            task.assignee[0].toUpperCase(),
-            style: const TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ],
-    ]);
-  }
 
-  // Widget hiển thị số subtask hoàn thành và type
-  Widget _buildSubtaskAndTypeRow(Task task) {
-    int completedSubtasks = 0;
-    int totalSubtasks = 0;
-    if (task.type == 'task') {
-      completedSubtasks = TaskData().getCompletedSubtaskCount(task.id);
-      totalSubtasks = TaskData().getSubtaskCount(task.id);
-    } else if (task.type == 'subtask') {
-      completedSubtasks = TaskData().getCompletedSubSubtaskCount(task.id);
-      totalSubtasks = TaskData().getSubsubtaskCount(task.id);
-    }
+  Widget _buildTaskHeaderRow(Task task) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        if (totalSubtasks > 0)
-          Text(
-            '$completedSubtasks / $totalSubtasks',
+        GestureDetector(
+          onTap: () {
+            if (task != null) {
+              task.completed = !task.completed;
+            }
+            context.read<TaskBloc>().add(UpdateTask(task.id, task, task.type));
+
+            context.read<TaskBloc>().add(FetchTasksByDate(
+                (_selectedDay != null
+                    ? DateTime(
+                        _focusedDay.year,
+                        _focusedDay.month,
+                        _focusedDay.day,
+                      ).toIso8601String().substring(0, 10)
+                    : DateTime.now().toIso8601String().substring(0, 10)),
+                showCompletedTasks));
+            setState(() {
+              context.read<TaskBloc>().add(FetchTasksByDate(
+                  (_selectedDay != null
+                      ? DateTime(
+                          _focusedDay.year,
+                          _focusedDay.month,
+                          _focusedDay.day,
+                        ).toIso8601String().substring(0, 10)
+                      : DateTime.now().toIso8601String().substring(0, 10)),
+                  showCompletedTasks));
+            });
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: 16,
+            height: 16,
+            decoration: BoxDecoration(
+              color: task.completed ? Colors.green : Colors.transparent,
+              border: Border.all(
+                color: _getPriorityColor(task.priority),
+                width: 2,
+              ),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: task.completed
+                ? const Icon(
+                    Icons.check,
+                    color: Colors.white,
+                    size: 10,
+                  )
+                : null,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            task.title,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.grey[600],
+              color: Colors.black,
+              decoration: task.completed ? TextDecoration.lineThrough : null,
             ),
           ),
-        Expanded(
-          child: Align(
-            alignment: Alignment.centerRight,
+        ),
+        if (TaskData().getUserAvatarFromList(task.assignee) != '') ...[
+          CircleAvatar(
+            radius: 16,
+            backgroundImage: AssetImage(
+                'assets/${TaskData().getUserAvatarFromList(task.assignee)}'),
+          ),
+        ] else if (task.assignee != '') ...[
+          CircleAvatar(
+            radius: 16,
+            backgroundColor: Colors.white,
             child: Text(
-              task.projectName,
-              style: TextStyle(
-                fontSize: 14,
+              task.assignee[0].toUpperCase(),
+              style: const TextStyle(
+                color: Colors.black,
                 fontWeight: FontWeight.bold,
-                color: _getPriorityColor(task.priority),
               ),
             ),
           ),
-        ),
+        ],
       ],
     );
+  }
+
+  Stream<Widget> _buildSubtaskAndTypeRow(Task task) async* {
+    try {
+      // Sử dụng StreamZip để lắng nghe cả 2 Stream cùng lúc
+      await for (var result in StreamZip([
+        TaskData().getCountByTypeStream(
+            task.id, task.type), // Stream cho số lượng totalSubtasks
+        TaskData().getCompletedCountStream(
+            task.id, task.type), // Stream cho  completedSubtasks
+      ])) {
+        int completedSubtasks = result[1]; // Số lượng completedSubtasks
+        int totalSubtasks = result[0]; // Số lượng totalSubtasks
+
+        yield Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            if (totalSubtasks > 0)
+              Text(
+                '$completedSubtasks / $totalSubtasks',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[600],
+                ),
+              ),
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  task.projectName,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: _getPriorityColor(task.priority),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      }
+    } catch (e) {
+      yield SizedBox.shrink(); // Trả về SizedBox nếu có lỗi
+    }
   }
 
   // Widget hiển thị mô tả công việc
