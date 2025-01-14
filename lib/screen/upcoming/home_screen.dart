@@ -213,44 +213,8 @@ class _HomeScreenState extends State<HomeScreen> {
       margin: const EdgeInsets.all(8.0),
       child: GestureDetector(
         onTap: () {
-          //   if (item['type'] == 'subtask') {
-          //     _showTaskDetailsDialog(
-          //       {},
-          //       item['subtask'],
-          //       item,
-          //       {},
-          //       item['category'],
-          //       priorityColor,
-          //       completedSubtasks,
-          //       totalSubtasks,
-          //       data,
-          //       item['typeID'],
-          //     );
-          //   } else if (item['type'] == 'subsubtask') {
-          //     _showTaskDetailsDialog(
-          //         {},
-          //         item['subsubtask'],
-          //         {},
-          //         item,
-          //         item['category'],
-          //         priorityColor,
-          //         completedSubtasks,
-          //         totalSubtasks,
-          //         data,
-          //         item['typeID']);
-          //   } else {
-          //     _showTaskDetailsDialog(
-          //         item,
-          //         item['task'],
-          //         {},
-          //         {},
-          //         item['category'],
-          //         priorityColor,
-          //         completedSubtasks,
-          //         totalSubtasks,
-          //         data,
-          //         item['typeID']);
-          //   }
+          _showTaskDetailsDialog(
+              item.id, item.type, showCompletedTasks, item.projectName);
         },
         child: Padding(
           padding: const EdgeInsets.all(8.0),
@@ -496,7 +460,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // Hàm hiển thị dialog chi tiết công việc
-  void _showTaskDetailsDialog() {}
+  void _showTaskDetailsDialog(
+      String taskId, String type, bool showCompletedTask, String projectName) {
+    showDialog(
+        context: context,
+        builder: (_) => TaskDetailsDialog(
+            taskId: taskId,
+            type: type,
+            projectName: projectName,
+            showCompletedTasks: showCompletedTasks));
+  }
 
   void _showAddTaskDialog(BuildContext context) {
     // showDialog(
