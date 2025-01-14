@@ -8,14 +8,13 @@ class TaskDetailsDialog extends StatefulWidget {
   final String type;
   final String projectName;
 
-  bool showCompletedTasks;
+  final bool showCompletedTasks;
 
-  TaskDetailsDialog({
-    required this.taskId,
-    required this.type,
-    required this.showCompletedTasks,
-    required this.projectName,
-  });
+  const TaskDetailsDialog(
+      {required this.taskId,
+      required this.type,
+      required this.projectName,
+      required this.showCompletedTasks});
 
   @override
   _TaskDetailsDialogState createState() => _TaskDetailsDialogState();
@@ -64,6 +63,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                 const SizedBox(height: 8.0),
                 _buildDescriptionEdit(context, task),
                 const SizedBox(height: 16.0),
+                buildCompletedSubtasksRow(),
                 // Handle subtasks
                 // if (task['subtasks'] != null &&
                 //     task['subtasks'].isNotEmpty) ...[
@@ -188,143 +188,164 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
       ),
     );
   }
-}
 
 // Widget để hiển thị nút thêm subtask
-Widget buildAddSubtaskButton() {
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 10.0),
-    child: Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(4),
-        boxShadow: [BoxShadow(color: Colors.grey.shade300, blurRadius: 5)],
-      ),
-      child: TextButton(
-        onPressed: () {
-          // showDialog(
-          //   context: context,
-          //   builder: (context) => AddSubTaskDialog(
-          //     data: widget.data,
-          //     selectDay: widget.selectedDate,
-          //     typeID: widget.typeID,
-          //   ),
-          // );
-        },
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          minimumSize: Size(double.infinity, 40),
+  Widget buildAddSubtaskButton() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(4),
+          boxShadow: [BoxShadow(color: Colors.grey.shade300, blurRadius: 5)],
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.add, color: Colors.red, size: 18),
-            const SizedBox(width: 8),
-            const Text(
-              'Add Subtask',
-              style: TextStyle(color: Colors.red, fontSize: 14),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-}
-
-Widget _buildPriorityEditDialog(
-    BuildContext context, Map<String, dynamic> taskData) {
-  return GestureDetector(
-    onTap: () {
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('Edit Priority'),
-          content: DropdownButton<String>(
-            value: taskData['priority'] ?? 'Trung bình', // Default priority
-            onChanged: (String? newValue) {
-              if (newValue != null) {
-                taskData['priority'] = newValue; // Update priority
-                Navigator.pop(context); // Close the dialog
-              }
-            },
-            items: ['Cao', 'Trung bình', 'Thấp']
-                .map((priority) => DropdownMenuItem<String>(
-                      value: priority,
-                      child: Text(priority),
-                    ))
-                .toList(),
+        child: TextButton(
+          onPressed: () {
+            // showDialog(
+            //   context: context,
+            //   builder: (context) => AddSubTaskDialog(
+            //     data: widget.data,
+            //     selectDay: widget.selectedDate,
+            //     typeID: widget.typeID,
+            //   ),
+            // );
+          },
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            minimumSize: Size(double.infinity, 40),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.add, color: Colors.red, size: 18),
+              const SizedBox(width: 8),
+              const Text(
+                'Add Subtask',
+                style: TextStyle(color: Colors.red, fontSize: 14),
+              ),
+            ],
           ),
         ),
-      );
-    },
-    child: Text(
-      'Priority: ${taskData['priority'] ?? 'Trung bình'}', // Display priority
-      style: const TextStyle(fontWeight: FontWeight.bold),
-    ),
-  );
-}
+      ),
+    );
+  }
+
+  Widget _buildPriorityEditDialog(
+      BuildContext context, Map<String, dynamic> taskData) {
+    return GestureDetector(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text('Edit Priority'),
+            content: DropdownButton<String>(
+              value: taskData['priority'] ?? 'Trung bình', // Default priority
+              onChanged: (String? newValue) {
+                if (newValue != null) {
+                  taskData['priority'] = newValue; // Update priority
+                  Navigator.pop(context); // Close the dialog
+                }
+              },
+              items: ['Cao', 'Trung bình', 'Thấp']
+                  .map((priority) => DropdownMenuItem<String>(
+                        value: priority,
+                        child: Text(priority),
+                      ))
+                  .toList(),
+            ),
+          ),
+        );
+      },
+      child: Text(
+        'Priority: ${taskData['priority'] ?? 'Trung bình'}', // Display priority
+        style: const TextStyle(fontWeight: FontWeight.bold),
+      ),
+    );
+  }
 
 // Widget để hiển thị thông tin Project
-Widget _buildProjectText(String projectName) {
-  return Text(
-    'Project: $projectName',
-    style: const TextStyle(fontWeight: FontWeight.bold),
-  );
-}
+  Widget _buildProjectText(String projectName) {
+    return Text(
+      'Project: $projectName',
+      style: const TextStyle(fontWeight: FontWeight.bold),
+    );
+  }
 
 // Widget để hiển thị description và dialog chỉnh sửa
-Widget _buildDescriptionEdit(
-    BuildContext context, Map<String, dynamic> taskData) {
-  return GestureDetector(
-    onTap: () {
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('Edit Description'),
-          content: SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: 300),
-              child: TextField(
-                controller:
-                    TextEditingController(text: taskData['description']),
-                onChanged: (value) {},
-                maxLines: null,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
+  Widget _buildDescriptionEdit(
+      BuildContext context, Map<String, dynamic> taskData) {
+    return GestureDetector(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text('Edit Description'),
+            content: SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: 300),
+                child: TextField(
+                  controller:
+                      TextEditingController(text: taskData['description']),
+                  onChanged: (value) {},
+                  maxLines: null,
+                  decoration: const InputDecoration(
+                    labelText: 'Description',
+                  ),
                 ),
               ),
             ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context); // Đóng dialog
+                },
+                child: const Text('Save'),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context); // Đóng dialog
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        ),
-      );
-    },
-    child: Text(
-      'Description: ${taskData['description']}',
-      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-    ),
-  );
-}
+        );
+      },
+      child: Text(
+        'Description: ${taskData['description']}',
+        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+      ),
+    );
+  }
 
 // Widget để hiển thị số lượng subtask đã hoàn thành
-Widget buildCompletedSubtasksRow() {
-  return Row(
-    children: [
-      Text(
-        // 'Completed Subtasks: ${_getCompletedSubtasks()} / ${widget.totalSubtasks}',
-        'Completed Subtasks: ',
-        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-      ),
-    ],
-  );
-}
+// Widget để hiển thị số lượng subtask đã hoàn thành
+  Widget buildCompletedSubtasksRow() {
+    return FutureBuilder<List<int>>(
+      future: Future.wait([
+        TaskData().getCountByTypeStream(widget.taskId, widget.type).first,
+        TaskData().getCompletedCountStream(widget.taskId, widget.type).first
+      ]),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (!snapshot.hasData) {
+          return Center(child: Text('No data available'));
+        }
+
+        var result = snapshot.data!;
+        int totalSubtasks = result[0];
+        int completedSubtasks = result[1];
+
+        return Row(
+          children: [
+            if (totalSubtasks > 0)
+              Text(
+                'Completed Subtasks: $completedSubtasks / $totalSubtasks',
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+          ],
+        );
+      },
+    );
+  }
 
 // Widget để hiển thị subtask
 // Widget buildSubtaskRow(var subtask) {
@@ -558,54 +579,55 @@ Widget buildCompletedSubtasksRow() {
 // }
 
 // Widget để hiển thị nút thêm comment và upload file
-Widget buildAddCommentAndUploadButton() {
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 10.0),
-    child: Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(4),
-        boxShadow: [BoxShadow(color: Colors.grey.shade300, blurRadius: 5)],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextButton(
-              onPressed: () {
-                // Add your logic to add a comment
-              },
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                minimumSize: Size(double.infinity, 40),
-              ),
-              child: const Text(
-                'Add Comment',
-                style: TextStyle(fontSize: 14),
+  Widget buildAddCommentAndUploadButton() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(4),
+          boxShadow: [BoxShadow(color: Colors.grey.shade300, blurRadius: 5)],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextButton(
+                onPressed: () {
+                  // Add your logic to add a comment
+                },
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  minimumSize: Size(double.infinity, 40),
+                ),
+                child: const Text(
+                  'Add Comment',
+                  style: TextStyle(fontSize: 14),
+                ),
               ),
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.cloud_upload),
-            onPressed: () {
-              // Handle file upload logic
-            },
-          ),
-        ],
+            IconButton(
+              icon: const Icon(Icons.cloud_upload),
+              onPressed: () {
+                // Handle file upload logic
+              },
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
 // Widget để hiển thị nút đóng dialog
-Widget buildCloseButton(BuildContext context) {
-  return TextButton(
-    onPressed: () {
-      Navigator.pop(context);
-    },
-    child: const Text('Close'),
-  );
+  Widget buildCloseButton(BuildContext context) {
+    return TextButton(
+      onPressed: () {
+        Navigator.pop(context);
+      },
+      child: const Text('Close'),
+    );
+  }
+
+  void _changeAssignee() {}
+
+  void _deleteTask() {}
 }
-
-void _changeAssignee() {}
-
-void _deleteTask() {}
