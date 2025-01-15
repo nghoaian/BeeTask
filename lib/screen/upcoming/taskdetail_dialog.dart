@@ -71,12 +71,13 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   Text('Subtasks:',
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   for (var subtask in task['subtasks']) ...[
-                    buildSubtaskRow(subtask), // Hiển thị các subtasks
+                    buildSubtaskRow(
+                        subtask, 'subtask'), // Hiển thị các subtasks
                     if (subtask['subsubtasks'] != null &&
                         subtask['subsubtasks'].isNotEmpty) ...[
+                      buildSubsubtasks(subtask['subsubtasks'],
+                          'subsubtask'), // Hiển thị các subsubtasks
                       const SizedBox(height: 8.0),
-                      buildSubsubtasks(
-                          subtask['subsubtasks']), // Hiển thị các subsubtasks
                     ],
                   ],
                 ] else if (task['subsubtasks'] != null &&
@@ -85,12 +86,8 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   Text('Subtasks:',
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   for (var subtask in task['subsubtasks']) ...[
-                    buildSubtaskRow(subtask), // Hiển thị các subtasks
-                    //     if (subtask['subsubtasks'] != null &&
-                    //         subtask['subsubtasks'].isNotEmpty) ...[
-                    //       const SizedBox(height: 8.0),
-                    //       buildSubsubtasks(subtask), // Hiển thị các subsubtasks
-                    //     ],
+                    buildSubtaskRow(
+                        subtask, 'subsubtask'), // Hiển thị các subtasks
                   ],
                 ],
               ],
@@ -362,7 +359,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
   }
 
 //Widget để hiển thị subtask
-  Widget buildSubtaskRow(var subtask) {
+  Widget buildSubtaskRow(var subtask, String type) {
     return FutureBuilder<List<int>>(
       future: Future.wait([
         if (widget.type == 'task') ...[
@@ -390,39 +387,13 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
 
         return GestureDetector(
           onTap: () {
-            // showDialog(
-            //   context: context,
-            //   builder: (context) => TaskDetailsDialog(
-            //     task: {},
-            //     taskName: subtask['subtask'],
-            //     subtasks: subtask,
-            //     subsubtasks: {},
-            //     project: widget.project,
-            //     priorityColor: _getPriorityColor(subtask['priority']),
-            //     completedSubtasks: completedSubtasks,
-            //     totalSubtasks: totalSubtasks,
-            //     data: widget.data,
-            //     typeID: widget.typeID,
-            //     selectedDate: widget.selectedDate,
-            //     onStatusChanged: (subtask) {
-            //       setState(() {
-            //         subtask['status'] = subtask['status'] == 'Hoàn Thành'
-            //             ? 'Chưa Hoàn Thành'
-            //             : 'Hoàn Thành';
-            //       });
-            //     },
-            //     resetScreen: () {
-            //       setState(() {});
-            //     },
-            //     onShowCompletedTasksChanged: widget.onShowCompletedTasksChanged,
-            //     showCompletedTasks: widget.showCompletedTasks,
-            //     onDataUpdated: (updatedData) {
-            //       setState(() {
-            //         widget.onDataUpdated(updatedData);
-            //       });
-            //     },
-            //   ),
-            // );
+            showDialog(
+                context: context,
+                builder: (context) => TaskDetailsDialog(
+                    taskId: subtask['id'],
+                    type: type,
+                    projectName: widget.projectName,
+                    showCompletedTasks: widget.showCompletedTasks));
           },
           child: Row(
             children: [
@@ -495,7 +466,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
   }
 
 // Widget để hiển thị các subsubtasks bên trong một subtask
-  Widget buildSubsubtasks(var subtask) {
+  Widget buildSubsubtasks(var subtask, String type) {
     // Lọc subsubtasks dựa trên trạng thái và widget.showCompletedTasks
 
     return Column(
@@ -506,49 +477,13 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
             padding: const EdgeInsets.only(left: 24.0),
             child: GestureDetector(
               onTap: () {
-                // Mở dialog khi nhấn vào bất kỳ dòng subsubtask nào
-                // Mở thêm dialog mới với dữ liệu khác
-                int completedSubtasks = 0;
-                int totalSubtasks = 0;
-                totalSubtasks = subtask['subsubtasks'].length;
-                completedSubtasks = subtask['subsubtasks']
-                    .where((subtask) => subtask['status'] == 'Hoàn Thành')
-                    .length;
-
-                // showDialog(
-                //   context: context,
-                //   builder: (context) => TaskDetailsDialog(
-                //     task: {},
-                //     taskName: subsubtask['subsubtask'],
-                //     subtasks: {},
-                //     subsubtasks: subsubtask,
-                //     project: widget.project,
-                //     priorityColor: _getPriorityColor(subsubtask['priority']),
-                //     data: widget.data,
-                //     completedSubtasks: completedSubtasks,
-                //     totalSubtasks: totalSubtasks,
-                //     selectedDate: widget.selectedDate,
-                //     typeID: widget.typeID,
-                //     onStatusChanged: (subtask) {
-                //       setState(() {
-                //         subtask['status'] = subtask['status'] == 'Hoàn Thành'
-                //             ? 'Chưa Hoàn Thành'
-                //             : 'Hoàn Thành';
-                //       });
-                //     },
-                //     resetScreen: () {
-                //       setState(() {});
-                //     },
-                //     onShowCompletedTasksChanged:
-                //         widget.onShowCompletedTasksChanged,
-                //     showCompletedTasks: widget.showCompletedTasks,
-                //     onDataUpdated: (updatedData) {
-                //       setState(() {
-                //         widget.onDataUpdated(updatedData);
-                //       });
-                //     },
-                //   ),
-                //);
+                showDialog(
+                    context: context,
+                    builder: (context) => TaskDetailsDialog(
+                        taskId: subsubtask['id'],
+                        type: type,
+                        projectName: widget.projectName,
+                        showCompletedTasks: widget.showCompletedTasks));
               },
               child: Row(
                 children: [
