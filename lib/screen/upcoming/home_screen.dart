@@ -455,12 +455,31 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showTaskDetailsDialog(
       String taskId, String type, bool showCompletedTask, String projectName) {
     showDialog(
-        context: context,
-        builder: (_) => TaskDetailsDialog(
-            taskId: taskId,
-            type: type,
-            projectName: projectName,
-            showCompletedTasks: showCompletedTasks));
+      context: context,
+      builder: (context) {
+        return TaskDetailsDialog(
+          taskId: taskId,
+          type: type,
+          projectName: projectName,
+          showCompletedTasks: true,
+          taskBloc: BlocProvider.of<TaskBloc>(context),
+          resetDialog: () => {},
+          resetScreen: () => setState(() {
+            context.read<TaskBloc>().add(
+                  FetchTasksByDate(
+                      (_selectedDay != null
+                          ? DateTime(
+                              _focusedDay.year,
+                              _focusedDay.month,
+                              _focusedDay.day,
+                            ).toIso8601String().substring(0, 10)
+                          : DateTime.now().toIso8601String().substring(0, 10)),
+                      showCompletedTasks),
+                );
+          }),
+        );
+      },
+    );
   }
 
   void _showAddTaskDialog(BuildContext context) {

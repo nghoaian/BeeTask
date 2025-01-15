@@ -1,20 +1,28 @@
+import 'package:bee_task/bloc/task/task_event.dart';
 import 'package:flutter/material.dart';
 import 'package:bee_task/util/colors.dart';
 import 'package:bee_task/screen/upcoming/addsubtask_dialog.dart';
 import 'package:bee_task/screen/TaskData.dart';
+import 'package:bee_task/bloc/task/task_bloc.dart';
+import 'package:bee_task/data/model/task.dart';
 
 class TaskDetailsDialog extends StatefulWidget {
   final String taskId;
   final String type;
   final String projectName;
-
   final bool showCompletedTasks;
+  final TaskBloc taskBloc; // Accept TaskBloc via constructor
+  final Function resetScreen;
+  final Function resetDialog;
 
   const TaskDetailsDialog(
       {required this.taskId,
       required this.type,
       required this.projectName,
-      required this.showCompletedTasks});
+      required this.showCompletedTasks,
+      required this.taskBloc,
+      required this.resetScreen,
+      required this.resetDialog});
 
   @override
   _TaskDetailsDialogState createState() => _TaskDetailsDialogState();
@@ -127,6 +135,21 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   setState(() {
                     // Update the task's title
                     taskData['title'] = value;
+                    Task task = Task(
+                      id: taskData['id'],
+                      title: taskData['title'],
+                      description: taskData['description'],
+                      dueDate: taskData['dueDate'],
+                      priority: taskData['priority'],
+                      assignee: taskData['assignee'],
+                      type: widget.type,
+                      projectName: widget.projectName,
+                      completed: taskData['completed'],
+                      subtasks: [],
+                    );
+                    widget.taskBloc
+                        .add(UpdateTask(widget.taskId, task, widget.type));
+                    widget.resetScreen();
                   });
                 },
                 decoration: const InputDecoration(
@@ -253,7 +276,24 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
               value: taskData['priority'] ?? 'Trung bình', // Default priority
               onChanged: (String? newValue) {
                 if (newValue != null) {
-                  taskData['priority'] = newValue; // Update priority
+                  setState(() {
+                    taskData['priority'] = newValue; // Update priority
+                    Task task = Task(
+                      id: taskData['id'],
+                      title: taskData['title'],
+                      description: taskData['description'],
+                      dueDate: taskData['dueDate'],
+                      priority: taskData['priority'],
+                      assignee: taskData['assignee'],
+                      type: widget.type,
+                      projectName: widget.projectName,
+                      completed: taskData['completed'],
+                      subtasks: [],
+                    );
+                    widget.taskBloc
+                        .add(UpdateTask(widget.taskId, task, widget.type));
+                    widget.resetScreen();
+                  });
                   Navigator.pop(context); // Close the dialog
                 }
               },
@@ -297,7 +337,26 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                 child: TextField(
                   controller:
                       TextEditingController(text: taskData['description']),
-                  onChanged: (value) {},
+                  onChanged: (value) {
+                    setState(() {
+                      taskData['description'] = value; // Update priority
+                      Task task = Task(
+                        id: taskData['id'],
+                        title: taskData['title'],
+                        description: taskData['description'],
+                        dueDate: taskData['dueDate'],
+                        priority: taskData['priority'],
+                        assignee: taskData['assignee'],
+                        type: widget.type,
+                        projectName: widget.projectName,
+                        completed: taskData['completed'],
+                        subtasks: [],
+                      );
+                      widget.taskBloc
+                          .add(UpdateTask(widget.taskId, task, widget.type));
+                      widget.resetScreen();
+                    });
+                  },
                   maxLines: null,
                   decoration: const InputDecoration(
                     labelText: 'Description',
@@ -323,7 +382,6 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
     );
   }
 
-// Widget để hiển thị số lượng subtask đã hoàn thành
 // Widget để hiển thị số lượng subtask đã hoàn thành
   Widget buildCompletedSubtasksRow() {
     return FutureBuilder<List<int>>(
@@ -359,9 +417,11 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
   }
 
 //Widget để hiển thị subtask
+  bool isUpdating = false;
+
   Widget buildSubtaskRow(var subtask, String type) {
-    return FutureBuilder<List<int>>(
-      future: Future.wait([
+    return StreamBuilder<List<int>>(
+      stream: Stream.fromFuture(Future.wait([
         if (widget.type == 'task') ...[
           TaskData().getCountByTypeStream(subtask['id'], 'subtask').first,
           TaskData().getCompletedCountStream(subtask['id'], 'subtask').first
@@ -369,53 +429,71 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
           TaskData().getCountByTypeStream(subtask['id'], 'subsubtask').first,
           TaskData().getCompletedCountStream(subtask['id'], 'subsubtask').first
         ]
-      ]),
+      ])),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (snapshot.connectionState == ConnectionState.waiting || isUpdating) {
           return Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         } else if (!snapshot.hasData) {
           return Center(child: Text('No data available'));
         }
-        int totalSubtasks = 0;
-        int completedSubtasks = 0;
 
         var result = snapshot.data!;
-        totalSubtasks = result[0];
-        completedSubtasks = result[1];
+        int totalSubtasks = result[0];
+        int completedSubtasks = result[1];
 
         return GestureDetector(
-          onTap: () {
+          onTap: () async {
             showDialog(
-                context: context,
-                builder: (context) => TaskDetailsDialog(
-                    taskId: subtask['id'],
-                    type: type,
-                    projectName: widget.projectName,
-                    showCompletedTasks: widget.showCompletedTasks));
+              context: context,
+              builder: (context) => TaskDetailsDialog(
+                taskId: subtask['id'],
+                type: type,
+                projectName: widget.projectName,
+                showCompletedTasks: widget.showCompletedTasks,
+                taskBloc: widget.taskBloc,
+                resetScreen: widget.resetScreen,
+                resetDialog: () => setState(() {
+                  task = TaskData()
+                      .fetchDataFromFirestore(widget.type, widget.taskId);
+                }),
+              ),
+            );
           },
           child: Row(
             children: [
               GestureDetector(
-                onTap: () {
-                  String newStatus = subtask['status'] == 'Hoàn Thành'
-                      ? 'Chưa Hoàn Thành'
-                      : 'Hoàn Thành';
+                onTap: () async {
+                  setState(() {
+                    isUpdating = true; // Khóa UI trong khi đang cập nhật
+                  });
 
-                  // setState(() {
-                  //   // Cập nhật trạng thái của subtask
-                  //   subtask['status'] = newStatus;
+                  // Cập nhật trạng thái subtask
+                  subtask['completed'] = !subtask['completed'];
+                  Task task = Task(
+                    id: subtask['id'],
+                    title: subtask['title'],
+                    description: subtask['description'],
+                    dueDate: subtask['dueDate'],
+                    priority: subtask['priority'],
+                    assignee: subtask['assignee'],
+                    type: type,
+                    projectName: widget.projectName,
+                    completed: subtask['completed'],
+                    subtasks: [],
+                  );
 
-                  //   // Cập nhật trạng thái của các subsubtask nếu có
-                  //   if (subtask['subsubtasks'] != null) {
-                  //     for (var subsubtask in subtask['subsubtasks']) {
-                  //       subsubtask['status'] = newStatus;
-                  //     }
-                  //   }
-                  //   // _updateSubtaskStatus(subtask); // Cập nhật trạng thái subtask
-                  //   // _updateTaskStatus(); // Cập nhật trạng thái task
-                  // });
+                  // Gửi cập nhật lên Firestore
+                  widget.taskBloc.add(UpdateTask(subtask['id'], task, type));
+
+                  // Chờ một khoảng thời gian ngắn để đảm bảo Firestore kịp cập nhật
+                  await Future.delayed(Duration(milliseconds: 300));
+                  widget.resetDialog();
+
+                  setState(() {
+                    isUpdating = false; // Mở khóa UI sau khi hoàn tất
+                  });
                 },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
@@ -456,8 +534,6 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   ),
                 ),
               ),
-              // if (subtask['assignee']?.isNotEmpty ?? false)
-              //   buildCircleAvatar(subtask['assignee'], subtask['avatar']),
             ],
           ),
         );
@@ -465,10 +541,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
     );
   }
 
-// Widget để hiển thị các subsubtasks bên trong một subtask
   Widget buildSubsubtasks(var subtask, String type) {
-    // Lọc subsubtasks dựa trên trạng thái và widget.showCompletedTasks
-
     return Column(
       children: [
         for (var subsubtask in subtask) ...[
@@ -478,37 +551,80 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
             child: GestureDetector(
               onTap: () {
                 showDialog(
-                    context: context,
-                    builder: (context) => TaskDetailsDialog(
-                        taskId: subsubtask['id'],
-                        type: type,
-                        projectName: widget.projectName,
-                        showCompletedTasks: widget.showCompletedTasks));
+                  context: context,
+                  builder: (context) => TaskDetailsDialog(
+                    taskId: subsubtask['id'],
+                    type: type,
+                    projectName: widget.projectName,
+                    showCompletedTasks: widget.showCompletedTasks,
+                    taskBloc: widget.taskBloc,
+                    resetScreen: widget.resetScreen,
+                    resetDialog: () => setState(() {
+                      task = TaskData()
+                          .fetchDataFromFirestore(widget.type, widget.taskId);
+                    }),
+                  ),
+                );
               },
               child: Row(
                 children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: 16,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      color: subsubtask['completed'] == true
-                          ? Colors.green
-                          : Colors.transparent,
-                      border: Border.all(
-                        color:
-                            TaskData().getPriorityColor(subsubtask['priority']),
-                        width: 2,
+                  GestureDetector(
+                    onTap: () async {
+                      if (isUpdating) return; // Ngăn thao tác khi đang cập nhật
+                      setState(() {
+                        isUpdating = true; // Bắt đầu cập nhật
+                      });
+
+                      // Cập nhật trạng thái `completed` cho subsubtask
+                      subsubtask['completed'] = !subsubtask['completed'];
+                      Task task = Task(
+                        id: subsubtask['id'],
+                        title: subsubtask['title'],
+                        description: subsubtask['description'],
+                        dueDate: subsubtask['dueDate'],
+                        priority: subsubtask['priority'],
+                        assignee: subsubtask['assignee'],
+                        type: type,
+                        projectName: widget.projectName,
+                        completed: subsubtask['completed'],
+                        subtasks: [],
+                      );
+
+                      // Gửi cập nhật lên Firestore
+                      widget.taskBloc
+                          .add(UpdateTask(subsubtask['id'], task, type));
+
+                      // Chờ Firebase cập nhật trước khi render lại
+                      await Future.delayed(Duration(milliseconds: 300));
+                      widget.resetDialog();
+
+                      setState(() {
+                        isUpdating = false; // Hoàn tất cập nhật
+                      });
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 16,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: subsubtask['completed'] == true
+                            ? Colors.green
+                            : Colors.transparent,
+                        border: Border.all(
+                          color: TaskData()
+                              .getPriorityColor(subsubtask['priority']),
+                          width: 2,
+                        ),
+                        borderRadius: BorderRadius.circular(4),
                       ),
-                      borderRadius: BorderRadius.circular(4),
+                      child: subsubtask['completed'] == true
+                          ? const Icon(
+                              Icons.check,
+                              color: Colors.white,
+                              size: 10,
+                            )
+                          : null,
                     ),
-                    child: subsubtask['completed'] == true
-                        ? const Icon(
-                            Icons.check,
-                            color: Colors.white,
-                            size: 10,
-                          )
-                        : null,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -525,6 +641,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                       ),
                     ),
                   ),
+                  // Uncomment if assignee info is needed
                   // if (subsubtask['assignee']?.isNotEmpty ?? false)
                   //   buildCircleAvatar(
                   //       subsubtask['assignee'], subsubtask['avatar']),
@@ -580,6 +697,9 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
   Widget buildCloseButton(BuildContext context) {
     return TextButton(
       onPressed: () {
+        setState(() {
+          widget.resetScreen();
+        });
         Navigator.pop(context);
       },
       child: const Text('Close'),
