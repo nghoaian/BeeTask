@@ -332,8 +332,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Stream<Widget> _buildSubtaskAndTypeRow(Task task) async* {
     try {
-      int completedSubtasks = 0;
-      int totalSubtasks = 0;
       // Sử dụng StreamZip để lắng nghe cả 2 Stream cùng lúc
       await for (var result in StreamZip([
         TaskData().getCountByTypeStream(
@@ -341,8 +339,8 @@ class _HomeScreenState extends State<HomeScreen> {
         TaskData().getCompletedCountStream(
             task.id, task.type), // Stream cho completedSubtasks
       ])) {
-        completedSubtasks = result[1]; // Số lượng completedSubtasks
-        totalSubtasks = result[0]; // Số lượng totalSubtasks
+        int completedSubtasks = result[1]; // Số lượng completedSubtasks
+        int totalSubtasks = result[0]; // Số lượng totalSubtasks
 
         // Lý do muốn hiển thị luôn projectName, vì vậy đặt ngoài điều kiện
         yield Row(

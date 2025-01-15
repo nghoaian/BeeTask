@@ -117,7 +117,7 @@ class FirebaseTaskRepository implements TaskRepository {
       allTasks.sort((a, b) {
         bool completedA = a['completed'] ?? true;
         bool completedB = b['completed'] ?? true;
-        return completedB ? 1 : -1; // completed = true sẽ lên trước
+        return completedA ? 1 : -1;
       });
       if (showCompletedTasks == false) {
         allTasks.removeWhere((task) => task['completed'] == true);

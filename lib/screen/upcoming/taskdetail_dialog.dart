@@ -72,6 +72,20 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   for (var subtask in task['subtasks']) ...[
                     buildSubtaskRow(subtask), // Hiển thị các subtasks
+                    if (subtask['subsubtasks'] != null &&
+                        subtask['subsubtasks'].isNotEmpty) ...[
+                      const SizedBox(height: 8.0),
+                      buildSubsubtasks(
+                          subtask['subsubtasks']), // Hiển thị các subsubtasks
+                    ],
+                  ],
+                ] else if (task['subsubtasks'] != null &&
+                    task['subsubtasks'].isNotEmpty) ...[
+                  const SizedBox(height: 16.0),
+                  Text('Subtasks:',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  for (var subtask in task['subsubtasks']) ...[
+                    buildSubtaskRow(subtask), // Hiển thị các subtasks
                     //     if (subtask['subsubtasks'] != null &&
                     //         subtask['subsubtasks'].isNotEmpty) ...[
                     //       const SizedBox(height: 8.0),
@@ -354,6 +368,9 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
         if (widget.type == 'task') ...[
           TaskData().getCountByTypeStream(subtask['id'], 'subtask').first,
           TaskData().getCompletedCountStream(subtask['id'], 'subtask').first
+        ] else ...[
+          TaskData().getCountByTypeStream(subtask['id'], 'subsubtask').first,
+          TaskData().getCompletedCountStream(subtask['id'], 'subsubtask').first
         ]
       ]),
       builder: (context, snapshot) {
@@ -477,117 +494,113 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
     );
   }
 
-// // Widget để hiển thị các subsubtasks bên trong một subtask
-// Widget buildSubsubtasks(Map subtask) {
-//   // Lọc subsubtasks dựa trên trạng thái và widget.showCompletedTasks
-//   final filteredSubsubtasks = widget.showCompletedTasks
-//       ? subtask['subsubtasks']
-//       : subtask['subsubtasks']
-//           .where((subsubtask) => subsubtask['status'] != 'Hoàn Thành')
-//           .toList();
+// Widget để hiển thị các subsubtasks bên trong một subtask
+  Widget buildSubsubtasks(var subtask) {
+    // Lọc subsubtasks dựa trên trạng thái và widget.showCompletedTasks
 
-//   return Column(
-//     children: [
-//       for (var subsubtask in filteredSubsubtasks) ...[
-//         const SizedBox(height: 8.0),
-//         Padding(
-//           padding: const EdgeInsets.only(left: 24.0),
-//           child: GestureDetector(
-//             onTap: () {
-//               // Mở dialog khi nhấn vào bất kỳ dòng subsubtask nào
-//               // Mở thêm dialog mới với dữ liệu khác
-//               int completedSubtasks = 0;
-//               int totalSubtasks = 0;
-//               totalSubtasks = subtask['subsubtasks'].length;
-//               completedSubtasks = subtask['subsubtasks']
-//                   .where((subtask) => subtask['status'] == 'Hoàn Thành')
-//                   .length;
+    return Column(
+      children: [
+        for (var subsubtask in subtask) ...[
+          const SizedBox(height: 8.0),
+          Padding(
+            padding: const EdgeInsets.only(left: 24.0),
+            child: GestureDetector(
+              onTap: () {
+                // Mở dialog khi nhấn vào bất kỳ dòng subsubtask nào
+                // Mở thêm dialog mới với dữ liệu khác
+                int completedSubtasks = 0;
+                int totalSubtasks = 0;
+                totalSubtasks = subtask['subsubtasks'].length;
+                completedSubtasks = subtask['subsubtasks']
+                    .where((subtask) => subtask['status'] == 'Hoàn Thành')
+                    .length;
 
-//               showDialog(
-//                 context: context,
-//                 builder: (context) => TaskDetailsDialog(
-//                   task: {},
-//                   taskName: subsubtask['subsubtask'],
-//                   subtasks: {},
-//                   subsubtasks: subsubtask,
-//                   project: widget.project,
-//                   priorityColor: _getPriorityColor(subsubtask['priority']),
-//                   data: widget.data,
-//                   completedSubtasks: completedSubtasks,
-//                   totalSubtasks: totalSubtasks,
-//                   selectedDate: widget.selectedDate,
-//                   typeID: widget.typeID,
-//                   onStatusChanged: (subtask) {
-//                     setState(() {
-//                       subtask['status'] = subtask['status'] == 'Hoàn Thành'
-//                           ? 'Chưa Hoàn Thành'
-//                           : 'Hoàn Thành';
-//                     });
-//                   },
-//                   resetScreen: () {
-//                     setState(() {});
-//                   },
-//                   onShowCompletedTasksChanged:
-//                       widget.onShowCompletedTasksChanged,
-//                   showCompletedTasks: widget.showCompletedTasks,
-//                   onDataUpdated: (updatedData) {
-//                     setState(() {
-//                       widget.onDataUpdated(updatedData);
-//                     });
-//                   },
-//                 ),
-//               );
-//             },
-//             child: Row(
-//               children: [
-//                 AnimatedContainer(
-//                   duration: const Duration(milliseconds: 200),
-//                   width: 16,
-//                   height: 16,
-//                   decoration: BoxDecoration(
-//                     color: subsubtask['status'] == 'Hoàn Thành'
-//                         ? Colors.green
-//                         : Colors.transparent,
-//                     border: Border.all(
-//                       color: _getPriorityColor(subsubtask['priority']),
-//                       width: 2,
-//                     ),
-//                     borderRadius: BorderRadius.circular(4),
-//                   ),
-//                   child: subsubtask['status'] == 'Hoàn Thành'
-//                       ? const Icon(
-//                           Icons.check,
-//                           color: Colors.white,
-//                           size: 10,
-//                         )
-//                       : null,
-//                 ),
-//                 const SizedBox(width: 8),
-//                 Expanded(
-//                   child: Text(
-//                     subsubtask['subsubtask'],
-//                     style: TextStyle(
-//                       color: subsubtask['status'] == 'Hoàn Thành'
-//                           ? Colors.green
-//                           : Colors.black,
-//                       decoration: subsubtask['status'] == 'Hoàn Thành'
-//                           ? TextDecoration.lineThrough
-//                           : null,
-//                       fontWeight: FontWeight.bold,
-//                     ),
-//                   ),
-//                 ),
-//                 if (subsubtask['assignee']?.isNotEmpty ?? false)
-//                   buildCircleAvatar(
-//                       subsubtask['assignee'], subsubtask['avatar']),
-//               ],
-//             ),
-//           ),
-//         ),
-//       ],
-//     ],
-//   );
-// }
+                // showDialog(
+                //   context: context,
+                //   builder: (context) => TaskDetailsDialog(
+                //     task: {},
+                //     taskName: subsubtask['subsubtask'],
+                //     subtasks: {},
+                //     subsubtasks: subsubtask,
+                //     project: widget.project,
+                //     priorityColor: _getPriorityColor(subsubtask['priority']),
+                //     data: widget.data,
+                //     completedSubtasks: completedSubtasks,
+                //     totalSubtasks: totalSubtasks,
+                //     selectedDate: widget.selectedDate,
+                //     typeID: widget.typeID,
+                //     onStatusChanged: (subtask) {
+                //       setState(() {
+                //         subtask['status'] = subtask['status'] == 'Hoàn Thành'
+                //             ? 'Chưa Hoàn Thành'
+                //             : 'Hoàn Thành';
+                //       });
+                //     },
+                //     resetScreen: () {
+                //       setState(() {});
+                //     },
+                //     onShowCompletedTasksChanged:
+                //         widget.onShowCompletedTasksChanged,
+                //     showCompletedTasks: widget.showCompletedTasks,
+                //     onDataUpdated: (updatedData) {
+                //       setState(() {
+                //         widget.onDataUpdated(updatedData);
+                //       });
+                //     },
+                //   ),
+                //);
+              },
+              child: Row(
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: subsubtask['completed'] == true
+                          ? Colors.green
+                          : Colors.transparent,
+                      border: Border.all(
+                        color:
+                            TaskData().getPriorityColor(subsubtask['priority']),
+                        width: 2,
+                      ),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: subsubtask['completed'] == true
+                        ? const Icon(
+                            Icons.check,
+                            color: Colors.white,
+                            size: 10,
+                          )
+                        : null,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      subsubtask['title'],
+                      style: TextStyle(
+                        color: subsubtask['completed'] == true
+                            ? Colors.green
+                            : Colors.black,
+                        decoration: subsubtask['completed'] == true
+                            ? TextDecoration.lineThrough
+                            : null,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  // if (subsubtask['assignee']?.isNotEmpty ?? false)
+                  //   buildCircleAvatar(
+                  //       subsubtask['assignee'], subsubtask['avatar']),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
 
 // Widget để hiển thị nút thêm comment và upload file
   Widget buildAddCommentAndUploadButton() {
