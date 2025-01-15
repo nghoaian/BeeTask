@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:bee_task/screen/upcoming/taskdetail_dialog.dart';
-import 'package:bee_task/util/colors.dart';
 import 'package:bee_task/bloc/task/task_bloc.dart';
 import 'package:bee_task/bloc/task/task_event.dart';
 import 'package:bee_task/bloc/task/task_state.dart';
@@ -170,11 +169,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Hàm lấy màu sắc ưu tiên cho task
-  Color _getPriorityColor(String priority) {
-    return AppColors.getPriorityColor(priority);
-  }
-
   Widget _buildTaskList() {
     return BlocBuilder<TaskBloc, TaskState>(
       builder: (context, state) {
@@ -287,7 +281,7 @@ class _HomeScreenState extends State<HomeScreen> {
             decoration: BoxDecoration(
               color: task.completed ? Colors.green : Colors.transparent,
               border: Border.all(
-                color: _getPriorityColor(task.priority),
+                color: TaskData().getPriorityColor(task.priority),
                 width: 2,
               ),
               borderRadius: BorderRadius.circular(4),
@@ -375,7 +369,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: _getPriorityColor(task.priority),
+                    color: TaskData().getPriorityColor(task.priority),
                   ),
                 ),
               ),

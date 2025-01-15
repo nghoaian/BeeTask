@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:bee_task/util/colors.dart';
+import 'package:flutter/material.dart';
 
 class TaskData {
   static final TaskData _instance = TaskData._internal();
@@ -422,6 +424,7 @@ class TaskData {
     }
 
     Map<String, dynamic> taskData = taskDoc.data()!;
+    taskData['id'] = taskDoc.id; // Lưu lại id của task
     taskData['subtasks'] = [];
 
     // Lấy danh sách subtasks
@@ -435,6 +438,7 @@ class TaskData {
 
     for (var subtaskDoc in subtasksSnapshot.docs) {
       Map<String, dynamic> subtaskData = subtaskDoc.data();
+      subtaskData['id'] = subtaskDoc.id; // Lưu lại id của subtask
       subtaskData['subsubtasks'] = [];
 
       // Lấy danh sách subsubtasks
@@ -448,8 +452,12 @@ class TaskData {
           .collection('subsubtasks')
           .get();
 
-      subtaskData['subsubtasks'] =
-          subsubtasksSnapshot.docs.map((doc) => doc.data()).toList();
+      subtaskData['subsubtasks'] = subsubtasksSnapshot.docs.map((doc) {
+        Map<String, dynamic> subsubtaskData = doc.data();
+        subsubtaskData['id'] = doc.id; // Lưu lại id của subsubtask
+        return subsubtaskData;
+      }).toList();
+
       taskData['subtasks'].add(subtaskData);
     }
 
@@ -476,7 +484,9 @@ class TaskData {
       throw Exception('Subtask not found');
     }
 
+    // Thêm id vào subtask
     Map<String, dynamic> subtaskData = subtaskDoc.data()!;
+    subtaskData['id'] = subtaskDoc.id; // Lưu id của subtask
     subtaskData['subsubtasks'] = [];
 
     // Lấy danh sách subsubtasks
@@ -490,8 +500,12 @@ class TaskData {
         .collection('subsubtasks')
         .get();
 
-    subtaskData['subsubtasks'] =
-        subsubtasksSnapshot.docs.map((doc) => doc.data()).toList();
+    // Thêm id vào mỗi subsubtask
+    subtaskData['subsubtasks'] = subsubtasksSnapshot.docs.map((doc) {
+      Map<String, dynamic> subsubtaskData = doc.data();
+      subsubtaskData['id'] = doc.id; // Lưu id của subsubtask
+      return subsubtaskData;
+    }).toList();
 
     return subtaskData;
   }
@@ -520,5 +534,10 @@ class TaskData {
     }
 
     return subsubtaskDoc.data()!;
+  }
+
+  // Hàm lấy màu sắc ưu tiên cho task
+  Color getPriorityColor(String priority) {
+    return AppColors.getPriorityColor(priority);
   }
 }
