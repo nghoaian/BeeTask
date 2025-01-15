@@ -9,7 +9,7 @@ abstract class TaskRepository {
       String date, bool showCompletedTasks, String email);
   Future<void> addTask(Map<String, dynamic> task);
   Future<void> updateTask(String taskId, Task updatedTaskData, String type);
-  Future<void> deleteTask(String taskId);
+  Future<void> deleteTask(String id, String type);
 }
 
 class FirebaseTaskRepository implements TaskRepository {
@@ -288,11 +288,122 @@ class FirebaseTaskRepository implements TaskRepository {
     }
   }
 
-  Future<void> deleteTask(String taskId) async {
+  Future<void> deleteTask(String id, String type) async {
+    DocumentReference? docRef;
+    var task;
+
+    // Xác định tài liệu cần cập nhật dựa trên type
+    switch (type) {
+      case 'task':
+        // Tìm task trong danh sách tasks
+        task = tasks.firstWhere((item) => item['id'] == id,
+            orElse: () => throw Exception('Task not found'));
+
+        // Xác định document reference của task
+        docRef = FirebaseFirestore.instance
+            .collection('projects')
+            .doc(task['projectId']) // Lấy projectId từ task
+            .collection('tasks')
+            .doc(id); // Tìm task theo taskId
+
+        // Xoá tất cả subtasks và subsubtasks trước khi xoá task
+        await _deleteSubtasksAndSubsubtasks(task['projectId'], id);
+        break;
+
+      case 'subtask':
+        // Tìm subtask trong danh sách subtasks
+        task = subtasks.firstWhere((item) => item['id'] == id,
+            orElse: () => throw Exception('Subtask not found'));
+
+        // Xác định document reference của subtask
+        docRef = FirebaseFirestore.instance
+            .collection('projects')
+            .doc(task['projectId']) // Lấy projectId từ subtask
+            .collection('tasks')
+            .doc(task['taskId']) // Lấy taskId từ subtask
+            .collection('subtasks')
+            .doc(task['id']); // Tìm subtask theo subtaskId
+
+        // Xoá tất cả subsubtasks trước khi xoá subtask
+        await _deleteSubsubtasks(task['projectId'], task['taskId'], task['id']);
+        break;
+
+      case 'subsubtask':
+        // Tìm subsubtask trong danh sách subsubtasks
+        task = subsubtasks.firstWhere((item) => item['id'] == id,
+            orElse: () => throw Exception('Subsubtask not found'));
+
+        // Xác định document reference của subsubtask
+        docRef = FirebaseFirestore.instance
+            .collection('projects')
+            .doc(task['projectId']) // Lấy projectId từ subsubtask
+            .collection('tasks')
+            .doc(task['taskId']) // Lấy taskId từ subsubtask
+            .collection('subtasks')
+            .doc(task['subtaskId']) // Lấy subtaskId từ subsubtask
+            .collection('subsubtasks')
+            .doc(task['id']); // Tìm subsubtask theo subsubtaskId
+        break;
+
+      default:
+        throw Exception('Invalid type');
+    }
+
+    // Lấy dữ liệu hiện tại từ tài liệu Firestore
+    DocumentSnapshot snapshot = await docRef.get();
+    if (!snapshot.exists) {
+      throw Exception('Document not found');
+    }
+
+    // Xoá tài liệu khỏi Firestore
     try {
-      await firestore.collection('tasks').doc(taskId).delete();
+      await docRef.delete();
     } catch (e) {
-      throw Exception('Error deleting task: $e');
+      throw Exception('Error deleting $type: $e');
+    }
+  }
+
+// Hàm xoá tất cả subtasks và subsubtasks trong một task
+  Future<void> _deleteSubtasksAndSubsubtasks(
+      String projectId, String taskId) async {
+    var subtasksRef = FirebaseFirestore.instance
+        .collection('projects')
+        .doc(projectId)
+        .collection('tasks')
+        .doc(taskId)
+        .collection('subtasks');
+
+    // Lấy danh sách subtasks
+    var subtasksSnapshot = await subtasksRef.get();
+
+    // Xoá từng subtask và các subsubtasks trong đó
+    for (var doc in subtasksSnapshot.docs) {
+      // Xoá subsubtasks của subtask hiện tại
+      await _deleteSubsubtasks(projectId, taskId, doc.id);
+
+      // Xoá subtask
+      await doc.reference.delete();
+    }
+  }
+
+// Hàm xoá tất cả subsubtasks trong một subtask
+  Future<void> _deleteSubsubtasks(
+      String projectId, String taskId, String subtaskId) async {
+    var subsubtasksRef = FirebaseFirestore.instance
+        .collection('projects')
+        .doc(projectId)
+        .collection('tasks')
+        .doc(taskId)
+        .collection('subtasks')
+        .doc(subtaskId)
+        .collection('subsubtasks');
+
+    // Lấy danh sách subsubtasks
+    var subsubtasksSnapshot = await subsubtasksRef.get();
+
+    // Xoá từng subsubtask
+    for (var doc in subsubtasksSnapshot.docs) {
+      await doc.reference.delete();
     }
   }
 }

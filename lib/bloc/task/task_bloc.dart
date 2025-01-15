@@ -122,7 +122,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
   Future<void> _onDeleteTask(DeleteTask event, Emitter<TaskState> emit) async {
     try {
-      await taskRepository.deleteTask(event.taskId);
+      await taskRepository.deleteTask(event.taskId, event.type);
       emit(TaskInitial()); // Reset state after deletion
     } catch (e) {
       emit(TaskError(e.toString()));

@@ -425,6 +425,7 @@ class TaskData {
 
     Map<String, dynamic> taskData = taskDoc.data()!;
     taskData['id'] = taskDoc.id; // Lưu lại id của task
+    taskData['projectId'] = projectId;
     taskData['subtasks'] = [];
 
     // Lấy danh sách subtasks
@@ -487,6 +488,7 @@ class TaskData {
     // Thêm id vào subtask
     Map<String, dynamic> subtaskData = subtaskDoc.data()!;
     subtaskData['id'] = subtaskDoc.id; // Lưu id của subtask
+    subtaskData['projectId'] = projectId;
     subtaskData['subsubtasks'] = [];
 
     // Lấy danh sách subsubtasks
@@ -510,7 +512,6 @@ class TaskData {
     return subtaskData;
   }
 
-// Hàm lấy trực tiếp subsubtask
   Future<Map<String, dynamic>> fetchSubsubtask(
       Map<String, dynamic> localData, String subsubtaskId) async {
     String projectId = localData['projectId'];
@@ -533,11 +534,42 @@ class TaskData {
       throw Exception('Subsubtask not found');
     }
 
-    return subsubtaskDoc.data()!;
+    // Thêm thông tin subsubtaskId và projectId vào kết quả trả về
+    Map<String, dynamic> subsubtaskData = subsubtaskDoc.data()!;
+    subsubtaskData['id'] = subsubtaskId;
+    subsubtaskData['projectId'] = projectId;
+
+    return subsubtaskData;
   }
 
   // Hàm lấy màu sắc ưu tiên cho task
   Color getPriorityColor(String priority) {
     return AppColors.getPriorityColor(priority);
+  }
+
+  Future<List<String>> getProjectMembers(String projectId) async {
+    try {
+      var projectDoc = await FirebaseFirestore.instance
+          .collection('projects')
+          .doc(projectId)
+          .get();
+
+      if (!projectDoc.exists) {
+        throw Exception('Project not found');
+      }
+
+      // Lấy dữ liệu members và ép kiểu về List<String>
+      var members = projectDoc.data()?['members'] ?? [];
+
+      // Nếu members là List<dynamic>, ép kiểu thành List<String>
+      if (members is List) {
+        return members.map((member) => member.toString()).toList();
+      } else {
+        throw Exception('Invalid members format');
+      }
+    } catch (e) {
+      print('Error fetching project members: $e');
+      return [];
+    }
   }
 }
