@@ -22,7 +22,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   }
 
   /// Hàm xử lý sự kiện LoadTasks
-  Future<void> _loadTasks(LoadTasks event, Emitter<TaskState> emit) async {
+  Future<bool> _loadTasks(LoadTasks event, Emitter<TaskState> emit) async {
     emit(TaskLoading()); // Phát trạng thái loading
     try {
       // Lấy danh sách tasks dựa trên projectId
@@ -80,52 +80,63 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       }
 
       emit(TaskLoaded(tasks)); // Phát trạng thái thành công với danh sách tasks
+      return true;
     } catch (e) {
       emit(TaskError(e.toString())); // Phát trạng thái lỗi nếu có exception
+      return false;
     }
   }
 
-  Future<void> _onFetchTasksByDate(
+  Future<bool> _onFetchTasksByDate(
       FetchTasksByDate event, Emitter<TaskState> emit) async {
     emit(TaskLoading());
     try {
       final userEmail = await userRepository.getUserEmail();
       if (userEmail == null) {
         emit(TaskError('User email is null'));
-        return;
+        return false;
       }
       final taskMaps = await taskRepository.fetchTasksByDate(
           event.date, event.showCompletedTasks, userEmail);
       final tasks = taskMaps.map((taskMap) => Task.copyTasks(taskMap)).toList();
       emit(TaskLoaded(tasks));
+      return true;
     } catch (e) {
       emit(TaskError(e.toString()));
+      return false;
     }
   }
 
-  Future<void> _onAddTask(AddTask event, Emitter<TaskState> emit) async {
+  Future<bool> _onAddTask(AddTask event, Emitter<TaskState> emit) async {
     try {
-      await taskRepository.addTask(event.task);
+      await taskRepository.addTask(
+          event.type, event.task, event.taskId, event.projectId);
+      return true;
     } catch (e) {
       emit(TaskError(e.toString()));
+      return false;
     }
   }
 
-  Future<void> _onUpdateTask(UpdateTask event, Emitter<TaskState> emit) async {
+  Future<bool> _onUpdateTask(UpdateTask event, Emitter<TaskState> emit) async {
     try {
       await taskRepository.updateTask(
           event.taskId, event.updatedTask, event.type);
+      return true;
     } catch (e) {
       emit(TaskError(e.toString()));
+      return false;
     }
   }
 
-  Future<void> _onDeleteTask(DeleteTask event, Emitter<TaskState> emit) async {
+  Future<bool> _onDeleteTask(DeleteTask event, Emitter<TaskState> emit) async {
     try {
       await taskRepository.deleteTask(event.taskId, event.type);
       emit(TaskInitial()); // Reset state after deletion
+      return true;
     } catch (e) {
       emit(TaskError(e.toString()));
+      return false;
     }
   }
 }

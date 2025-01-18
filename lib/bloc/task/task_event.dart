@@ -28,9 +28,12 @@ class FetchTasksByDate extends TaskEvent {
 }
 
 class AddTask extends TaskEvent {
-  final Map<String, dynamic> task;
+  final Task task;
+  final String type;
+  final String taskId;
+  final String projectId;
 
-  AddTask(this.task);
+  AddTask(this.type,this.task,this.taskId,this.projectId);
 
   @override
   List<Object> get props => [task];
@@ -53,3 +56,4 @@ class DeleteTask extends TaskEvent {
 
   DeleteTask(this.taskId, this.type);
 }
+

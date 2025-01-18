@@ -9,6 +9,7 @@ import 'package:bee_task/bloc/task/task_state.dart';
 import 'package:bee_task/data/model/task.dart';
 import 'package:async/async.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:bee_task/screen/upcoming/addtask_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -43,6 +44,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset:
+          true, // Đảm bảo rằng không gian được điều chỉnh khi bàn phím xuất hiện
+
       appBar: _buildAppBar(), // Gọi hàm để xây dựng AppBar
       body: Column(
         children: [
@@ -454,47 +458,70 @@ class _HomeScreenState extends State<HomeScreen> {
   // Hàm hiển thị dialog chi tiết công việc
   void _showTaskDetailsDialog(
       String taskId, String type, bool showCompletedTask, String projectName) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
+      isDismissible: false,
+      isScrollControlled:
+          true, // Allow the bottom sheet to adjust its height based on content
       builder: (context) {
-        return TaskDetailsDialog(
-          taskId: taskId,
-          type: type,
-          projectName: projectName,
-          showCompletedTasks: true,
-          taskBloc: BlocProvider.of<TaskBloc>(context),
-          resetDialog: () => {},
-          resetScreen: () => setState(() {
-            context.read<TaskBloc>().add(
-                  FetchTasksByDate(
-                      (_selectedDay != null
-                          ? DateTime(
-                              _focusedDay.year,
-                              _focusedDay.month,
-                              _focusedDay.day,
-                            ).toIso8601String().substring(0, 10)
-                          : DateTime.now().toIso8601String().substring(0, 10)),
-                      showCompletedTasks),
-                );
-          }),
+        return SingleChildScrollView(
+          child: TaskDetailsDialog(
+            taskId: taskId,
+            type: type,
+            selectDay: _selectedDay ?? DateTime.now(),
+            projectName: projectName,
+            showCompletedTasks: true,
+            taskBloc: BlocProvider.of<TaskBloc>(context),
+            resetDialog: () => {},
+            resetScreen: () => setState(() {
+              context.read<TaskBloc>().add(
+                    FetchTasksByDate(
+                        (_selectedDay != null
+                            ? DateTime(
+                                _focusedDay.year,
+                                _focusedDay.month,
+                                _focusedDay.day,
+                              ).toIso8601String().substring(0, 10)
+                            : DateTime.now()
+                                .toIso8601String()
+                                .substring(0, 10)),
+                        showCompletedTasks),
+                  );
+            }),
+          ),
         );
       },
     );
   }
 
   void _showAddTaskDialog(BuildContext context) {
-    // showDialog(
-    //   context: context,
-    //   builder: (_) => AddTaskDialog(
-    //     data: data,
-    //     selectDay: _selectedDay ?? DateTime.now(),
-    //     onTaskAdded: (task) {
-    //       _tasks.add(task);
-    //       setState(() {});
-    //     },
-    //   ),
-    // );
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SingleChildScrollView(
+          child: AddTaskDialog(
+            taskId: '', // Add appropriate taskId
+            type: 'task', // Add appropriate type
+            selectDay: _selectedDay ?? DateTime.now(),
+            resetDialog: () => {},
+            resetScreen: () => setState(() {
+              context.read<TaskBloc>().add(
+                    FetchTasksByDate(
+                        (_selectedDay != null
+                            ? DateTime(
+                                _focusedDay.year,
+                                _focusedDay.month,
+                                _focusedDay.day,
+                              ).toIso8601String().substring(0, 10)
+                            : DateTime.now()
+                                .toIso8601String()
+                                .substring(0, 10)),
+                        showCompletedTasks),
+                  );
+            }),
+          ),
+        );
+      },
+    );
   }
-
-  ///Đối trạng thái task,subtask,subsubtask
 }

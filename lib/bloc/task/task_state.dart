@@ -17,3 +17,10 @@ class TaskError extends TaskState {
 
   TaskError(this.error);
 }
+
+class TaskSuccess extends TaskState {}
+
+class TaskFailure extends TaskState {
+  final String error; // You can pass the error message
+  TaskFailure(this.error);
+}

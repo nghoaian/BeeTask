@@ -4,11 +4,14 @@ import 'package:bee_task/util/colors.dart';
 import 'package:bee_task/screen/TaskData.dart';
 import 'package:bee_task/bloc/task/task_bloc.dart';
 import 'package:bee_task/data/model/task.dart';
+import 'package:bee_task/screen/upcoming/addtask_dialog.dart';
 
 class TaskDetailsDialog extends StatefulWidget {
   final String taskId;
   final String type;
   final String projectName;
+  final DateTime selectDay; // Ngày được chọn để thêm task
+
   final bool showCompletedTasks;
   final TaskBloc taskBloc; // Accept TaskBloc via constructor
   final Function resetScreen;
@@ -21,6 +24,7 @@ class TaskDetailsDialog extends StatefulWidget {
       required this.showCompletedTasks,
       required this.taskBloc,
       required this.resetScreen,
+      required this.selectDay,
       required this.resetDialog});
 
   @override
@@ -101,7 +105,9 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
             ),
           ),
           actions: [
-            buildAddSubtaskButton(),
+            if (widget.type != 'subsubtask') ...[
+              buildAddSubtaskButton(),
+            ],
             buildAddCommentAndUploadButton(),
             buildCloseButton(context),
           ],
@@ -115,25 +121,50 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
       BuildContext context, Map<String, dynamic> taskData) {
     return GestureDetector(
       onTap: () {
+        // Hiển thị dialog chỉnh sửa tên task
         showDialog(
           context: context,
           builder: (_) {
-            // Extract the title directly from the task
+            // Tạo TextEditingController và FocusNode
             String initialValue = taskData['title'] ?? '';
+            final TextEditingController _controller =
+                TextEditingController(text: initialValue);
+            final FocusNode _focusNode = FocusNode();
 
-            // Create a TextEditingController with the initial value
-            final TextEditingController _controller = TextEditingController(
-              text: initialValue,
-            );
+            // Kích hoạt FocusNode khi dialog hiển thị
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _focusNode.requestFocus();
+            });
+
+            String temporaryTitle = initialValue; // Biến tạm để lưu giá trị
 
             return AlertDialog(
               title: const Text('Edit Name'),
               content: TextField(
                 controller: _controller,
+                focusNode: _focusNode, // Gán FocusNode vào TextField
+                autofocus: true, // Đảm bảo TextField có tiêu điểm
                 onChanged: (value) {
-                  setState(() {
-                    // Update the task's title
-                    taskData['title'] = value;
+                  temporaryTitle = value; // Lưu giá trị vào biến tạm
+                },
+                decoration: const InputDecoration(
+                  labelText: 'Name',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    // Đóng dialog mà không lưu
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    // Lưu giá trị từ biến tạm vào taskData
+                    taskData['title'] = temporaryTitle;
+
                     Task task = Task(
                       id: taskData['id'],
                       title: taskData['title'],
@@ -149,16 +180,8 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                     widget.taskBloc
                         .add(UpdateTask(widget.taskId, task, widget.type));
                     widget.resetScreen();
-                  });
-                },
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context); // Close the dialog
+                    setState(() {});
+                    Navigator.pop(context); // Đóng dialog sau khi lưu
                   },
                   child: const Text('Save'),
                 ),
@@ -175,8 +198,6 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
-          // Add avatar or assignee information if needed
-          if (taskData['assignee'] != null) const SizedBox(width: 8),
           IconButton(
             icon: const Icon(Icons.more_vert),
             onPressed: () {
@@ -187,6 +208,20 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   PopupMenuItem(
                     value: 'assignUser',
                     child: const Text('Change Assignee'),
+                  ),
+                  PopupMenuItem(
+                    value: 'markAsComplete',
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Mark Task as Complete'),
+                        if (taskData['completed'] == true)
+                          const Icon(
+                            Icons.check,
+                            color: Colors.green,
+                          ),
+                      ],
+                    ),
                   ),
                   PopupMenuItem(
                     value: 'toggleCompletedTasksVisibility',
@@ -208,16 +243,39 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   ),
                 ],
               ).then((value) async {
+                // Đóng menu popup mà không đóng dialog hiện tại
+                FocusScope.of(context)
+                    .requestFocus(FocusNode()); // Loại bỏ focus khỏi menu
+
                 if (value == 'assignUser') {
                   _changeAssignee(taskData['assignee']);
                 } else if (value == 'toggleCompletedTasksVisibility') {
+                  // Thực hiện toggle visibility
                 } else if (value == 'deleteTask') {
                   await _confirmAndDeleteTask();
+                  await widget.resetScreen();
+                  Navigator.pop(context); // Dùng context đã lưu ở trên
+                } else if (value == 'markAsComplete') {
+                  // Toggle trạng thái hoàn thành
+                  taskData['completed'] = !(taskData['completed'] ?? false);
 
-// Chỉ chạy khi _confirmAndDeleteTask hoàn tất
+                  // Cập nhật trạng thái task trong BLoC
+                  Task task = Task(
+                    id: taskData['id'],
+                    title: taskData['title'],
+                    description: taskData['description'],
+                    dueDate: taskData['dueDate'],
+                    priority: taskData['priority'],
+                    assignee: taskData['assignee'],
+                    type: widget.type,
+                    projectName: widget.projectName,
+                    completed: taskData['completed'], // Đã toggle trạng thái
+                    subtasks: [],
+                  );
+                  widget.taskBloc
+                      .add(UpdateTask(widget.taskId, task, widget.type));
                   widget.resetScreen();
-                  Navigator.pop(context);
-                  // Dùng context đã lưu ở trên
+                  setState(() {});
                 }
               });
             },
@@ -239,14 +297,24 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
         ),
         child: TextButton(
           onPressed: () {
-            // showDialog(
-            //   context: context,
-            //   builder: (context) => AddSubTaskDialog(
-            //     data: widget.data,
-            //     selectDay: widget.selectedDate,
-            //     typeID: widget.typeID,
-            //   ),
-            // );
+            showModalBottomSheet(
+              context: context,
+              builder: (context) {
+                return SingleChildScrollView(
+                  child: AddTaskDialog(
+                    taskId: widget.taskId, // Add appropriate taskId
+                    type: widget.type, // Add appropriate type
+                    selectDay: widget.selectDay ?? DateTime.now(),
+                    resetDialog: () => setState(() {
+                      this.task = TaskData()
+                          .fetchDataFromFirestore(widget.type, widget.taskId);
+                      ;
+                    }),
+                    resetScreen: () => widget.resetScreen,
+                  ),
+                );
+              },
+            );
           },
           style: TextButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -333,17 +401,59 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
       onTap: () {
         showDialog(
           context: context,
-          builder: (_) => AlertDialog(
-            title: const Text('Edit Description'),
-            content: SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: 300),
-                child: TextField(
-                  controller:
-                      TextEditingController(text: taskData['description']),
-                  onChanged: (value) {
+          builder: (_) {
+            // Tạo FocusNode để quản lý focus của TextField
+            final FocusNode _focusNode = FocusNode();
+            // Tạo TextEditingController
+            final TextEditingController _controller =
+                TextEditingController(text: taskData['description']);
+            // Lưu trữ giá trị mô tả tạm thời để so sánh khi nhấn Save hoặc Cancel
+            String temporaryDescription = taskData['description'];
+
+            // Kích hoạt bàn phím khi dialog hiển thị
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _focusNode.requestFocus();
+            });
+
+            return AlertDialog(
+              title: const Text('Edit Description'),
+              content: SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints:
+                      BoxConstraints(maxHeight: 300), // Giới hạn chiều cao
+                  child: TextField(
+                    controller: _controller,
+                    focusNode: _focusNode, // Gán FocusNode vào TextField
+                    onChanged: (value) {
+                      temporaryDescription = value; // Lưu giá trị vào biến tạm
+                    },
+                    maxLines: null, // Cho phép nhập nhiều dòng
+                    decoration: const InputDecoration(
+                      labelText: 'Description',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType:
+                        TextInputType.multiline, // Hỗ trợ nhập nhiều dòng
+                    textInputAction:
+                        TextInputAction.newline, // Cho phép nhập nhiều dòng
+                    style: TextStyle(fontSize: 14),
+                  ),
+                ),
+              ),
+              actions: [
+                // Nút Cancel
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context); // Đóng dialog mà không lưu
+                  },
+                  child: const Text('Cancel'),
+                ),
+                // Nút Save
+                TextButton(
+                  onPressed: () {
                     setState(() {
-                      taskData['description'] = value; // Update priority
+                      taskData['description'] =
+                          temporaryDescription; // Lưu mô tả tạm vào taskData
                       Task task = Task(
                         id: taskData['id'],
                         title: taskData['title'],
@@ -360,23 +470,13 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                           .add(UpdateTask(widget.taskId, task, widget.type));
                       widget.resetScreen();
                     });
+                    Navigator.pop(context); // Đóng dialog sau khi lưu
                   },
-                  maxLines: null,
-                  decoration: const InputDecoration(
-                    labelText: 'Description',
-                  ),
+                  child: const Text('Save'),
                 ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context); // Đóng dialog
-                },
-                child: const Text('Save'),
-              ),
-            ],
-          ),
+              ],
+            );
+          },
         );
       },
       child: Text(
@@ -454,6 +554,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
               builder: (context) => TaskDetailsDialog(
                 taskId: subtask['id'],
                 type: type,
+                selectDay: widget.selectDay,
                 projectName: widget.projectName,
                 showCompletedTasks: widget.showCompletedTasks,
                 taskBloc: widget.taskBloc,
@@ -560,6 +661,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   builder: (context) => TaskDetailsDialog(
                     taskId: subsubtask['id'],
                     type: type,
+                    selectDay: widget.selectDay,
                     projectName: widget.projectName,
                     showCompletedTasks: widget.showCompletedTasks,
                     taskBloc: widget.taskBloc,

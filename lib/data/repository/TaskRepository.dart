@@ -7,7 +7,12 @@ abstract class TaskRepository {
   FirebaseAuth get firebaseAuth;
   Future<List<Map<String, dynamic>>> fetchTasksByDate(
       String date, bool showCompletedTasks, String email);
-  Future<void> addTask(Map<String, dynamic> task);
+  Future<void> addTask(
+    String type, // Type: 'task', 'subtask', or 'subsubtask'
+    Task task, // Đối tượng Task chứa thông tin cần thiết
+    String taskId, // taskId nếu là subtask hoặc subsubtask
+    String projectId,
+  );
   Future<void> updateTask(String taskId, Task updatedTaskData, String type);
   Future<void> deleteTask(String id, String type);
 }
@@ -129,15 +134,61 @@ class FirebaseTaskRepository implements TaskRepository {
     }
   }
 
-  Future<void> addTask(Map<String, dynamic> task) async {
+  @override
+  Future<bool> addTask(
+      String type, Task task, String taskId, String projectId) async {
     try {
-      await firestore.collection('tasks').add(task);
+      // Lấy thông tin cần thiết từ đối tượng Task
+      Map<String, dynamic> taskDataAdd = {
+        'title': task.title,
+        'description': task.description,
+        'dueDate': task.dueDate,
+        'priority': task.priority,
+        'assignee': task.assignee,
+        'completed': task.completed,
+      };
+
+      if (type == 'task') {
+        // Thêm task vào collection 'tasks' trong project
+        await firestore
+            .collection('projects')
+            .doc(projectId)
+            .collection('tasks')
+            .add(taskDataAdd);
+        return true;
+      } else if (type == 'subtask' && taskId != '') {
+        // Thêm vào collection 'subtasks' của task
+        await firestore
+            .collection('projects')
+            .doc(projectId)
+            .collection('tasks')
+            .doc(taskId)
+            .collection('subtasks')
+            .add(taskDataAdd);
+        return true;
+      } else if (type == 'subsubtask' && taskId != '') {
+        var findTask = subtasks.firstWhere((item) => item['id'] == taskId,
+            orElse: () => throw Exception('Task not found'));
+        // Thêm vào collection 'subsubtasks' của subtask
+        await firestore
+            .collection('projects')
+            .doc(projectId)
+            .collection('tasks')
+            .doc(findTask['taskId'])
+            .collection('subtasks')
+            .doc(taskId)
+            .collection('subsubtasks')
+            .add(taskDataAdd);
+        return true;
+      } else {
+        return false;
+      }
     } catch (e) {
-      throw Exception('Error adding task: $e');
+      return false;
     }
   }
 
-  Future<void> updateTask(
+  Future<bool> updateTask(
       String taskId, Task updatedTaskData, String type) async {
     try {
       // Biến tham chiếu đến tài liệu
@@ -228,9 +279,9 @@ class FirebaseTaskRepository implements TaskRepository {
               task['taskId'], task['id'], newCompletedStatus);
         }
       }
+      return true;
     } catch (e) {
-      print('Error updating task: $e');
-      throw Exception('Error updating task: $e');
+      return false;
     }
   }
 
