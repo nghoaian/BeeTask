@@ -470,7 +470,7 @@ class _HomeScreenState extends State<HomeScreen> {
             type: type,
             selectDay: _selectedDay ?? DateTime.now(),
             projectName: projectName,
-            showCompletedTasks: true,
+            showCompletedTasks: showCompletedTask,
             taskBloc: BlocProvider.of<TaskBloc>(context),
             resetDialog: () => {},
             resetScreen: () => setState(() {

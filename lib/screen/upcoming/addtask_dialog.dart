@@ -594,10 +594,16 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
 
   @override
   Widget build(BuildContext context) {
+    String title = '';
+    if (widget.type == 'task' || widget.type == 'subtask') {
+      title = 'Add New Subtask';
+    } else {
+      title = 'Add New Task';
+    }
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: const Text(
-        'Add New Task',
+      title: Text(
+        title,
         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
       ),
       content: SingleChildScrollView(

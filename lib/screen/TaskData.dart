@@ -54,24 +54,30 @@ class TaskData {
 
   // Phương thức cập nhật thông tin người dùng khi có sự thay đổi
   void _updateUserInfo(DocumentChange userChange) {
-    String userEmail = userChange.doc['userEmail'];
     var userData = userChange.doc.data() as Map<String, dynamic>;
 
-    int index = users.indexWhere((user) => user['userEmail'] == userEmail);
-
+    // Nếu là trường hợp thêm người dùng mới
     if (userChange.type == DocumentChangeType.added) {
-      if (index == -1) {
-        // Kiểm tra nếu chưa tồn tại
-        users.add(userData);
+      // Kiểm tra xem người dùng đã tồn tại trong danh sách chưa
+      if (!users.any((user) => user['userEmail'] == userData['userEmail'])) {
+        users.add(userData); // Thêm người dùng mới vào danh sách
       }
-    } else if (userChange.type == DocumentChangeType.modified) {
+    }
+    // Nếu là trường hợp cập nhật thông tin người dùng
+    else if (userChange.type == DocumentChangeType.modified) {
+      int index = users
+          .indexWhere((user) => user['userEmail'] == userData['userEmail']);
       if (index != -1) {
-        // Cập nhật nếu đã tồn tại
+        // Cập nhật thông tin của người dùng trong danh sách
         users[index] = userData;
       }
-    } else if (userChange.type == DocumentChangeType.removed) {
+    }
+    // Nếu là trường hợp xóa người dùng
+    else if (userChange.type == DocumentChangeType.removed) {
+      int index = users
+          .indexWhere((user) => user['userEmail'] == userData['userEmail']);
       if (index != -1) {
-        // Xóa nếu đã tồn tại
+        // Xóa người dùng khỏi danh sách
         users.removeAt(index);
       }
     }
@@ -260,6 +266,22 @@ class TaskData {
 
       if (user.isNotEmpty) {
         return user['avatar']; // Trả về avatar của người dùng
+      } else {
+        return '';
+      }
+    } catch (e) {
+      return '';
+    }
+  }
+
+  String getUserNameFromList(String email) {
+    try {
+      // Tìm người dùng trong danh sách users có email trùng khớp
+      var user = users.firstWhere((user) => user['userEmail'] == email,
+          orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
+          );
+      if (user.isNotEmpty) {
+        return user['userName']; // Trả về avatar của người dùng
       } else {
         return '';
       }
@@ -570,6 +592,92 @@ class TaskData {
     } catch (e) {
       print('Error fetching project members: $e');
       return [];
+    }
+  }
+
+  Stream<List<Map<String, dynamic>>> getComment(String id, String type) async* {
+    try {
+      if (type == 'task') {
+        var taskData = tasks.firstWhere((task) => task['id'] == id);
+
+        // Lắng nghe sự thay đổi comment của task
+        await for (var commentsSnapshot in FirebaseFirestore.instance
+            .collection('projects')
+            .doc(taskData['projectId']) // Lấy projectId từ task
+            .collection('tasks')
+            .doc(taskData['id']) // Lấy taskId từ task
+            .collection(
+                'comments') // Assuming you store comments in a 'comments' collection
+            .snapshots()) {
+          // Mỗi khi có thay đổi trong comments, yield danh sách bình luận mới
+          List<Map<String, dynamic>> comments =
+              commentsSnapshot.docs.map((doc) {
+            return {
+              'author': doc['author'],
+              'text': doc['text'],
+              'date': doc['date'],
+            };
+          }).toList();
+          yield comments;
+        }
+      } else if (type == 'subtask') {
+        var subtaskData = subtasks.firstWhere((task) => task['id'] == id);
+
+        // Lắng nghe sự thay đổi comment của subtask
+        await for (var commentsSnapshot in FirebaseFirestore.instance
+            .collection('projects')
+            .doc(subtaskData['projectId'])
+            .collection('tasks')
+            .doc(subtaskData['taskId'])
+            .collection('subtasks')
+            .doc(subtaskData['id']) // Lấy subtaskId từ subtask
+            .collection(
+                'comments') // Assuming you store comments in a 'comments' collection
+            .snapshots()) {
+          // Mỗi khi có thay đổi trong comments, yield danh sách bình luận mới
+          List<Map<String, dynamic>> comments =
+              commentsSnapshot.docs.map((doc) {
+            return {
+              'author': doc['author'],
+              'text': doc['text'],
+              'date': doc['date'],
+            };
+          }).toList();
+          yield comments;
+        }
+      } else if (type == 'subsubtask') {
+        var subsubtaskData = subsubtasks.firstWhere((task) => task['id'] == id);
+
+        // Lắng nghe sự thay đổi comment của subsubtask
+        await for (var commentsSnapshot in FirebaseFirestore.instance
+            .collection('projects')
+            .doc(subsubtaskData['projectId'])
+            .collection('tasks')
+            .doc(subsubtaskData['taskId'])
+            .collection('subtasks')
+            .doc(subsubtaskData['subtaskId'])
+            .collection('subsubtasks')
+            .doc(subsubtaskData['id']) // Lấy subsubtaskId từ subsubtask
+            .collection(
+                'comments') // Assuming you store comments in a 'comments' collection
+            .snapshots()) {
+          // Mỗi khi có thay đổi trong comments, yield danh sách bình luận mới
+          List<Map<String, dynamic>> comments =
+              commentsSnapshot.docs.map((doc) {
+            return {
+              'author': doc['author'],
+              'text': doc['text'],
+              'date': doc['date'],
+            };
+          }).toList();
+          yield comments;
+        }
+      } else {
+        yield []; // Return an empty list if the type is invalid
+      }
+    } catch (e) {
+      print('Error fetching comments stream: $e');
+      yield []; // Return an empty list if there's an error
     }
   }
 }
