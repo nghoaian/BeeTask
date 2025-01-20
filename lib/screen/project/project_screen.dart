@@ -68,7 +68,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ShareScreen(),
+                    builder: (context) => ShareScreen(projectId: widget.projectId),
                   ),
                 );
               },

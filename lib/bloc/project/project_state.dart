@@ -36,3 +36,11 @@ class ProjectColorLoaded extends ProjectState {
   List<Object?> get props => [color];
 }
 
+class ProjectMemberLoaded extends ProjectState {
+  final List<Map<String, dynamic>> members;
+
+  ProjectMemberLoaded(this.members);
+
+  @override
+  List<Object?> get props => [members];
+}

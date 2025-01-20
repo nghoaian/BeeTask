@@ -1,11 +1,27 @@
+import 'package:bee_task/bloc/project/project_bloc.dart';
+import 'package:bee_task/bloc/project/project_event.dart';
+import 'package:bee_task/bloc/project/project_state.dart';
+import 'package:bee_task/screen/project/invite_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ShareScreen extends StatefulWidget {
+  final String projectId;
+
+  ShareScreen({required this.projectId});
+
   @override
   _ShareScreenState createState() => _ShareScreenState();
 }
 
 class _ShareScreenState extends State<ShareScreen> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<ProjectBloc>().add(LoadProjectMembers(widget.projectId));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,21 +37,10 @@ class _ShareScreenState extends State<ShareScreen> {
           icon: Icon(Icons.arrow_back_ios, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        // actions: [
-        //   TextButton(
-        //     onPressed: () {},
-        //     child: Text(
-        //       "Done",
-        //       style: TextStyle(color: Ap, fontSize: 16),
-        //     ),
-        //   )
-        // ],
       ),
-      backgroundColor:
-          Colors.grey[200], // Đặt màu nền của toàn màn hình là màu grey 200
+      backgroundColor: Colors.grey[200], // Đặt màu nền của toàn màn hình là màu grey 200
       body: Container(
-        margin: const EdgeInsets.symmetric(
-            horizontal: 8), // Thay đổi từ padding sang margin
+        margin: const EdgeInsets.symmetric(horizontal: 8), // Thay đổi từ padding sang margin
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -49,11 +54,15 @@ class _ShareScreenState extends State<ShareScreen> {
             SizedBox(height: 10),
             GestureDetector(
               onTap: () {
-                print("Invite via name or email tapped");
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => InvitePeopleScreen(projectId: widget.projectId),
+                  ),
+                );
               },
               child: Container(
-                margin: EdgeInsets.symmetric(
-                    horizontal: 8), // Thêm margin horizontal 16
+                margin: EdgeInsets.symmetric(horizontal: 8), // Thêm margin horizontal 16
                 padding: EdgeInsets.symmetric(vertical: 15, horizontal: 8),
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -64,7 +73,7 @@ class _ShareScreenState extends State<ShareScreen> {
                     Icon(Icons.add, color: Colors.red),
                     SizedBox(width: 10),
                     Text(
-                      "Invite via name or email",
+                      "Invite via email",
                       style: TextStyle(
                           color: Colors.red,
                           fontSize: 16,
@@ -76,8 +85,7 @@ class _ShareScreenState extends State<ShareScreen> {
             ),
             SizedBox(height: 20),
             Container(
-              margin: EdgeInsets.symmetric(
-                  horizontal: 8), // Thêm margin horizontal 16
+              margin: EdgeInsets.symmetric(horizontal: 8), // Thêm margin horizontal 16
               child: Text(
                 "IN THIS PROJECT",
                 style: TextStyle(
@@ -87,7 +95,30 @@ class _ShareScreenState extends State<ShareScreen> {
               ),
             ),
             SizedBox(height: 10),
-            ProjectMembersCard(), // Sử dụng widget ProjectMembersCard
+            Expanded(
+              child: BlocBuilder<ProjectBloc, ProjectState>(
+                builder: (context, state) {
+                  if (state is ProjectLoading) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (state is ProjectMemberLoaded) {
+                    return ListView.builder(
+                      itemCount: state.members.length,
+                      itemBuilder: (context, index) {
+                        final member = state.members[index];
+                        return ProjectMembersCard(
+                          userName: member['userName'],
+                          userEmail: member['userEmail'],
+                        );
+                      },
+                    );
+                  } else if (state is ProjectError) {
+                    return Center(child: Text(state.message));
+                  } else {
+                    return Center(child: Text('No members found'));
+                  }
+                },
+              ),
+            ),
           ],
         ),
       ),
@@ -96,63 +127,37 @@ class _ShareScreenState extends State<ShareScreen> {
 }
 
 class ProjectMembersCard extends StatelessWidget {
+  final String userName;
+  final String userEmail;
+
+  ProjectMembersCard({required this.userName, required this.userEmail});
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      // margin: EdgeInsets.symmetric(horizontal: 0), // Thêm margin horizontal 16
+      margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4), // Thêm margin horizontal 16
       child: Card(
         color: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        child: Column(
-          children: const [
-            ListTile(
-              // contentPadding: EdgeInsets.symmetric(horizontal: 8),
-              leading: CircleAvatar(
-                radius: 18,
-                backgroundColor: Colors.blue,
-                child: Text(
-                  "A",
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-              ),
-              title: Text(
-                "Me (An N.)",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text("an66528@gmail.com"),
-              trailing:
-                  Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
+        child: ListTile(
+          leading: CircleAvatar(
+            radius: 18,
+            backgroundColor: Colors.blue,
+            child: Text(
+              userName[0].toUpperCase(),
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
             ),
-            ListTile(
-              // contentPadding: EdgeInsets.zero,
-              leading: CircleAvatar(
-                radius: 18,
-                backgroundColor: Colors.orange,
-                child: Text(
-                  "T",
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-              ),
-              title: Text(
-                "dangminhthongbt2003",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text("dangminhthongbt2003@gmail.com"),
-              trailing: Icon(Icons.person, color: Colors.orange, size: 20),
-            ),
-          ],
+          ),
+          title: Text(
+            userName,
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          subtitle: Text(userEmail),
+          trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
         ),
       ),
     );
   }
-}
-
-void main() {
-  runApp(MaterialApp(
-    home: ShareScreen(),
-  ));
 }

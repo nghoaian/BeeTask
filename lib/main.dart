@@ -1,6 +1,6 @@
 import 'package:bee_task/bloc/account/account_bloc.dart';
 import 'package:bee_task/bloc/auth/auth_bloc.dart';
-import 'package:bee_task/bloc/comment/comment_bloc.dart';
+import 'package:bee_task/bloc/invite/invite_bloc.dart';
 import 'package:bee_task/bloc/project/project_bloc.dart';
 import 'package:bee_task/bloc/task/task_bloc.dart';
 import 'package:bee_task/firebase/firebase_options.dart';
@@ -56,6 +56,11 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) => ProjectBloc(
+            FirebaseFirestore.instance,
+          ),
+        ),
+        BlocProvider(
+          create: (context) => InviteBloc(
             FirebaseFirestore.instance,
           ),
         ),

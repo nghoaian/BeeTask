@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 
 import 'project_event.dart';
 import 'project_state.dart';
@@ -10,12 +11,13 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
   ProjectBloc(
     this.firestore,
   ) : super(ProjectInitial()) {
-    on<LoadProjectsEvent>(_loadProjects);
-    on<AddProjectEvent>(_addProject);
+    on<LoadProjectsEvent>(_onLoadProjects);
+    on<AddProjectEvent>(_onAddProject);
     on<GetColorForProjectEvent>(_getColorForProject);
+    on<LoadProjectMembers>(_onLoadProjectMembers);
   }
 
-  Future<void> _loadProjects(
+  Future<void> _onLoadProjects(
       LoadProjectsEvent event, Emitter<ProjectState> emit) async {
     emit(ProjectLoading());
     try {
@@ -35,7 +37,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     }
   }
 
-  Future<void> _addProject(
+  Future<void> _onAddProject(
       AddProjectEvent event, Emitter<ProjectState> emit) async {
     print(
         'Adding project: ${event.project}'); // Debug: Kiểm tra dữ liệu nhận được
@@ -59,7 +61,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     try {
       DocumentSnapshot projectSnapshot =
           await firestore.collection('projects').doc(event.projectId).get();
-      
+
       if (projectSnapshot.exists) {
         String color = projectSnapshot['color'] ?? 'Grey'; // Giá trị mặc định
         emit(ProjectColorLoaded(color: color));
@@ -68,6 +70,40 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
       }
     } catch (e) {
       emit(ProjectError("Failed to load color: $e"));
+    }
+  }
+
+  Future<void> _onLoadProjectMembers(
+      LoadProjectMembers event, Emitter<ProjectState> emit) async {
+    emit(ProjectLoading());
+    try {
+      final projectDoc =
+          await firestore.collection('projects').doc(event.projectId).get();
+      final members = projectDoc.data()?['members'] as List<dynamic>? ?? [];
+
+      final memberDetails = await Future.wait(members.map((email) async {
+        final userDoc = await firestore
+            .collection('users')
+            .where('userEmail', isEqualTo: email)
+            .get();
+        if (userDoc.docs.isNotEmpty) {
+          final user = userDoc.docs.first.data();
+          return {
+            'userName': user['userName'],
+            'userEmail': user['userEmail'],
+          };
+        }
+        return null;
+      }).toList());
+
+      final filteredMemberDetails = memberDetails
+          .where((user) => user != null)
+          .cast<Map<String, dynamic>>()
+          .toList();
+
+      emit(ProjectMemberLoaded(filteredMemberDetails));
+    } catch (e) {
+      emit(ProjectError('Failed to load project members: $e'));
     }
   }
 }

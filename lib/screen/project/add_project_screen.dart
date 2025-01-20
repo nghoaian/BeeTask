@@ -121,7 +121,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
                 'color': selectedColor,
                 'isFavorite': isFavorite,
                 'owner': userEmail,
-                'members': userEmail,
+                'members': [userEmail],
               };
 
               print(

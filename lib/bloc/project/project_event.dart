@@ -20,8 +20,16 @@ class GetColorForProjectEvent extends ProjectEvent {
   final String projectId;
 
   GetColorForProjectEvent({required this.projectId});
-  
+
   @override
   List<Object?> get props => [projectId];
 }
 
+class LoadProjectMembers extends ProjectEvent {
+  final String projectId;
+
+  LoadProjectMembers(this.projectId);
+
+  @override
+  List<Object?> get props => [projectId];
+}
