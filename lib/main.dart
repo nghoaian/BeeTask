@@ -1,5 +1,6 @@
 import 'package:bee_task/bloc/account/account_bloc.dart';
 import 'package:bee_task/bloc/auth/auth_bloc.dart';
+import 'package:bee_task/bloc/comment/comment_bloc.dart';
 import 'package:bee_task/bloc/project/project_bloc.dart';
 import 'package:bee_task/bloc/task/task_bloc.dart';
 import 'package:bee_task/firebase/firebase_options.dart';
@@ -13,6 +14,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:bee_task/data/repository/TaskRepository.dart';
 import 'package:bee_task/data/repository/UserRepository.dart';
+import 'package:bee_task/bloc/comment/comment_bloc.dart'; // Add this line
+
+import 'package:bee_task/data/repository/CommentRepository.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,6 +57,11 @@ class MyApp extends StatelessWidget {
         BlocProvider(
           create: (context) => ProjectBloc(
             FirebaseFirestore.instance,
+          ),
+        ),
+        BlocProvider(
+          create: (context) => CommentBloc(
+            FirebaseCommentRepository(),
           ),
         ),
       ],

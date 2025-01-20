@@ -457,4 +457,42 @@ class FirebaseTaskRepository implements TaskRepository {
       await doc.reference.delete();
     }
   }
+
+  Future<void> addComment(String id, String type, String content, String author,
+      {String? fileUrl, String? imageUrl}) async {
+    try {
+      var taskData = tasks.firstWhere((task) => task['id'] == id);
+
+      // Lấy thông tin collection cần thêm comment vào (task, subtask, subsubtask)
+      var commentsRef = FirebaseFirestore.instance
+          .collection('projects')
+          .doc(taskData['projectId'])
+          .collection('tasks')
+          .doc(taskData['id'])
+          .collection('comments');
+
+      // Tạo đối tượng comment mới
+      Map<String, dynamic> comment = {
+        'author': author,
+        'text': type == 'text'
+            ? content
+            : null, // Nếu type là text, thêm nội dung vào trường 'text'
+        'fileUrl': type == 'file'
+            ? fileUrl
+            : null, // Nếu type là file, thêm URL file vào trường 'fileUrl'
+        'imageUrl': type == 'image'
+            ? imageUrl
+            : null, // Nếu type là image, thêm URL hình ảnh vào trường 'imageUrl'
+        'date': DateTime.now().toIso8601String(),
+        'type': type, // Lưu loại comment (text, file, image)
+      };
+
+      // Thêm comment vào Firestore
+      await commentsRef.add(comment);
+
+      print('Comment added successfully');
+    } catch (e) {
+      print('Error adding comment: $e');
+    }
+  }
 }

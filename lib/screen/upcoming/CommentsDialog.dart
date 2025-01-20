@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:bee_task/screen/TaskData.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:bee_task/bloc/comment/comment_bloc.dart'; // Add this line
+import 'package:bee_task/bloc/comment/comment_state.dart'; // Add this line
+import 'package:bee_task/bloc/comment/comment_event.dart'; // Add this line
+import 'package:flutter_bloc/flutter_bloc.dart'; // Add this line
 
 class CommentsDialog extends StatefulWidget {
   final String idTask;
@@ -24,7 +30,24 @@ class _CommentsDialogState extends State<CommentsDialog> {
   @override
   void initState() {
     super.initState();
-    commentStream = TaskData().getComment(widget.idTask, widget.type);
+    _fetchComments();
+  }
+
+  Future<void> _fetchComments() async {
+    final completer = Completer<void>();
+    final subscription =
+        BlocProvider.of<CommentBloc>(context).stream.listen((state) {
+      if (state is CommentLoadedState || state is CommentErrorState) {
+        completer.complete();
+      }
+    });
+
+    BlocProvider.of<CommentBloc>(context).add(
+      FetchCommentsEvent(id: widget.idTask, type: widget.type),
+    );
+
+    await completer.future;
+    subscription.cancel(); // Hủy đăng ký sau khi hoàn tất
   }
 
   // Function to show a dialog for entering a comment
@@ -142,148 +165,160 @@ class _CommentsDialogState extends State<CommentsDialog> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title:
           const Text('Comments', style: TextStyle(fontWeight: FontWeight.bold)),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Use StreamBuilder to listen to the commentStream and rebuild UI
-          StreamBuilder<List<Map<String, dynamic>>>(
-            stream: commentStream,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (snapshot.hasError) {
-                return const Center(child: Text('Error fetching comments'));
-              }
-              if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Text('No comments yet.');
-              }
+      content: SizedBox(
+        width: double.maxFinite, // Đảm bảo nội dung có thể cuộn ngang nếu cần
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // StreamBuilder để lắng nghe và cập nhật dữ liệu
+            StreamBuilder<CommentState>(
+  stream: BlocProvider.of<CommentBloc>(context).stream,
+  builder: (context, snapshot) {
+    // Kiểm tra xem có đang trong trạng thái loading không
+    if (snapshot.connectionState == ConnectionState.waiting || snapshot.data is CommentLoadingState) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-              return Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ...snapshot.data!.map(
-                        (comment) => Container(
-                          margin: const EdgeInsets.only(bottom: 10),
-                          child: ListTile(
-                            contentPadding:
-                                EdgeInsets.zero, // No padding for ListTile
-                            leading: _buildAvatar(comment['author']),
-                            title: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  (TaskData()
-                                              .getUserNameFromList(
-                                                  comment['author'])
-                                              ?.isEmpty ??
-                                          true)
-                                      ? comment['author']
-                                      : TaskData().getUserNameFromList(
-                                          comment['author']),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                Text(
-                                  comment['text'],
-                                  style: const TextStyle(fontSize: 14),
-                                ),
-                              ],
-                            ),
-                            subtitle: Text(
-                              '${comment['date']}',
-                              style: const TextStyle(fontSize: 10),
-                            ),
-                            trailing: PopupMenuButton<String>(
-                              icon: const Icon(Icons.more_vert),
-                              onSelected: (value) {
-                                if (value == 'edit') {
-                                  _editComment(comment);
-                                } else if (value == 'delete') {
-                                  setState(() {
-                                    // Remove the comment
-                                  });
-                                }
-                              },
-                              itemBuilder: (BuildContext context) {
-                                return [
-                                  const PopupMenuItem<String>(
-                                    value: 'edit',
-                                    child: ListTile(
-                                      leading: Icon(Icons.edit),
-                                      title: Text('Edit Comment'),
-                                    ),
-                                  ),
-                                  const PopupMenuItem<String>(
-                                    value: 'delete',
-                                    child: ListTile(
-                                      leading:
-                                          Icon(Icons.delete, color: Colors.red),
-                                      title: Text('Delete Comment'),
-                                    ),
-                                  ),
-                                ];
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
+    // Kiểm tra nếu có lỗi
+    if (snapshot.hasError) {
+      return const Center(child: Text('Error fetching comments'));
+    }
+
+    // Kiểm tra nếu có dữ liệu và trạng thái là CommentLoadedState
+    if (snapshot.hasData) {
+      var state = snapshot.data;
+      if (state is CommentLoadedState) {
+        var comments = state.comments;
+
+        // Nếu không có bình luận
+        if (comments.isEmpty) {
+          return const Center(child: Text('No comments yet.'));
+        }
+
+        // Hiển thị danh sách bình luận
+        return Flexible(
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: comments.length,
+            itemBuilder: (context, index) {
+              return _buildCommentItem(comments[index]);
             },
           ),
-          // Comment input section
+        );
+      } else if (state is CommentErrorState) {
+        return Center(child: Text('Error: ${state.error}'));
+      }
+    }
 
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: _showCommentInputDialog,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.blue.shade300),
-                      borderRadius: BorderRadius.circular(16),
-                      color: Colors.white,
-                    ),
-                    child: Row(
-                      children: const [
-                        Icon(Icons.comment, color: Colors.blue),
-                        SizedBox(width: 8.0),
-                        Text('Comment', style: TextStyle(color: Colors.blue)),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12.0),
-              IconButton(
-                icon: const Icon(Icons.upload_rounded, color: Colors.blue),
-                onPressed: () {
-                  _showUploadOptions(); // Hiển thị các tùy chọn upload
-                },
-              ),
-            ],
-          ),
-        ],
+    return const Center(child: Text('No data available'));
+  },
+)
+,
+
+            const SizedBox(height: 12.0),
+
+            // Phần nhập comment
+            _buildCommentInputSection(),
+          ],
+        ),
       ),
       actions: [
         TextButton(
           onPressed: () {
-            Navigator.of(context).pop(); // Close the dialog
+            Navigator.of(context).pop(); // Đóng dialog
           },
           child: const Text('Close'),
+        ),
+      ],
+    );
+  }
+
+// Hàm xây dựng một item bình luận
+  Widget _buildCommentItem(Map<String, dynamic> comment) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: ListTile(
+        contentPadding: EdgeInsets.zero, // Không padding cho ListTile
+        leading: _buildAvatar(comment['author']),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              comment['author'],
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+            ),
+            Text(comment['text'], style: const TextStyle(fontSize: 14)),
+          ],
+        ),
+        subtitle: Text(
+          comment['date'],
+          style: const TextStyle(fontSize: 10),
+        ),
+        trailing: PopupMenuButton<String>(
+          icon: const Icon(Icons.more_vert),
+          onSelected: (value) {
+            if (value == 'edit') {
+              _editComment(comment);
+            } else if (value == 'delete') {
+              // Gọi hàm delete comment
+            }
+          },
+          itemBuilder: (BuildContext context) {
+            return [
+              const PopupMenuItem<String>(
+                value: 'edit',
+                child: ListTile(
+                  leading: Icon(Icons.edit),
+                  title: Text('Edit Comment'),
+                ),
+              ),
+              const PopupMenuItem<String>(
+                value: 'delete',
+                child: ListTile(
+                  leading: Icon(Icons.delete, color: Colors.red),
+                  title: Text('Delete Comment'),
+                ),
+              ),
+            ];
+          },
+        ),
+      ),
+    );
+  }
+
+// Hàm xây dựng phần nhập bình luận
+  Widget _buildCommentInputSection() {
+    return Row(
+      children: [
+        Expanded(
+          child: GestureDetector(
+            onTap: _showCommentInputDialog,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.blue.shade300),
+                borderRadius: BorderRadius.circular(16),
+                color: Colors.white,
+              ),
+              child: Row(
+                children: const [
+                  Icon(Icons.comment, color: Colors.blue),
+                  SizedBox(width: 8.0),
+                  Text('Comment', style: TextStyle(color: Colors.blue)),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12.0),
+        IconButton(
+          icon: const Icon(Icons.upload_rounded, color: Colors.blue),
+          onPressed: _showUploadOptions, // Show upload options dialog
         ),
       ],
     );
@@ -373,7 +408,7 @@ class _CommentsDialogState extends State<CommentsDialog> {
     FilePickerResult? result = await FilePicker.platform.pickFiles();
 
     if (result != null) {
-      PlatformFile file = result.files.first;
+      // PlatformFile file = result.files.first;
 
       // String? fileUrl = await uploadFileToFirebase(file.path!, file.name);
 

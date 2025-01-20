@@ -33,7 +33,7 @@ class AddTask extends TaskEvent {
   final String taskId;
   final String projectId;
 
-  AddTask(this.type,this.task,this.taskId,this.projectId);
+  AddTask(this.type, this.task, this.taskId, this.projectId);
 
   @override
   List<Object> get props => [task];
@@ -56,4 +56,3 @@ class DeleteTask extends TaskEvent {
 
   DeleteTask(this.taskId, this.type);
 }
-
