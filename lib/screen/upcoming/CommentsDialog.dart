@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:bee_task/screen/TaskData.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
 
 class CommentsDialog extends StatefulWidget {
   final String idTask;
@@ -268,7 +270,9 @@ class _CommentsDialogState extends State<CommentsDialog> {
               const SizedBox(width: 12.0),
               IconButton(
                 icon: const Icon(Icons.upload_rounded, color: Colors.blue),
-                onPressed: _showCommentInputDialog,
+                onPressed: () {
+                  _showUploadOptions(); // Hiển thị các tùy chọn upload
+                },
               ),
             ],
           ),
@@ -307,6 +311,75 @@ class _CommentsDialogState extends State<CommentsDialog> {
       );
     } else {
       return const SizedBox(width: 16);
+    }
+  }
+
+  void _showUploadOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Choose upload option',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Icons.image, color: Colors.blue),
+                title: const Text('Upload Image'),
+                onTap: () async {
+                  Navigator.of(context).pop();
+                  await _uploadImage(); // Gọi hàm upload ảnh
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.file_present, color: Colors.green),
+                title: const Text('Upload File'),
+                onTap: () async {
+                  Navigator.of(context).pop();
+                  await _uploadFile();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _uploadImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedImage =
+        await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedImage != null) {
+      // String? fileUrl =
+      //     await uploadFileToFirebase(pickedImage.path, pickedImage.name);
+
+      // if (fileUrl != null) {
+      //   // Lưu bình luận với URL file (ảnh)
+      // }
+    }
+  }
+
+  Future<void> _uploadFile() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles();
+
+    if (result != null) {
+      PlatformFile file = result.files.first;
+
+      // String? fileUrl = await uploadFileToFirebase(file.path!, file.name);
+
+      // if (fileUrl != null) {
+      //   // Lưu bình luận với URL file
+      // }
     }
   }
 }
