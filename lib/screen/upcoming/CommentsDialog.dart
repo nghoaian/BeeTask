@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:bee_task/screen/TaskData.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:bee_task/bloc/comment/comment_bloc.dart'; // Add this line
 import 'package:bee_task/bloc/comment/comment_state.dart'; // Add this line
 import 'package:bee_task/bloc/comment/comment_event.dart'; // Add this line
@@ -25,11 +24,13 @@ class CommentsDialog extends StatefulWidget {
 
 class _CommentsDialogState extends State<CommentsDialog> {
   late Stream<List<Map<String, dynamic>>> commentStream;
-  final TextEditingController commentController = TextEditingController();
+  final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
+  User? user;
 
   @override
   void initState() {
     super.initState();
+    user = firebaseAuth.currentUser;
     _fetchComments();
   }
 
@@ -50,9 +51,65 @@ class _CommentsDialogState extends State<CommentsDialog> {
     subscription.cancel(); // Hủy đăng ký sau khi hoàn tất
   }
 
-  // Function to show a dialog for entering a comment
+  Future<void> _addComments(String commentText) async {
+    final completer = Completer<void>();
+    final subscription =
+        BlocProvider.of<CommentBloc>(context).stream.listen((state) {
+      if (state is CommentLoadedState || state is CommentErrorState) {
+        completer.complete();
+      }
+    });
+
+    BlocProvider.of<CommentBloc>(context).add(AddCommentEvent(
+        id: widget.idTask,
+        type: widget.type,
+        content: commentText,
+        author: user?.email ?? ''));
+
+    await completer.future;
+    subscription.cancel(); // Hủy đăng ký sau khi hoàn tất
+  }
+
+  Future<void> _editComments(String commentId, String commentText) async {
+    final completer = Completer<void>();
+    final subscription =
+        BlocProvider.of<CommentBloc>(context).stream.listen((state) {
+      if (state is CommentLoadedState || state is CommentErrorState) {
+        completer.complete();
+      }
+    });
+
+    BlocProvider.of<CommentBloc>(context).add(EditCommentEvent(
+      commentId: commentId,
+      id: widget.idTask,
+      type: widget.type,
+      content: commentText,
+    ));
+
+    await completer.future;
+    subscription.cancel(); // Hủy đăng ký sau khi hoàn tất
+  }
+
+  Future<void> _deleteComments(String commentId) async {
+    final completer = Completer<void>();
+    final subscription =
+        BlocProvider.of<CommentBloc>(context).stream.listen((state) {
+      if (state is CommentLoadedState || state is CommentErrorState) {
+        completer.complete();
+      }
+    });
+
+    BlocProvider.of<CommentBloc>(context).add(DeleteCommentEvent(
+      commentId: commentId,
+      id: widget.idTask,
+      type: widget.type,
+    ));
+
+    await completer.future;
+    subscription.cancel(); // Hủy đăng ký sau khi hoàn tất
+  }
+
   Future<void> _showCommentInputDialog() async {
-    String commentText = '';
     TextEditingController inputController = TextEditingController();
 
     await showDialog(
@@ -70,59 +127,28 @@ class _CommentsDialogState extends State<CommentsDialog> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(context).pop(); // Đóng dialog
               },
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () {
-                commentText = inputController.text.trim();
+              onPressed: () async {
+                // Lấy giá trị từ TextField
+                final commentText = inputController.text.trim();
+
                 if (commentText.isNotEmpty) {
-                  setState(() {
-                    // Add the new comment to the list manually
-                    // You might need to update the stream as well in your data source
-                    // (TaskData) to reflect the new comment if needed.
-                  });
-                  Navigator.of(context).pop();
+                  Navigator.of(context).pop(); // Đóng dialog
+
+                  // Gọi hàm thêm comment
+                  await _addComments(commentText);
+
+                  // Cập nhật giao diện hoặc fetch lại comments nếu cần
+                  await _fetchComments();
                 }
               },
               child: const Text('Submit'),
             ),
           ],
-        );
-      },
-    );
-  }
-
-  void _showEditDeleteOptions(Map<String, dynamic> comment) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Choose an option'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.edit),
-                title: const Text('Edit Comment'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _editComment(comment);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.delete, color: Colors.red),
-                title: const Text('Delete Comment'),
-                onTap: () {
-                  setState(() {
-                    // Remove the comment
-                  });
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          ),
         );
       },
     );
@@ -153,6 +179,7 @@ class _CommentsDialogState extends State<CommentsDialog> {
               onPressed: () {
                 setState(() {
                   comment['text'] = editController.text.trim();
+                  _editComments(comment['id'], comment['text']);
                 });
                 Navigator.of(context).pop();
               },
@@ -165,7 +192,6 @@ class _CommentsDialogState extends State<CommentsDialog> {
   }
 
   @override
-  @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title:
@@ -177,48 +203,48 @@ class _CommentsDialogState extends State<CommentsDialog> {
           children: [
             // StreamBuilder để lắng nghe và cập nhật dữ liệu
             StreamBuilder<CommentState>(
-  stream: BlocProvider.of<CommentBloc>(context).stream,
-  builder: (context, snapshot) {
-    // Kiểm tra xem có đang trong trạng thái loading không
-    if (snapshot.connectionState == ConnectionState.waiting || snapshot.data is CommentLoadingState) {
-      return const Center(child: CircularProgressIndicator());
-    }
+              stream: BlocProvider.of<CommentBloc>(context).stream,
+              builder: (context, snapshot) {
+                // Kiểm tra xem có đang trong trạng thái loading không
+                if (snapshot.connectionState == ConnectionState.waiting ||
+                    snapshot.data is CommentLoadingState) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-    // Kiểm tra nếu có lỗi
-    if (snapshot.hasError) {
-      return const Center(child: Text('Error fetching comments'));
-    }
+                // Kiểm tra nếu có lỗi
+                if (snapshot.hasError) {
+                  return const Center(child: Text('Error fetching comments'));
+                }
 
-    // Kiểm tra nếu có dữ liệu và trạng thái là CommentLoadedState
-    if (snapshot.hasData) {
-      var state = snapshot.data;
-      if (state is CommentLoadedState) {
-        var comments = state.comments;
+                // Kiểm tra nếu có dữ liệu và trạng thái là CommentLoadedState
+                if (snapshot.hasData) {
+                  var state = snapshot.data;
+                  if (state is CommentLoadedState) {
+                    var comments = state.comments;
 
-        // Nếu không có bình luận
-        if (comments.isEmpty) {
-          return const Center(child: Text('No comments yet.'));
-        }
+                    // Nếu không có bình luận
+                    if (comments.isEmpty) {
+                      return const Center(child: Text('No comments yet.'));
+                    }
 
-        // Hiển thị danh sách bình luận
-        return Flexible(
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: comments.length,
-            itemBuilder: (context, index) {
-              return _buildCommentItem(comments[index]);
-            },
-          ),
-        );
-      } else if (state is CommentErrorState) {
-        return Center(child: Text('Error: ${state.error}'));
-      }
-    }
+                    // Hiển thị danh sách bình luận
+                    return Flexible(
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: comments.length,
+                        itemBuilder: (context, index) {
+                          return _buildCommentItem(comments[index]);
+                        },
+                      ),
+                    );
+                  } else if (state is CommentErrorState) {
+                    return Center(child: Text('Error: ${state.error}'));
+                  }
+                }
 
-    return const Center(child: Text('No data available'));
-  },
-)
-,
+                return const Center(child: Text('No data available'));
+              },
+            ),
 
             const SizedBox(height: 12.0),
 
@@ -243,7 +269,7 @@ class _CommentsDialogState extends State<CommentsDialog> {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       child: ListTile(
-        contentPadding: EdgeInsets.zero, // Không padding cho ListTile
+        contentPadding: EdgeInsets.zero,
         leading: _buildAvatar(comment['author']),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -265,7 +291,8 @@ class _CommentsDialogState extends State<CommentsDialog> {
             if (value == 'edit') {
               _editComment(comment);
             } else if (value == 'delete') {
-              // Gọi hàm delete comment
+              _deleteComments(comment['id']);
+              _fetchComments();
             }
           },
           itemBuilder: (BuildContext context) {
@@ -316,10 +343,6 @@ class _CommentsDialogState extends State<CommentsDialog> {
           ),
         ),
         const SizedBox(width: 12.0),
-        IconButton(
-          icon: const Icon(Icons.upload_rounded, color: Colors.blue),
-          onPressed: _showUploadOptions, // Show upload options dialog
-        ),
       ],
     );
   }
@@ -346,75 +369,6 @@ class _CommentsDialogState extends State<CommentsDialog> {
       );
     } else {
       return const SizedBox(width: 16);
-    }
-  }
-
-  void _showUploadOptions() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (BuildContext context) {
-        return Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Choose upload option',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              ListTile(
-                leading: const Icon(Icons.image, color: Colors.blue),
-                title: const Text('Upload Image'),
-                onTap: () async {
-                  Navigator.of(context).pop();
-                  await _uploadImage(); // Gọi hàm upload ảnh
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.file_present, color: Colors.green),
-                title: const Text('Upload File'),
-                onTap: () async {
-                  Navigator.of(context).pop();
-                  await _uploadFile();
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _uploadImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? pickedImage =
-        await picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedImage != null) {
-      // String? fileUrl =
-      //     await uploadFileToFirebase(pickedImage.path, pickedImage.name);
-
-      // if (fileUrl != null) {
-      //   // Lưu bình luận với URL file (ảnh)
-      // }
-    }
-  }
-
-  Future<void> _uploadFile() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles();
-
-    if (result != null) {
-      // PlatformFile file = result.files.first;
-
-      // String? fileUrl = await uploadFileToFirebase(file.path!, file.name);
-
-      // if (fileUrl != null) {
-      //   // Lưu bình luận với URL file
-      // }
     }
   }
 }

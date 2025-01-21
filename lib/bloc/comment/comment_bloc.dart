@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'comment_event.dart';
 import 'comment_state.dart';
@@ -10,6 +12,7 @@ class CommentBloc extends Bloc<CommentEvent, CommentState> {
     on<FetchCommentsEvent>(_onFetchComment);
     on<AddCommentEvent>(_onAddComment);
     on<EditCommentEvent>(_onUpdateComment);
+    on<DeleteCommentEvent>(_onDeleteComment);
   }
 
   // Handle FetchCommentsEvent
@@ -30,13 +33,7 @@ class CommentBloc extends Bloc<CommentEvent, CommentState> {
     emit(CommentLoadingState());
     try {
       await commentRepository.addComment(
-        event.id,
-        event.type,
-        event.content,
-        event.author,
-        filePath: event.filePath,
-        imageUrl: event.imageUrl,
-      );
+          event.id, event.type, event.author, event.content);
       var comments = await commentRepository.getComments(event.id, event.type);
       emit(CommentLoadedState(comments: comments));
     } catch (e) {
@@ -54,10 +51,20 @@ class CommentBloc extends Bloc<CommentEvent, CommentState> {
         event.id,
         event.type,
         event.content,
-        event.author,
-        filePath: event.filePath,
-        imageUrl: event.imageUrl,
       );
+      var comments = await commentRepository.getComments(event.id, event.type);
+      emit(CommentLoadedState(comments: comments));
+    } catch (e) {
+      emit(CommentErrorState(error: 'Error editing comment: $e'));
+    }
+  }
+
+  Future<void> _onDeleteComment(
+      DeleteCommentEvent event, Emitter<CommentState> emit) async {
+    emit(CommentLoadingState());
+    try {
+      await commentRepository.deleteComment(
+          event.commentId, event.id, event.type);
       var comments = await commentRepository.getComments(event.id, event.type);
       emit(CommentLoadedState(comments: comments));
     } catch (e) {

@@ -1,6 +1,5 @@
 import 'package:bee_task/bloc/task/task_event.dart';
 import 'package:flutter/material.dart';
-import 'package:bee_task/util/colors.dart';
 import 'package:bee_task/screen/TaskData.dart';
 import 'package:bee_task/bloc/task/task_bloc.dart';
 import 'package:bee_task/data/model/task.dart';
@@ -215,28 +214,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
       },
       child: Row(
         children: [
-          // Thêm hiển thị avatar
-          if (TaskData().getUserAvatarFromList(taskData['assignee']) != '') ...[
-            CircleAvatar(
-              radius: 16,
-              backgroundImage: AssetImage(
-                  'assets/${TaskData().getUserAvatarFromList(taskData['assignee'])}'),
-            ),
-          ] else if (taskData['assignee'] != '') ...[
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: Colors.white,
-              child: Text(
-                taskData['assignee'][0].toUpperCase(),
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ] else ...[
-            const SizedBox(width: 16), // Khoảng trống thay vì avatar
-          ],
+          _buildAssigneeAvatar(taskData['assignee']),
           const SizedBox(width: 8), // Khoảng cách giữa avatar và tiêu đề
           Expanded(
             child: Text(
@@ -292,7 +270,12 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                 FocusScope.of(context).requestFocus(FocusNode());
 
                 if (value == 'assignUser') {
-                  _changeAssignee(taskData['assignee']);
+                  String newAssignee =
+                      await _changeAssignee(taskData['assignee']);
+                  if (newAssignee != '')
+                    setState(() {
+                      taskData['assignee'] = newAssignee;
+                    });
                 } else if (value == 'toggleCompletedTasksVisibility') {
                   changeShowCompletedTasksVisibility();
                 } else if (value == 'deleteTask') {
@@ -677,28 +660,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                 ),
               ),
               // Hiển thị avatar hoặc khoảng trống
-              if (TaskData().getUserAvatarFromList(subtask['assignee']) !=
-                  '') ...[
-                CircleAvatar(
-                  radius: 16,
-                  backgroundImage: AssetImage(
-                      'assets/${TaskData().getUserAvatarFromList(subtask['assignee'])}'),
-                ),
-              ] else if (subtask['assignee'] != '') ...[
-                CircleAvatar(
-                  radius: 16,
-                  backgroundColor: Colors.white,
-                  child: Text(
-                    subtask['assignee'][0].toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ] else ...[
-                const SizedBox(width: 16), // Khoảng trống thay vì avatar
-              ],
+              _buildAssigneeAvatar(subtask['assignee']),
             ],
           ),
         );
@@ -808,29 +770,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   ),
                 ),
                 // Hiển thị avatar người được giao hoặc khoảng trống
-                if (TaskData().getUserAvatarFromList(subsubtask['assignee']) !=
-                    '') ...[
-                  CircleAvatar(
-                    radius: 16,
-                    backgroundImage: AssetImage(
-                        'assets/${TaskData().getUserAvatarFromList(subsubtask['assignee'])}'),
-                  ),
-                ] else if (subsubtask['assignee'] != null &&
-                    subsubtask['assignee'] != '') ...[
-                  CircleAvatar(
-                    radius: 16,
-                    backgroundColor: Colors.white,
-                    child: Text(
-                      subsubtask['assignee'][0].toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ] else ...[
-                  const SizedBox(width: 16), // Khoảng trống thay vì avatar
-                ],
+                _buildAssigneeAvatar(subsubtask['assignee']),
               ],
             ),
           ),
@@ -895,7 +835,8 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
     );
   }
 
-  void _changeAssignee(String currentAssignee) async {
+  Future<String> _changeAssignee(String currentAssignee) async {
+    String? newAssignee = currentAssignee;
     // Lấy thông tin task
     var task = TaskData().fetchDataFromFirestore(widget.type, widget.taskId);
     var taskData = await task;
@@ -906,7 +847,8 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
           await TaskData().getProjectMembers(taskData['projectId']);
 
       if (projectMembers.isNotEmpty) {
-        showDialog(
+        // Hiển thị dialog cho việc chọn assignee mới
+        newAssignee = await showDialog<String>(
           context: context,
           builder: (BuildContext context) {
             // Đặt currentAssignee làm giá trị mặc định nếu nó không rỗng
@@ -922,12 +864,12 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   itemCount: projectMembers.length,
                   itemBuilder: (context, index) {
                     var member = projectMembers[index];
-                    return RadioListTile(
+                    return RadioListTile<String>(
                       title: Text(member), // Hiển thị tên người dùng
                       value: member, // Giá trị là tên của member
                       groupValue: selectedAssignee,
                       onChanged: (value) {
-                        selectedAssignee = value as String?;
+                        selectedAssignee = value;
                         Navigator.of(context)
                             .pop(selectedAssignee); // Đóng dialog sau khi chọn
                       },
@@ -945,42 +887,31 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
               ],
             );
           },
-        ).then((selectedMemberName) {
-          if (selectedMemberName != null) {
-            if (isUpdating) return; // Ngăn thao tác khi đang cập nhật
-            setState(() {
-              isUpdating = true; // Bắt đầu cập nhật
-            });
+        );
 
-            // Cập nhật trạng thái `completed` cho subsubtask
-            Task updateTask = Task(
-              id: taskData['id'],
-              title: taskData['title'],
-              description: taskData['description'],
-              dueDate: taskData['dueDate'],
-              priority: taskData['priority'],
-              assignee: selectedMemberName,
-              type: widget.type,
-              projectName: widget.projectName,
-              completed: taskData['completed'],
-              subtasks: [],
-            );
+        // Kiểm tra nếu assignee được chọn và không null
+        if (newAssignee != null && newAssignee.isNotEmpty) {
+          // Cập nhật trạng thái `assignee` cho task
+          Task updateTask = Task(
+            id: taskData['id'],
+            title: taskData['title'],
+            description: taskData['description'],
+            dueDate: taskData['dueDate'],
+            priority: taskData['priority'],
+            assignee: newAssignee, // Cập nhật assignee
+            type: widget.type,
+            projectName: widget.projectName,
+            completed: taskData['completed'],
+            subtasks: [],
+          );
 
-            // Gửi cập nhật lên Firestore
-            widget.taskBloc
-                .add(UpdateTask(taskData['id'], updateTask, widget.type));
-
-            // Chờ Firebase cập nhật trước khi render lại
-            widget.resetDialog();
-
-            setState(() {
-              isUpdating = false; // Hoàn tất cập nhật
-            });
-            // TODO: Cập nhật assignee cho task tại đây
-          }
-        });
+          // Gửi cập nhật lên Firestore
+          widget.taskBloc
+              .add(UpdateTask(taskData['id'], updateTask, widget.type));
+        }
       }
     }
+    return newAssignee ?? ''; // Trả về assignee mới
   }
 
   Future<void> _confirmAndDeleteTask() async {
@@ -1042,6 +973,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
 
       // Đóng dialog sau khi cập nhật xong
       Navigator.pop(dialogContext); // Dùng context đã lưu ở trên
+      await widget.resetDialog();
 
       // Cập nhật lại màn hình
       widget.resetScreen();
@@ -1060,5 +992,24 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
       this.task = TaskData().fetchDataFromFirestore(widget.type, widget.taskId);
       ;
     });
+  }
+
+  Widget _buildAssigneeAvatar(String assingee) {
+    if (assingee != '') {
+      return CircleAvatar(
+        radius: 16,
+        backgroundColor: Colors.white,
+        child: Text(
+          assingee[0].toUpperCase(),
+          style: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    } else {
+      return SizedBox
+          .shrink(); // Hoặc có thể trả về bất kỳ widget nào khác nếu không có assignee
+    }
   }
 }

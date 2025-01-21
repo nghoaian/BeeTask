@@ -327,7 +327,6 @@ class TaskData {
         yield 0;
       }
     } catch (e) {
-      print('Error getting count stream: $e');
       yield 0; // Trả về giá trị mặc định nếu có lỗi
     }
   }
@@ -370,7 +369,6 @@ class TaskData {
         yield 0;
       }
     } catch (e) {
-      print('Error fetching completed count stream: $e');
       yield 0; // Trả về giá trị mặc định nếu có lỗi
     }
   }
@@ -594,6 +592,4 @@ class TaskData {
       return [];
     }
   }
-
- 
 }

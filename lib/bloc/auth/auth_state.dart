@@ -9,6 +9,7 @@ abstract class AuthState extends Equatable {
 class AuthInitial extends AuthState {}
 
 class AuthLoading extends AuthState {}
+
 class AuthFailure extends AuthState {
   final String errorMessage;
 
@@ -33,7 +34,7 @@ class ChangePasswordSuccess extends AuthState {}
 
 class ChangePasswordFailure extends AuthState {
   final String errorMessage;
-  
+
   ChangePasswordFailure({required this.errorMessage});
 
   @override

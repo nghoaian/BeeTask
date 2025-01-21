@@ -2,23 +2,37 @@ import 'package:bee_task/screen/TaskData.dart';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:intl/intl.dart';
 
 abstract class CommentRepository {
   FirebaseAuth get firebaseAuth;
-  Future<void> addComment(String id, String type, String content, String author,
-      {String? filePath, String? imageUrl});
+  Future<void> addComment(
+    String id,
+    String type,
+    String author,
+    String content,
+  );
   Future<void> editComment(
-      String commentId, String id, String type, String content, String author,
-      {String? filePath, String? imageUrl});
-  Future<List<Map<String, dynamic>>> getComments(String id, String type);
+    String commentId,
+    String id,
+    String type,
+    String content,
+  );
+
+  Future<void> deleteComment(
+    String commentId,
+    String id,
+    String type,
+  );
+  Future<List<Map<String, dynamic>>> getComments(
+    String id,
+    String type,
+  );
 }
 
 class FirebaseCommentRepository implements CommentRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   FirebaseCommentRepository();
 
@@ -30,38 +44,39 @@ class FirebaseCommentRepository implements CommentRepository {
   List<Map<String, dynamic>> subsubtasks = TaskData().subsubtasks;
   List<Map<String, dynamic>> users = TaskData().users;
   List<Map<String, dynamic>> pr = TaskData().users;
-  Future<void> addComment(String id, String type, String content, String author,
-      {String? filePath, String? imageUrl}) async {
+  Future<void> addComment(
+      String id, String type, String author, String content) async {
     try {
-      var taskData = tasks.firstWhere((task) => task['id'] == id);
+      String path = '';
 
-      String? fileUrl;
-      if (type == 'file' && filePath != null) {
-        // Tải file lên Firebase Storage
-        var fileRef = _storage
-            .ref()
-            .child('comments/${DateTime.now().millisecondsSinceEpoch}');
-        var uploadTask = await fileRef.putFile(File(filePath));
-        fileUrl = await uploadTask.ref.getDownloadURL();
+      // Xây dựng đường dẫn dựa trên type
+      if (type == 'task') {
+        var taskData = tasks.firstWhere((task) => task['id'] == id);
+        path = 'projects/${taskData['projectId']}/tasks/$id';
+      } else if (type == 'subtask') {
+        var subtaskData = subtasks.firstWhere((task) => task['id'] == id);
+        path =
+            'projects/${subtaskData['projectId']}/tasks/${subtaskData['taskId']}/subtasks/$id';
+      } else if (type == 'subsubtask') {
+        var subsubtaskData = subsubtasks.firstWhere((task) => task['id'] == id);
+        path =
+            'projects/${subsubtaskData['projectId']}/tasks/${subsubtaskData['taskId']}/subtasks/${subsubtaskData['subtaskId']}/subsubtasks/$id';
+      } else {
+        throw Exception('Invalid type or id');
       }
 
-      var commentsRef = _firestore
-          .collection('projects')
-          .doc(taskData['projectId'])
-          .collection('tasks')
-          .doc(taskData['id'])
-          .collection('comments');
+      // Lấy danh sách comments từ Firestore
+      var commentsSnapshot =
+          await FirebaseFirestore.instance.doc(path).collection('comments');
 
       Map<String, dynamic> comment = {
         'author': author,
-        'text': type == 'text' ? content : null,
-        'fileUrl': type == 'file' ? fileUrl : null,
-        'imageUrl': type == 'image' ? imageUrl : null,
-        'date': DateTime.now().toIso8601String(),
-        'type': type,
+        'text': content ?? null,
+        'date': DateFormat('dd/MM/yyyy, HH:mm')
+            .format(DateTime.now()), // Định dạng ngày/tháng/năm, giờ
       };
 
-      await commentsRef.add(comment);
+      await commentsSnapshot.add(comment);
     } catch (e) {
       throw Exception('Error adding comment: $e');
     }
@@ -69,8 +84,7 @@ class FirebaseCommentRepository implements CommentRepository {
 
   // Chỉnh sửa comment
   Future<void> editComment(
-      String commentId, String id, String type, String content, String author,
-      {String? filePath, String? imageUrl}) async {
+      String commentId, String id, String type, String content) async {
     try {
       var taskData = tasks.firstWhere((task) => task['id'] == id);
 
@@ -82,22 +96,8 @@ class FirebaseCommentRepository implements CommentRepository {
           .collection('comments')
           .doc(commentId);
 
-      String? fileUrl;
-      if (type == 'file' && filePath != null) {
-        var fileRef = _storage
-            .ref()
-            .child('comments/${DateTime.now().millisecondsSinceEpoch}');
-        var uploadTask = await fileRef.putFile(File(filePath));
-        fileUrl = await uploadTask.ref.getDownloadURL();
-      }
-
       Map<String, dynamic> updatedComment = {
-        'author': author,
-        'text': type == 'text' ? content : null,
-        'fileUrl': type == 'file' ? fileUrl : null,
-        'imageUrl': type == 'image' ? imageUrl : null,
-        'date': DateTime.now().toIso8601String(),
-        'type': type,
+        'text': content ?? null,
       };
 
       await commentRef.update(updatedComment);
@@ -106,9 +106,41 @@ class FirebaseCommentRepository implements CommentRepository {
     }
   }
 
+  Future<void> deleteComment(String commentId, String id, String type) async {
+    try {
+      String path = '';
+
+      // Xây dựng đường dẫn dựa trên type
+      if (type == 'task') {
+        var taskData = tasks.firstWhere((task) => task['id'] == id);
+        path = 'projects/${taskData['projectId']}/tasks/$id';
+      } else if (type == 'subtask') {
+        var subtaskData = subtasks.firstWhere((task) => task['id'] == id);
+        path =
+            'projects/${subtaskData['projectId']}/tasks/${subtaskData['taskId']}/subtasks/$id';
+      } else if (type == 'subsubtask') {
+        var subsubtaskData = subsubtasks.firstWhere((task) => task['id'] == id);
+        path =
+            'projects/${subsubtaskData['projectId']}/tasks/${subsubtaskData['taskId']}/subtasks/${subsubtaskData['subtaskId']}/subsubtasks/$id';
+      } else {
+        throw Exception('Invalid type or id');
+      }
+
+      // Lấy danh sách comments từ Firestore
+      var commentsSnapshot = await FirebaseFirestore.instance
+          .doc(path)
+          .collection('comments')
+          .doc(commentId);
+
+      // Xóa comment
+      await commentsSnapshot.delete();
+    } catch (e) {
+      throw Exception('Error deleting comment: $e');
+    }
+  }
+
   // Lấy tất cả comment
-  Future<List<Map<String, dynamic>>> getComments(
-      String id, String type) async {
+  Future<List<Map<String, dynamic>>> getComments(String id, String type) async {
     try {
       List<Map<String, dynamic>> allComments = [];
       String path = '';
@@ -140,12 +172,10 @@ class FirebaseCommentRepository implements CommentRepository {
         commentData['id'] = commentDoc.id;
 
         allComments.add({
+          'id': commentData['id'],
           'author': commentData['author'] ?? '',
           'text': commentData['text'] ?? '',
-          'fileUrl': commentData['fileUrl'] ?? '',
-          'imageUrl': commentData['imageUrl'] ?? '',
           'date': commentData['date'] ?? '',
-          'type': commentData['type'] ?? '',
         });
       }
 
