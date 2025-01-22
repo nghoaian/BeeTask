@@ -6,6 +6,7 @@ import 'package:bee_task/bloc/task/task_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bee_task/data/model/task.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AddTaskDialog extends StatefulWidget {
   final String taskId; // Có thể là null nếu tạo mới
@@ -27,6 +28,8 @@ class AddTaskDialog extends StatefulWidget {
 }
 
 class _AddTaskDialogState extends State<AddTaskDialog> {
+  User? user = FirebaseAuth.instance.currentUser;
+
   final TextEditingController taskNameController =
       TextEditingController(); // Controller cho tên công việc
   final TextEditingController descriptionController =
@@ -36,8 +39,10 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
           'Thấp'); // Controller cho mức độ ưu tiên có giá trị mặc định là Thấp
   final TextEditingController dateController =
       TextEditingController(); // Controller cho ngày
+
   final TextEditingController projectController =
-      TextEditingController(); // Controller cho project có giá trị mặc định là Inbox
+      TextEditingController(); // Controller cho dự án
+
   final TextEditingController assigneeController =
       TextEditingController(); // Controller cho người được giao việc
 
@@ -47,7 +52,10 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
   void initState() {
     super.initState();
     _selectedDay = widget.selectDay;
-    dateController.text = "${_selectedDay!.toLocal()}".split(' ')[0];
+    _selectedDay = widget.selectDay;
+    projectController.text = user != null
+        ? user?.email ?? ''
+        : ''; // Nếu user không null, gán email, nếu null thì để rỗng
   }
 
 // Widget nhập tên công việc
@@ -122,11 +130,11 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     );
   }
 
-  /// Dropdown chọn project
   Widget _buildProjectDropdown() {
-    var task;
     // Kiểm tra nếu widget.taskId không phải là rỗng
     if (widget.taskId.isNotEmpty || widget.taskId != '') {
+      var task;
+
       if (widget.type == 'task') {
         // Lấy projectId và projectName từ task
         task = TaskData().tasks.firstWhere(
@@ -169,7 +177,24 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
       );
     }
 
-    // Nếu widget.taskId rỗng, thì hiển thị Dropdown để chọn project
+    // Nếu widget.taskId rỗng, kiểm tra nếu projectController là user?.email
+    if (projectController.text == user?.email) {
+      var userProject = TaskData().projects.firstWhere(
+            (proj) => proj['id'] == user?.email,
+            orElse: () => {}, // Trả về đối tượng rỗng nếu không tìm thấy
+          );
+      if (userProject.isEmpty) {
+        return _buildProjectDropdownWithChoices(false);
+      }
+      return _buildProjectDropdownWithChoices(true);
+    }
+
+    return _buildProjectDropdownWithChoices(false);
+  }
+
+// Hàm dựng dropdown để người dùng chọn project
+  Widget _buildProjectDropdownWithChoices(bool check) {
+    if (check == false) projectController.clear();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -248,6 +273,12 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
       final List<String> members =
           List<String>.from(selectedProject['members']); // Ép kiểu danh sách
 
+      // Nếu chỉ có một thành viên trong danh sách, không hiển thị dropdown
+      if (members.length == 1) {
+        return const SizedBox.shrink();
+      }
+
+      // Nếu có nhiều hơn một thành viên, hiển thị dropdown
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -602,8 +633,8 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     }
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: Text(
-        title,
+      title: const Text(
+        'Add New Task',
         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
       ),
       content: SingleChildScrollView(

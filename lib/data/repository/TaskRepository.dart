@@ -165,10 +165,19 @@ class FirebaseTaskRepository implements TaskRepository {
             .doc(taskId)
             .collection('subtasks')
             .add(taskDataAdd);
+
+        // Cập nhật completed của task cha thành false
+        await firestore
+            .collection('projects')
+            .doc(projectId)
+            .collection('tasks')
+            .doc(taskId)
+            .update({'completed': false});
         return true;
       } else if (type == 'subsubtask' && taskId != '') {
         var findTask = subtasks.firstWhere((item) => item['id'] == taskId,
             orElse: () => throw Exception('Task not found'));
+
         // Thêm vào collection 'subsubtasks' của subtask
         await firestore
             .collection('projects')
@@ -179,11 +188,29 @@ class FirebaseTaskRepository implements TaskRepository {
             .doc(taskId)
             .collection('subsubtasks')
             .add(taskDataAdd);
+
+        // Cập nhật completed của subtask cha và task cha thành false
+        await firestore
+            .collection('projects')
+            .doc(projectId)
+            .collection('tasks')
+            .doc(findTask['taskId'])
+            .collection('subtasks')
+            .doc(taskId)
+            .update({'completed': false});
+
+        await firestore
+            .collection('projects')
+            .doc(projectId)
+            .collection('tasks')
+            .doc(findTask['taskId'])
+            .update({'completed': false});
         return true;
       } else {
         return false;
       }
     } catch (e) {
+      print("Error: $e");
       return false;
     }
   }
