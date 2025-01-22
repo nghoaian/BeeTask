@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:bee_task/util/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class TaskData {
   static final TaskData _instance = TaskData._internal();
@@ -590,6 +591,60 @@ class TaskData {
     } catch (e) {
       print('Error fetching project members: $e');
       return [];
+    }
+  }
+
+  Future<bool> isUserInProjectPermissions(String type, String id) async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+
+      // Check if there's a logged-in user
+      if (user == null) {
+        print('No current user');
+        return false;
+      }
+      var task;
+      if (type == 'task') {
+        task = tasks.firstWhere((item) => item['id'] == id,
+            orElse: () => throw Exception('Task not found'));
+      } else if (type == 'subtask') {
+        task = subtasks.firstWhere((item) => item['id'] == id,
+            orElse: () => throw Exception('Task not found'));
+      } else {
+        task = subsubtasks.firstWhere((item) => item['id'] == id,
+            orElse: () => throw Exception('Task not found'));
+      }
+
+      // Fetch the project document from Firestore
+      DocumentSnapshot projectSnapshot = await FirebaseFirestore.instance
+          .collection('projects')
+          .doc(task['projectId'])
+          .get();
+
+      // Check if the project exists
+      if (!projectSnapshot.exists) {
+        print('Project not found');
+        return false;
+      }
+
+      // Get the permissions array from the project data
+      var projectData = projectSnapshot.data() as Map<String, dynamic>?;
+      var permissions = projectData?['permissions'];
+
+      // Check if permissions is null or not an array
+      if (permissions == null || !(permissions is List)) {
+        print('Permissions field is either missing or not an array');
+        return false;
+      }
+
+      // Debugging: Log the user email and permissions array
+
+      return permissions
+          .any((email) => email.toLowerCase() == user.email?.toLowerCase());
+    } catch (e) {
+      // Log error
+      print('Error checking user permissions: $e');
+      return false; // Return false if an error occurs
     }
   }
 }

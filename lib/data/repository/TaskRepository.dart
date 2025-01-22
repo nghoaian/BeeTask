@@ -305,7 +305,17 @@ class FirebaseTaskRepository implements TaskRepository {
           await updateSubsubtasksCompletedStatus(task['projectId'],
               task['taskId'], task['id'], newCompletedStatus);
         }
+      } else {
+        if (type == 'subsubtask') {
+          // Update the parent subtask to completed = false
+          await updateSubtaskCompletedStatus(
+              task['projectId'], task['taskId'], task['subtaskId'], false);
+        } else if (type == 'subtask') {
+          // Update the parent task to completed = false
+          await updateTaskCompletedStatus(task['projectId'], taskId, false);
+        }
       }
+
       return true;
     } catch (e) {
       return false;
@@ -363,6 +373,38 @@ class FirebaseTaskRepository implements TaskRepository {
       }
     } catch (e) {
       print('Error updating subsubtasks completed status: $e');
+    }
+  }
+
+  Future<void> updateSubtaskCompletedStatus(String projectId, String taskId,
+      String subtaskId, bool completedStatus) async {
+    try {
+      DocumentReference subtaskRef = FirebaseFirestore.instance
+          .collection('projects')
+          .doc(projectId)
+          .collection('tasks')
+          .doc(taskId)
+          .collection('subtasks')
+          .doc(subtaskId);
+
+      await subtaskRef.update({'completed': completedStatus});
+    } catch (e) {
+      throw Exception('Failed to update subtask completed status');
+    }
+  }
+
+  Future<void> updateTaskCompletedStatus(
+      String projectId, String taskId, bool completedStatus) async {
+    try {
+      DocumentReference taskRef = FirebaseFirestore.instance
+          .collection('projects')
+          .doc(projectId)
+          .collection('tasks')
+          .doc(taskId);
+
+      await taskRef.update({'completed': completedStatus});
+    } catch (e) {
+      throw Exception('Failed to update task completed status');
     }
   }
 

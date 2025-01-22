@@ -456,8 +456,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // Hàm hiển thị dialog chi tiết công việc
-  void _showTaskDetailsDialog(
-      String taskId, String type, bool showCompletedTask, String projectName) {
+  void _showTaskDetailsDialog(String taskId, String type,
+      bool showCompletedTask, String projectName) async {
+    bool permissions =
+        await TaskData().isUserInProjectPermissions(type, taskId);
+
     showModalBottomSheet(
       context: context,
       isDismissible: false,
@@ -467,6 +470,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return SingleChildScrollView(
           child: TaskDetailsDialog(
             taskId: taskId,
+            permissions: permissions,
             type: type,
             selectDay: _selectedDay ?? DateTime.now(),
             projectName: projectName,

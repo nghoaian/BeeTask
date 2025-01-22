@@ -16,6 +16,7 @@ class TaskDetailsDialog extends StatefulWidget {
   final TaskBloc taskBloc; // Accept TaskBloc via constructor
   final Function resetScreen;
   final Function resetDialog;
+  final bool permissions;
 
   TaskDetailsDialog(
       {required this.taskId,
@@ -25,7 +26,8 @@ class TaskDetailsDialog extends StatefulWidget {
       required this.taskBloc,
       required this.resetScreen,
       required this.selectDay,
-      required this.resetDialog});
+      required this.resetDialog,
+      required this.permissions});
 
   @override
   _TaskDetailsDialogState createState() => _TaskDetailsDialogState();
@@ -99,14 +101,16 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                                 for (var subsubtask
                                     in subtask['subsubtasks'] ?? [])
                                   if (!subsubtask['completed'])
-                                    buildSubsubtasks(subsubtask, 'subsubtask'),
+                                    buildSubsubtasks(subsubtask, 'subsubtask',
+                                        subtask['id']),
                             ] else if (widget.showCompletedTasks) ...[
                               buildSubtaskRow(subtask, 'subtask'),
                               if (subtask['subsubtasks'] != null &&
                                   subtask['subsubtasks'].isNotEmpty)
                                 for (var subsubtask
                                     in subtask['subsubtasks'] ?? [])
-                                  buildSubsubtasks(subsubtask, 'subsubtask'),
+                                  buildSubsubtasks(
+                                      subsubtask, 'subsubtask', subtask['id']),
                             ],
                           ],
                           for (var subsubtask in task['subsubtasks'] ?? []) ...[
@@ -125,7 +129,8 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
             ],
           ),
           actions: [
-            if (widget.type != 'subsubtask') buildAddSubtaskButton(),
+            if (widget.type != 'subsubtask' && widget.permissions == true)
+              buildAddSubtaskButton(),
             buildAddCommentAndUploadButton(),
             buildCloseButton(context),
           ],
@@ -138,71 +143,73 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
   Widget _buildTaskNameEditDialog(
       BuildContext context, Map<String, dynamic> taskData) {
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
         // Hiển thị dialog chỉnh sửa tên task
-        showDialog(
-          context: context,
-          builder: (_) {
-            String initialValue = taskData['title'] ?? '';
-            final TextEditingController _controller =
-                TextEditingController(text: initialValue);
-            final FocusNode _focusNode = FocusNode();
+        if (widget.permissions == true) {
+          showDialog(
+            context: context,
+            builder: (_) {
+              String initialValue = taskData['title'] ?? '';
+              final TextEditingController _controller =
+                  TextEditingController(text: initialValue);
+              final FocusNode _focusNode = FocusNode();
 
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _focusNode.requestFocus();
-            });
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _focusNode.requestFocus();
+              });
 
-            String temporaryTitle = initialValue;
+              String temporaryTitle = initialValue;
 
-            return AlertDialog(
-              title: const Text('Edit Name'),
-              content: TextField(
-                controller: _controller,
-                focusNode: _focusNode,
-                autofocus: true,
-                onChanged: (value) {
-                  temporaryTitle = value;
-                },
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
+              return AlertDialog(
+                title: const Text('Edit Name'),
+                content: TextField(
+                  controller: _controller,
+                  focusNode: _focusNode,
+                  autofocus: true,
+                  onChanged: (value) {
+                    temporaryTitle = value;
                   },
-                  child: const Text('Cancel'),
+                  decoration: const InputDecoration(
+                    labelText: 'Name',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-                ElevatedButton(
-                  onPressed: () {
-                    taskData['title'] = temporaryTitle;
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Cancel'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      taskData['title'] = temporaryTitle;
 
-                    Task task = Task(
-                      id: taskData['id'],
-                      title: taskData['title'],
-                      description: taskData['description'],
-                      dueDate: taskData['dueDate'],
-                      priority: taskData['priority'],
-                      assignee: taskData['assignee'],
-                      type: widget.type,
-                      projectName: widget.projectName,
-                      completed: taskData['completed'],
-                      subtasks: [],
-                    );
-                    widget.taskBloc
-                        .add(UpdateTask(widget.taskId, task, widget.type));
-                    widget.resetScreen();
-                    setState(() {});
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Save'),
-                ),
-              ],
-            );
-          },
-        );
+                      Task task = Task(
+                        id: taskData['id'],
+                        title: taskData['title'],
+                        description: taskData['description'],
+                        dueDate: taskData['dueDate'],
+                        priority: taskData['priority'],
+                        assignee: taskData['assignee'],
+                        type: widget.type,
+                        projectName: widget.projectName,
+                        completed: taskData['completed'],
+                        subtasks: [],
+                      );
+                      widget.taskBloc
+                          .add(UpdateTask(widget.taskId, task, widget.type));
+                      widget.resetScreen();
+                      setState(() {});
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Save'),
+                  ),
+                ],
+              );
+            },
+          );
+        }
       },
       child: Row(
         children: [
@@ -221,10 +228,11 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                 context: context,
                 position: const RelativeRect.fromLTRB(100, 100, 0, 0),
                 items: [
-                  PopupMenuItem(
-                    value: 'assignUser',
-                    child: const Text('Change Assignee'),
-                  ),
+                  if (widget.permissions != false)
+                    PopupMenuItem(
+                      value: 'assignUser',
+                      child: const Text('Change Assignee'),
+                    ),
                   PopupMenuItem(
                     value: 'markAsComplete',
                     child: Row(
@@ -253,21 +261,25 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
-                    value: 'deleteTask',
-                    child: const Text('Delete Task'),
-                  ),
+                  if (widget.permissions != false)
+                    PopupMenuItem(
+                      value: 'deleteTask',
+                      child: const Text('Delete Task'),
+                    ),
                 ],
               ).then((value) async {
                 FocusScope.of(context).requestFocus(FocusNode());
 
                 if (value == 'assignUser') {
-                  String newAssignee =
-                      await _changeAssignee(taskData['assignee']);
-                  if (newAssignee != '')
-                    setState(() {
-                      taskData['assignee'] = newAssignee;
-                    });
+                  // Hiển thị dialog chỉnh sửa tên task
+                  if (widget.permissions == true) {
+                    String newAssignee =
+                        await _changeAssignee(taskData['assignee']);
+                    if (newAssignee != '')
+                      setState(() {
+                        taskData['assignee'] = newAssignee;
+                      });
+                  }
                 } else if (value == 'toggleCompletedTasksVisibility') {
                   changeShowCompletedTasksVisibility();
                 } else if (value == 'deleteTask') {
@@ -355,44 +367,47 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
       BuildContext context, Map<String, dynamic> taskData) {
     return GestureDetector(
       onTap: () {
-        showDialog(
-          context: context,
-          builder: (_) => AlertDialog(
-            title: const Text('Edit Priority'),
-            content: DropdownButton<String>(
-              value: taskData['priority'] ?? 'Trung bình', // Default priority
-              onChanged: (String? newValue) {
-                if (newValue != null) {
-                  setState(() {
-                    taskData['priority'] = newValue; // Update priority
-                    Task task = Task(
-                      id: taskData['id'],
-                      title: taskData['title'],
-                      description: taskData['description'],
-                      dueDate: taskData['dueDate'],
-                      priority: taskData['priority'],
-                      assignee: taskData['assignee'],
-                      type: widget.type,
-                      projectName: widget.projectName,
-                      completed: taskData['completed'],
-                      subtasks: [],
-                    );
-                    widget.taskBloc
-                        .add(UpdateTask(widget.taskId, task, widget.type));
-                    widget.resetScreen();
-                  });
-                  Navigator.pop(context); // Close the dialog
-                }
-              },
-              items: ['Cao', 'Trung bình', 'Thấp']
-                  .map((priority) => DropdownMenuItem<String>(
-                        value: priority,
-                        child: Text(priority),
-                      ))
-                  .toList(),
+        // Hiển thị dialog chỉnh sửa tên task
+        if (widget.permissions == true) {
+          showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: const Text('Edit Priority'),
+              content: DropdownButton<String>(
+                value: taskData['priority'] ?? 'Trung bình', // Default priority
+                onChanged: (String? newValue) {
+                  if (newValue != null) {
+                    setState(() {
+                      taskData['priority'] = newValue; // Update priority
+                      Task task = Task(
+                        id: taskData['id'],
+                        title: taskData['title'],
+                        description: taskData['description'],
+                        dueDate: taskData['dueDate'],
+                        priority: taskData['priority'],
+                        assignee: taskData['assignee'],
+                        type: widget.type,
+                        projectName: widget.projectName,
+                        completed: taskData['completed'],
+                        subtasks: [],
+                      );
+                      widget.taskBloc
+                          .add(UpdateTask(widget.taskId, task, widget.type));
+                      widget.resetScreen();
+                    });
+                    Navigator.pop(context); // Close the dialog
+                  }
+                },
+                items: ['Cao', 'Trung bình', 'Thấp']
+                    .map((priority) => DropdownMenuItem<String>(
+                          value: priority,
+                          child: Text(priority),
+                        ))
+                    .toList(),
+              ),
             ),
-          ),
-        );
+          );
+        }
       },
       child: Text(
         'Priority: ${taskData['priority'] ?? 'Trung bình'}', // Display priority
@@ -578,6 +593,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                     selectDay: widget.selectDay,
                     projectName: widget.projectName,
                     showCompletedTasks: widget.showCompletedTasks,
+                    permissions: widget.permissions,
                     taskBloc: widget.taskBloc,
                     resetScreen: widget.resetScreen,
                     resetDialog: () => setState(() {
@@ -700,7 +716,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
     );
   }
 
-  Widget buildSubsubtasks(var subsubtask, String type) {
+  Widget buildSubsubtasks(var subsubtask, String type, String subtaskId) {
     return Column(
       children: [
         Padding(
@@ -717,6 +733,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                     child: TaskDetailsDialog(
                       taskId: subsubtask['id'],
                       type: type,
+                      permissions: widget.permissions,
                       selectDay: widget.selectDay,
                       projectName: widget.projectName,
                       showCompletedTasks: widget.showCompletedTasks,
@@ -765,6 +782,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
 
                     setState(() {
                       isUpdating = false; // Hoàn tất cập nhật
+                      if (widget.type == 'task') {}
                     });
                   },
                   child: AnimatedContainer(
