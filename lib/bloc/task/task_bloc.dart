@@ -19,6 +19,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     on<UpdateTask>(_onUpdateTask);
     on<DeleteTask>(_onDeleteTask);
     on<LoadTasks>(_loadTasks);
+    on<DetailsTask>(_onDetailTaskLoaded);
   }
 
   /// Hàm xử lý sự kiện LoadTasks
@@ -137,6 +138,20 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     } catch (e) {
       emit(TaskError(e.toString()));
       return false;
+    }
+  }
+
+  void _onDetailTaskLoaded(DetailsTask event, Emitter<TaskState> emit) async {
+    emit(TaskLoading()); // Start with loading state
+    try {
+      // Assuming the repository method takes `type` and `id` as arguments to fetch details
+      final detailTask =
+          await taskRepository.fetchDataFromFirestore(event.type, event.id);
+
+      // Check if the fetched task details are valid
+      emit(DetailTaskLoaded(detailTask));
+    } catch (e) {
+      emit(TaskError('Failed to load task details: ${e.toString()}'));
     }
   }
 }

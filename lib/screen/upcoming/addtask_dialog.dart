@@ -184,17 +184,25 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
             orElse: () => {}, // Trả về đối tượng rỗng nếu không tìm thấy
           );
       if (userProject.isEmpty) {
-        return _buildProjectDropdownWithChoices(false);
+        projectController.text = '';
+        return _buildProjectDropdownWithChoices();
       }
-      return _buildProjectDropdownWithChoices(true);
+      return _buildProjectDropdownWithChoices();
     }
 
-    return _buildProjectDropdownWithChoices(false);
+    return _buildProjectDropdownWithChoices();
   }
 
 // Hàm dựng dropdown để người dùng chọn project
-  Widget _buildProjectDropdownWithChoices(bool check) {
-    if (check == false) projectController.clear();
+  Widget _buildProjectDropdownWithChoices() {
+    // Filter the projects based on the user's email
+    final List<Map<String, dynamic>> projects = TaskData().projects;
+
+    // Filter the projects based on the user's email
+    final filteredProjects = projects.where((project) {
+      return project['permissions'] != null &&
+          project['permissions'].contains(user?.email);
+    }).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -205,17 +213,16 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
           value: projectController.text.isEmpty ? null : projectController.text,
-          items: TaskData().projects.map((project) {
+          items: filteredProjects.map((project) {
             return DropdownMenuItem<String>(
-              value: project['id'], // Sử dụng 'id' làm giá trị
-              child: Text(project['name']), // Hiển thị 'name' trong danh sách
+              value: project['id'], // Use 'id' as the value
+              child: Text(project['name']), // Display 'name' in the dropdown
             );
           }).toList(),
           onChanged: (value) {
             setState(() {
-              projectController.text =
-                  value ?? ''; // Cập nhật projectController
-              assigneeController.clear(); // Xóa dữ liệu người được giao
+              projectController.text = value ?? ''; // Update projectController
+              assigneeController.clear(); // Clear assignee data
             });
           },
           decoration: const InputDecoration(
@@ -433,6 +440,11 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
 
 // Trường nhập ngày
   Widget _buildDateField() {
+    // Initialize the dateController with the formatted selectedDay if it's not null
+    if (_selectedDay != null) {
+      dateController.text = "${_selectedDay!.toLocal()}".split(' ')[0];
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -443,14 +455,15 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
         const SizedBox(height: 8),
         TextField(
           controller: dateController,
-          readOnly: true, // Ngăn người dùng nhập trực tiếp
+          readOnly: true, // Prevent user from typing directly
           decoration: const InputDecoration(
             hintText: 'Select a date',
-            border: OutlineInputBorder(), // Viền ngoài cho trường nhập
-            suffixIcon: Icon(Icons.calendar_today), // Icon lịch ở bên phải
+            border: OutlineInputBorder(), // Border for the input field
+            suffixIcon:
+                Icon(Icons.calendar_today), // Calendar icon on the right
           ),
           onTap: () async {
-            // Hiển thị trình chọn ngày
+            // Show date picker
             final DateTime? pickedDate = await showDatePicker(
               context: context,
               initialDate: _selectedDay ?? DateTime.now(),
@@ -459,9 +472,9 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
             );
             if (pickedDate != null && pickedDate != _selectedDay) {
               setState(() {
-                _selectedDay = pickedDate; // Lưu giá trị ngày được chọn
-                dateController.text =
-                    "${_selectedDay!.toLocal()}".split(' ')[0];
+                _selectedDay = pickedDate; // Store the selected date
+                dateController.text = "${_selectedDay!.toLocal()}"
+                    .split(' ')[0]; // Update the text field
               });
             }
           },
@@ -507,7 +520,9 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
             // Lấy thông tin dự án và assignee
             String type = '';
             String avatar = '';
-            String assignee = assigneeController.text;
+            String assignee = assigneeController.text.isNotEmpty
+                ? assigneeController.text
+                : (user?.email ?? '');
 
             // Lấy id từ projectController
             String projectId = projectController.text;
@@ -552,7 +567,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
               'priority': priorityController.text,
               'description': descriptionController.text,
               'typeID': type,
-              'assignee': assignee,
+              'assignee': assignee ?? user?.email,
               'date': _selectedDay ?? DateTime.now(),
             };
 
@@ -585,9 +600,12 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
 
               // Simulate a delay of 2 seconds before closing the dialog and adding the task
               await Future.delayed(Duration(seconds: 2));
-              widget.resetScreen();
+              if (widget.type == '') {
+                widget.resetScreen();
+              } else {
+                widget.resetDialog();
+              }
 
-              widget.resetDialog();
               // Close the loading dialog
               Navigator.pop(context); // Close loading dialog
 

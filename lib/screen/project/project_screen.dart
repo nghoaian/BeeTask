@@ -68,7 +68,8 @@ class _ProjectScreenState extends State<ProjectScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ShareScreen(projectId: widget.projectId),
+                    builder: (context) =>
+                        ShareScreen(projectId: widget.projectId),
                   ),
                 );
               },
@@ -157,12 +158,19 @@ class _ProjectScreenState extends State<ProjectScreen> {
                 ],
               ),
             ),
-            if (TaskData().getUserAvatarFromList(task.assignee) != '')
+            if (task.assignee != '') ...[
               CircleAvatar(
-                backgroundImage: NetworkImage(
-                    TaskData().getUserAvatarFromList(task.assignee)),
-                radius: 15,
-              ),
+                radius: 15, // Kích thước radius của avatar
+                backgroundColor: Colors.white,
+                child: Text(
+                  task.assignee[0].toUpperCase(),
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              )
+            ],
           ],
         ),
         children: task.subtasks.map<Widget>((subtask) {
@@ -228,12 +236,19 @@ class _ProjectScreenState extends State<ProjectScreen> {
                 ],
               ),
             ),
-            if (TaskData().getUserAvatarFromList(subtask.assignee) != '')
+            if (subtask.assignee != '') ...[
               CircleAvatar(
-                backgroundImage: NetworkImage(
-                    TaskData().getUserAvatarFromList(subtask.assignee)),
-                radius: 15,
-              ),
+                radius: 15, // Kích thước radius của avatar
+                backgroundColor: Colors.white,
+                child: Text(
+                  subtask.assignee[0].toUpperCase(),
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              )
+            ],
           ],
         ),
         children: subtask.subtasks.map<Widget>((subsubtask) {
@@ -271,14 +286,19 @@ class _ProjectScreenState extends State<ProjectScreen> {
                     ),
                 ],
               ),
-              trailing:
-                  (TaskData().getUserAvatarFromList(subsubtask.assignee) != '')
-                      ? CircleAvatar(
-                          backgroundImage: NetworkImage(TaskData()
-                              .getUserAvatarFromList(subsubtask.assignee)),
-                          radius: 15,
-                        )
-                      : null,
+              trailing: (subsubtask.assignee != '')
+                  ? CircleAvatar(
+                      radius: 15, // Kích thước radius của avatar
+                      backgroundColor: Colors.white,
+                      child: Text(
+                        subsubtask.assignee[0].toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    )
+                  : null,
             ),
           );
         }).toList(),

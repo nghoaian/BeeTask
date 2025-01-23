@@ -23,7 +23,6 @@ class CommentsDialog extends StatefulWidget {
 }
 
 class _CommentsDialogState extends State<CommentsDialog> {
-  late Stream<List<Map<String, dynamic>>> commentStream;
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
   User? user;
 
@@ -275,7 +274,9 @@ class _CommentsDialogState extends State<CommentsDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              comment['author'],
+              TaskData().getUserNameFromList(comment['author']).isNotEmpty
+                  ? TaskData().getUserNameFromList(comment['author'])
+                  : comment['author'],
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
             ),
             Text(comment['text'], style: const TextStyle(fontSize: 14)),
@@ -285,35 +286,37 @@ class _CommentsDialogState extends State<CommentsDialog> {
           comment['date'],
           style: const TextStyle(fontSize: 10),
         ),
-        trailing: PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert),
-          onSelected: (value) {
-            if (value == 'edit') {
-              _editComment(comment);
-            } else if (value == 'delete') {
-              _deleteComments(comment['id']);
-              _fetchComments();
-            }
-          },
-          itemBuilder: (BuildContext context) {
-            return [
-              const PopupMenuItem<String>(
-                value: 'edit',
-                child: ListTile(
-                  leading: Icon(Icons.edit),
-                  title: Text('Edit Comment'),
-                ),
-              ),
-              const PopupMenuItem<String>(
-                value: 'delete',
-                child: ListTile(
-                  leading: Icon(Icons.delete, color: Colors.red),
-                  title: Text('Delete Comment'),
-                ),
-              ),
-            ];
-          },
-        ),
+        trailing: comment['author'] == user?.email
+            ? PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert),
+                onSelected: (value) {
+                  if (value == 'edit') {
+                    _editComment(comment);
+                  } else if (value == 'delete') {
+                    _deleteComments(comment['id']);
+                    _fetchComments();
+                  }
+                },
+                itemBuilder: (BuildContext context) {
+                  return [
+                    const PopupMenuItem<String>(
+                      value: 'edit',
+                      child: ListTile(
+                        leading: Icon(Icons.edit),
+                        title: Text('Edit Comment'),
+                      ),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'delete',
+                      child: ListTile(
+                        leading: Icon(Icons.delete, color: Colors.red),
+                        title: Text('Delete Comment'),
+                      ),
+                    ),
+                  ];
+                },
+              )
+            : null, // No trailing widget if author does not match
       ),
     );
   }
@@ -348,14 +351,7 @@ class _CommentsDialogState extends State<CommentsDialog> {
   }
 
   Widget _buildAvatar(String author) {
-    String avatarPath = TaskData().getUserAvatarFromList(author);
-
-    if (avatarPath != '') {
-      return CircleAvatar(
-        radius: 15,
-        backgroundImage: AssetImage('assets/$avatarPath'),
-      );
-    } else if (author != '') {
+    if (author != '') {
       return CircleAvatar(
         radius: 15,
         backgroundColor: Colors.white,

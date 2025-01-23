@@ -1,10 +1,16 @@
 import 'package:bee_task/bloc/task/task_event.dart';
+import 'dart:async';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:bee_task/screen/TaskData.dart';
 import 'package:bee_task/bloc/task/task_bloc.dart';
 import 'package:bee_task/data/model/task.dart';
 import 'package:bee_task/screen/upcoming/addtask_dialog.dart';
 import 'package:bee_task/screen/upcoming/CommentsDialog.dart';
+import 'package:bee_task/bloc/task/task_bloc.dart';
+import 'package:bee_task/bloc/task/task_event.dart';
+import 'package:bee_task/bloc/task/task_state.dart';
 
 class TaskDetailsDialog extends StatefulWidget {
   final String taskId;
@@ -17,6 +23,7 @@ class TaskDetailsDialog extends StatefulWidget {
   final Function resetScreen;
   final Function resetDialog;
   final bool permissions;
+  bool openFirst;
 
   TaskDetailsDialog(
       {required this.taskId,
@@ -27,114 +34,159 @@ class TaskDetailsDialog extends StatefulWidget {
       required this.resetScreen,
       required this.selectDay,
       required this.resetDialog,
-      required this.permissions});
+      required this.permissions,
+      required this.openFirst});
 
   @override
   _TaskDetailsDialogState createState() => _TaskDetailsDialogState();
 }
 
 class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
-  late Future<Map<String, dynamic>?> task; // Make the task nullable
-
+  final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
+  bool isNotOneMem = false;
   @override
   void initState() {
     super.initState();
-    task = TaskData()
-        .fetchDataFromFirestore(widget.type, widget.taskId); // task is nullable
+    check();
+    _fetchTask();
+  }
+
+  Future<void> check() async {
+    isNotOneMem = await checkMember();
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Map<String, dynamic>?>(
-      future: task,
+    return StreamBuilder<TaskState>(
+      stream: BlocProvider.of<TaskBloc>(context).stream,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData) {
-          return Center(child: Text('No data available'));
+        if (snapshot.connectionState == ConnectionState.waiting ||
+            snapshot.data is TaskLoading) {
+          return const Center(child: CircularProgressIndicator());
         }
 
-        var task = snapshot.data;
-
-        if (task == null) {
-          return Center(child: Text('Task data is null.'));
+        if (snapshot.hasError) {
+          return Center(
+              child: Text('Error fetching task details: ${snapshot.error}'));
         }
 
-        return AlertDialog(
-          title: _buildTaskNameEditDialog(context, task),
-          content: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildPriorityEditDialog(context, task),
-              const SizedBox(height: 8.0),
-              _buildProjectText(widget.projectName),
-              const SizedBox(height: 8.0),
-              _buildDescriptionEdit(context, task),
-              const SizedBox(height: 16.0),
-              buildCompletedSubtasksRow(),
-              // Phần Subtasks/Subsubtasks có thể cuộn
-              if ((task['subtasks'] != null && task['subtasks'].isNotEmpty) ||
-                  (task['subsubtasks'] != null &&
-                      task['subsubtasks'].isNotEmpty))
-                Flexible(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxHeight: MediaQuery.of(context).size.height *
-                          0.4, // Giới hạn chiều cao cuộn
-                    ),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Subtasks:',
-                              style: TextStyle(fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 8.0),
-                          for (var subtask in task['subtasks'] ?? []) ...[
-                            if (!widget.showCompletedTasks &&
-                                !subtask['completed']) ...[
-                              buildSubtaskRow(subtask, 'subtask'),
-                              if (subtask['subsubtasks'] != null &&
-                                  subtask['subsubtasks'].isNotEmpty)
-                                for (var subsubtask
-                                    in subtask['subsubtasks'] ?? [])
-                                  if (!subsubtask['completed'])
-                                    buildSubsubtasks(subsubtask, 'subsubtask',
-                                        subtask['id']),
-                            ] else if (widget.showCompletedTasks) ...[
-                              buildSubtaskRow(subtask, 'subtask'),
-                              if (subtask['subsubtasks'] != null &&
-                                  subtask['subsubtasks'].isNotEmpty)
-                                for (var subsubtask
-                                    in subtask['subsubtasks'] ?? [])
-                                  buildSubsubtasks(
-                                      subsubtask, 'subsubtask', subtask['id']),
-                            ],
-                          ],
-                          for (var subsubtask in task['subsubtasks'] ?? []) ...[
-                            if (!widget.showCompletedTasks &&
-                                !subsubtask['completed']) ...[
-                              buildSubtaskRow(subsubtask, 'subsubtask'),
-                            ] else ...[
-                              buildSubtaskRow(subsubtask, 'subsubtask'),
-                            ],
-                          ],
-                        ],
+        if (snapshot.hasData) {
+          final state = snapshot.data;
+
+          if (state is DetailTaskLoaded) {
+            // Find the specific task by ID
+            final task = state.tasks;
+
+            if (task == {}) {
+              return const Center(child: Text('Task not found.'));
+            }
+
+            return AlertDialog(
+              title: _buildTaskNameEditDialog(context, task),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildPriorityEditDialog(context, task),
+                    const SizedBox(height: 8.0),
+                    _buildProjectText(widget.projectName),
+                    const SizedBox(height: 8.0),
+                    _buildDescriptionEdit(context, task),
+                    const SizedBox(height: 16.0),
+                    buildCompletedSubtasksRow(),
+                    const SizedBox(height: 12.0),
+
+                    // Dynamically display subtasks and subsubtasks
+                    if ((task['subtasks'] != null &&
+                        task['subtasks'].isNotEmpty)) ...[
+                      Flexible(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: MediaQuery.of(context).size.height * 0.4,
+                          ),
+                          child: SingleChildScrollView(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Subtasks:',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold)),
+                                const SizedBox(height: 8.0),
+                                for (var subtask in task['subtasks'] ?? []) ...[
+                                  if (!widget.showCompletedTasks &&
+                                      !subtask['completed']) ...[
+                                    buildSubtaskRow(subtask, 'subtask'),
+                                    if (subtask['subsubtasks'] != null &&
+                                        subtask['subsubtasks'].isNotEmpty)
+                                      for (var subsubtask
+                                          in subtask['subsubtasks'] ?? [])
+                                        if (!subsubtask['completed'])
+                                          buildSubsubtasks(subsubtask,
+                                              'subsubtask', subtask['id']),
+                                  ] else if (widget.showCompletedTasks) ...[
+                                    buildSubtaskRow(subtask, 'subtask'),
+                                    if (subtask['subsubtasks'] != null &&
+                                        subtask['subsubtasks'].isNotEmpty)
+                                      for (var subsubtask
+                                          in subtask['subsubtasks'] ?? [])
+                                        buildSubsubtasks(subsubtask,
+                                            'subsubtask', subtask['id']),
+                                  ],
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
+                    ] else if ((task['subsubtasks'] != null &&
+                        task['subsubtasks'].isNotEmpty)) ...[
+                      Flexible(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: MediaQuery.of(context).size.height * 0.4,
+                          ),
+                          child: SingleChildScrollView(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Subtasks:',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold)),
+                                const SizedBox(height: 8.0),
+                                for (var subsubtask
+                                    in task['subsubtasks'] ?? []) ...[
+                                  if (widget.showCompletedTasks == false) ...[
+                                    if (subsubtask['completed'] == false)
+                                      buildSubtaskRow(subsubtask, 'subsubtask'),
+                                  ] else ...[
+                                    buildSubtaskRow(subsubtask, 'subsubtask'),
+                                  ]
+                                ]
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-            ],
-          ),
-          actions: [
-            if (widget.type != 'subsubtask' && widget.permissions == true)
-              buildAddSubtaskButton(),
-            buildAddCommentAndUploadButton(),
-            buildCloseButton(context),
-          ],
-        );
+              ),
+              actions: [
+                if (widget.type != 'subsubtask' && widget.permissions == true)
+                  buildAddSubtaskButton(),
+                buildAddCommentAndUploadButton(),
+                buildCloseButton(context),
+              ],
+            );
+          } else if (state is TaskError) {
+            return Center(child: Text('Error: ${state.error}'));
+          }
+        }
+
+        return const Center(child: Text('No data available'));
       },
     );
   }
@@ -197,10 +249,10 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                         completed: taskData['completed'],
                         subtasks: [],
                       );
-                      widget.taskBloc
-                          .add(UpdateTask(widget.taskId, task, widget.type));
-                      widget.resetScreen();
-                      setState(() {});
+                      _updateTask(task.id, task, task.type);
+                      setState(() {
+                        taskData['title'] = temporaryTitle;
+                      });
                       Navigator.pop(context);
                     },
                     child: const Text('Save'),
@@ -213,8 +265,10 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
       },
       child: Row(
         children: [
-          _buildAssigneeAvatar(taskData['assignee']),
-          const SizedBox(width: 8), // Khoảng cách giữa avatar và tiêu đề
+          if (taskData['assignee'] != '') ...[
+            _buildAssigneeAvatar(taskData['assignee']),
+            const SizedBox(width: 8), // Khoảng cách giữa avatar và tiêu đề
+          ],
           Expanded(
             child: Text(
               taskData['title'] ?? '',
@@ -228,11 +282,14 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                 context: context,
                 position: const RelativeRect.fromLTRB(100, 100, 0, 0),
                 items: [
-                  if (widget.permissions != false)
-                    PopupMenuItem(
-                      value: 'assignUser',
-                      child: const Text('Change Assignee'),
-                    ),
+                  if (widget.permissions == true) ...[
+                    if (isNotOneMem != false) ...[
+                      PopupMenuItem(
+                        value: 'assignUser',
+                        child: const Text('Change Assignee'),
+                      ),
+                    ],
+                  ],
                   PopupMenuItem(
                     value: 'markAsComplete',
                     child: Row(
@@ -271,20 +328,63 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                 FocusScope.of(context).requestFocus(FocusNode());
 
                 if (value == 'assignUser') {
-                  // Hiển thị dialog chỉnh sửa tên task
                   if (widget.permissions == true) {
-                    String newAssignee =
-                        await _changeAssignee(taskData['assignee']);
-                    if (newAssignee != '')
-                      setState(() {
-                        taskData['assignee'] = newAssignee;
-                      });
+                    var taskData;
+
+                    // Lấy thông tin task
+                    if (widget.type == 'task') {
+                      taskData = TaskData().tasks.firstWhere(
+                          (task) => task['id'] == widget.taskId,
+                          orElse: () =>
+                              {} // Nếu không tìm thấy, trả về một Map trống
+                          );
+                    } else if (widget.type == 'subtask') {
+                      taskData = TaskData().subtasks.firstWhere(
+                          (task) => task['id'] == widget.taskId,
+                          orElse: () =>
+                              {} // Nếu không tìm thấy, trả về một Map trống
+                          );
+                    } else {
+                      taskData = TaskData().subsubtasks.firstWhere(
+                          (task) => task['id'] == widget.taskId,
+                          orElse: () =>
+                              {} // Nếu không tìm thấy, trả về một Map trống
+                          );
+                    }
+
+                    if (taskData != null && taskData.isNotEmpty) {
+                      // Lấy danh sách project members
+                      var projectMembers = await TaskData()
+                          .getProjectMembers(taskData['projectId']);
+                      if (projectMembers != null && projectMembers.length > 2) {
+                        String newAssignee = await _changeAssignee(
+                            taskData['assignee'], projectMembers);
+                        Task updateTask = Task(
+                          id: taskData['id'],
+                          title: taskData['title'],
+                          description: taskData['description'],
+                          dueDate: taskData['dueDate'],
+                          priority: taskData['priority'],
+                          assignee: newAssignee, // Cập nhật assignee
+                          type: widget.type,
+                          projectName: widget.projectName,
+                          completed: taskData['completed'],
+                          subtasks: [],
+                        );
+
+                        // Gửi cập nhật lên Firestore
+                        _updateTask(updateTask.id, updateTask, updateTask.type);
+                        setState(() {
+                          taskData['assignee'] = newAssignee;
+                        });
+                      }
+                    }
                   }
                 } else if (value == 'toggleCompletedTasksVisibility') {
                   changeShowCompletedTasksVisibility();
                 } else if (value == 'deleteTask') {
                   await _confirmAndDeleteTask();
-                  await widget.resetScreen();
+                  _fetchTask();
                   Navigator.pop(context);
                 } else if (value == 'markAsComplete') {
                   taskData['completed'] = !(taskData['completed'] ?? false);
@@ -301,10 +401,9 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                     completed: taskData['completed'],
                     subtasks: [],
                   );
-                  widget.taskBloc
-                      .add(UpdateTask(widget.taskId, task, widget.type));
-                  widget.resetScreen();
-                  setState(() {});
+                  _updateTask(task.id, task, task.type);
+
+                  _fetchTask();
                 }
               });
             },
@@ -335,9 +434,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                     type: widget.type, // Add appropriate type
                     selectDay: widget.selectDay ?? DateTime.now(),
                     resetDialog: () => setState(() {
-                      this.task = TaskData()
-                          .fetchDataFromFirestore(widget.type, widget.taskId);
-                      ;
+                      _fetchTask();
                     }),
                     resetScreen: () => widget.resetScreen,
                   ),
@@ -391,9 +488,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                         completed: taskData['completed'],
                         subtasks: [],
                       );
-                      widget.taskBloc
-                          .add(UpdateTask(widget.taskId, task, widget.type));
-                      widget.resetScreen();
+                      _updateTask(task.id, task, task.type);
                     });
                     Navigator.pop(context); // Close the dialog
                   }
@@ -496,9 +591,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                         completed: taskData['completed'],
                         subtasks: [],
                       );
-                      widget.taskBloc
-                          .add(UpdateTask(widget.taskId, task, widget.type));
-                      widget.resetScreen();
+                      _updateTask(task.id, task, task.type);
                     });
                     Navigator.pop(context); // Đóng dialog sau khi lưu
                   },
@@ -590,6 +683,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   child: TaskDetailsDialog(
                     taskId: subtask['id'],
                     type: type,
+                    openFirst: false,
                     selectDay: widget.selectDay,
                     projectName: widget.projectName,
                     showCompletedTasks: widget.showCompletedTasks,
@@ -597,8 +691,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                     taskBloc: widget.taskBloc,
                     resetScreen: widget.resetScreen,
                     resetDialog: () => setState(() {
-                      task = TaskData()
-                          .fetchDataFromFirestore(widget.type, widget.taskId);
+                      _fetchTask();
                     }),
                   ),
                 );
@@ -628,44 +721,36 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                     subtasks: [],
                   );
 
-                  widget.taskBloc.add(UpdateTask(subtask['id'], task, type));
+                  _updateTask(task.id, task, task.type);
+
                   if (subtask['completed'] == true) {
                     if (subtask['subsubtasks'] != null &&
                         subtask['subsubtasks'].isNotEmpty) {
                       for (var subsubtask in subtask['subsubtasks']) {
-                        Task task = Task(
-                          id: subsubtask['id'],
-                          title: subsubtask['title'],
-                          description: subsubtask['description'],
-                          dueDate: subsubtask['dueDate'],
-                          priority: subsubtask['priority'],
-                          assignee: subsubtask['assignee'],
-                          type: 'subsubtask',
-                          projectName: widget.projectName,
-                          completed: true,
-                          subtasks: [],
-                        );
-                        widget.taskBloc.add(
-                            UpdateTask(subsubtask['id'], task, 'subsubtask'));
+                        if (subsubtask['completed'] == false) {
+                          Task task = Task(
+                            id: subsubtask['id'],
+                            title: subsubtask['title'],
+                            description: subsubtask['description'],
+                            dueDate: subsubtask['dueDate'],
+                            priority: subsubtask['priority'],
+                            assignee: subsubtask['assignee'],
+                            type: 'subsubtask',
+                            projectName: widget.projectName,
+                            completed: true,
+                            subtasks: [],
+                          );
+                          _updateTask(task.id, task, task.type);
+                        }
                       }
                     }
                   }
                   await Future.delayed(const Duration(milliseconds: 300));
 
-                  await widget.resetScreen();
-
-                  widget.resetDialog();
-
                   setState(() {
+                    _fetchTask();
+
                     isUpdating = false;
-                    if (subtask['completed'] == true) {
-                      if (subtask['subsubtasks'] != null &&
-                          subtask['subsubtasks'].isNotEmpty) {
-                        for (var subsubtask in subtask['subsubtasks']) {
-                          subsubtask['completed'] = true;
-                        }
-                      }
-                    }
                   });
                 },
                 child: AnimatedContainer(
@@ -708,7 +793,10 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                 ),
               ),
               // Hiển thị avatar hoặc khoảng trống
-              _buildAssigneeAvatar(subtask['assignee']),
+              if (subtask['assignee'] != '') ...[
+                _buildAssigneeAvatar(subtask['assignee']),
+                const SizedBox(width: 8), // Khoảng cách giữa avatar và tiêu đề
+              ],
             ],
           ),
         );
@@ -733,6 +821,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                     child: TaskDetailsDialog(
                       taskId: subsubtask['id'],
                       type: type,
+                      openFirst: false,
                       permissions: widget.permissions,
                       selectDay: widget.selectDay,
                       projectName: widget.projectName,
@@ -740,8 +829,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                       taskBloc: widget.taskBloc,
                       resetScreen: widget.resetScreen,
                       resetDialog: () => setState(() {
-                        task = TaskData()
-                            .fetchDataFromFirestore(widget.type, widget.taskId);
+                        _fetchTask();
                       }),
                     ),
                   );
@@ -773,16 +861,33 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                     );
 
                     // Gửi cập nhật lên Firestore
-                    widget.taskBloc
-                        .add(UpdateTask(subsubtask['id'], task, type));
-
-                    // Chờ Firebase cập nhật trước khi render lại
-                    await Future.delayed(const Duration(milliseconds: 300));
-                    widget.resetDialog();
+                    _updateTask(task.id, task, task.type);
+                    if (subsubtask['completed'] == false) {
+                      var taskData = TaskData().subtasks.firstWhere(
+                          (subtask) => subtask['id'] == subtaskId,
+                          orElse: () =>
+                              {} // Nếu không tìm thấy, trả về một Map trống
+                          );
+                      if (taskData['completed'] == true) {
+                        Task task = Task(
+                          id: taskData['id'],
+                          title: taskData['title'],
+                          description: taskData['description'],
+                          dueDate: taskData['dueDate'],
+                          priority: taskData['priority'],
+                          assignee: taskData['assignee'],
+                          type: 'subtask',
+                          projectName: widget.projectName,
+                          completed: false,
+                          subtasks: [],
+                        );
+                        _updateTask(task.id, task, task.type);
+                      }
+                    }
 
                     setState(() {
                       isUpdating = false; // Hoàn tất cập nhật
-                      if (widget.type == 'task') {}
+                      _fetchTask();
                     });
                   },
                   child: AnimatedContainer(
@@ -826,7 +931,11 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   ),
                 ),
                 // Hiển thị avatar người được giao hoặc khoảng trống
-                _buildAssigneeAvatar(subsubtask['assignee']),
+                if (subsubtask['assignee'] != '') ...[
+                  _buildAssigneeAvatar(subsubtask['assignee']),
+                  const SizedBox(
+                      width: 8), // Khoảng cách giữa avatar và tiêu đề
+                ],
               ],
             ),
           ),
@@ -882,7 +991,8 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
     return TextButton(
       onPressed: () {
         setState(() {
-          widget.resetScreen();
+          if (widget.openFirst == true) widget.resetScreen();
+
           widget.resetDialog();
         });
         Navigator.pop(context);
@@ -891,82 +1001,59 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
     );
   }
 
-  Future<String> _changeAssignee(String currentAssignee) async {
+  Future<String> _changeAssignee(
+      String currentAssignee, var projectMembers) async {
     String? newAssignee = currentAssignee;
-    // Lấy thông tin task
-    var task = TaskData().fetchDataFromFirestore(widget.type, widget.taskId);
-    var taskData = await task;
 
-    if (taskData != null && taskData.isNotEmpty) {
-      // Lấy danh sách project members
-      var projectMembers =
-          await TaskData().getProjectMembers(taskData['projectId']);
+    if (projectMembers.isNotEmpty) {
+      // Hiển thị dialog cho việc chọn assignee mới
+      newAssignee = await showDialog<String>(
+        context: context,
+        builder: (BuildContext context) {
+          // Đặt currentAssignee làm giá trị mặc định nếu nó không rỗng
+          String? selectedAssignee =
+              currentAssignee.isNotEmpty ? currentAssignee : null;
 
-      if (projectMembers.isNotEmpty) {
-        // Hiển thị dialog cho việc chọn assignee mới
-        newAssignee = await showDialog<String>(
-          context: context,
-          builder: (BuildContext context) {
-            // Đặt currentAssignee làm giá trị mặc định nếu nó không rỗng
-            String? selectedAssignee =
-                currentAssignee.isNotEmpty ? currentAssignee : null;
-
-            return AlertDialog(
-              title: const Text('Change Assignee'),
-              content: SizedBox(
-                width: double.maxFinite,
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: projectMembers.length,
-                  itemBuilder: (context, index) {
-                    var member = projectMembers[index];
-                    return RadioListTile<String>(
-                      title: Text(member), // Hiển thị tên người dùng
-                      value: member, // Giá trị là tên của member
-                      groupValue: selectedAssignee,
-                      onChanged: (value) {
-                        selectedAssignee = value;
-                        Navigator.of(context)
-                            .pop(selectedAssignee); // Đóng dialog sau khi chọn
-                      },
-                    );
-                  },
-                ),
+          return AlertDialog(
+            title: const Text('Change Assignee'),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: projectMembers.length,
+                itemBuilder: (context, index) {
+                  var member = projectMembers[index];
+                  return RadioListTile<String>(
+                    title: Text(member), // Hiển thị tên người dùng
+                    value: member, // Giá trị là tên của member
+                    groupValue: selectedAssignee,
+                    onChanged: (value) {
+                      selectedAssignee = value;
+                      Navigator.of(context)
+                          .pop(selectedAssignee); // Đóng dialog sau khi chọn
+                    },
+                  );
+                },
               ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop(); // Đóng dialog nếu nhấn Cancel
-                  },
-                  child: const Text('Cancel'),
-                ),
-              ],
-            );
-          },
-        );
-
-        // Kiểm tra nếu assignee được chọn và không null
-        if (newAssignee != null && newAssignee.isNotEmpty) {
-          // Cập nhật trạng thái `assignee` cho task
-          Task updateTask = Task(
-            id: taskData['id'],
-            title: taskData['title'],
-            description: taskData['description'],
-            dueDate: taskData['dueDate'],
-            priority: taskData['priority'],
-            assignee: newAssignee, // Cập nhật assignee
-            type: widget.type,
-            projectName: widget.projectName,
-            completed: taskData['completed'],
-            subtasks: [],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Đóng dialog nếu nhấn Cancel
+                },
+                child: const Text('Cancel'),
+              ),
+            ],
           );
+        },
+      );
 
-          // Gửi cập nhật lên Firestore
-          widget.taskBloc
-              .add(UpdateTask(taskData['id'], updateTask, widget.type));
-        }
+      // Kiểm tra nếu assignee được chọn và không null
+      if (newAssignee != null && newAssignee.isNotEmpty) {
+        return newAssignee;
       }
     }
+
     return newAssignee ?? ''; // Trả về assignee mới
   }
 
@@ -1029,7 +1116,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
 
       // Đóng dialog sau khi cập nhật xong
       Navigator.pop(dialogContext); // Dùng context đã lưu ở trên
-      await widget.resetDialog();
+      _fetchTask();
 
       // Cập nhật lại màn hình
       widget.resetScreen();
@@ -1045,7 +1132,6 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
   void changeShowCompletedTasksVisibility() async {
     setState(() {
       widget.showCompletedTasks = !widget.showCompletedTasks;
-      this.task = TaskData().fetchDataFromFirestore(widget.type, widget.taskId);
       ;
     });
   }
@@ -1070,5 +1156,69 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
         height: 30, // 2 * radius
       );
     }
+  }
+
+  Future<void> _fetchTask() async {
+    final completer = Completer<void>();
+    final subscription =
+        BlocProvider.of<TaskBloc>(context).stream.listen((state) {
+      if (state is TaskDetailsDialog || state is TaskError) {
+        completer.complete();
+      }
+    });
+
+    BlocProvider.of<TaskBloc>(context).add(
+      DetailsTask(widget.type, widget.taskId),
+    );
+
+    await completer.future;
+    subscription.cancel(); // Hủy đăng ký sau khi hoàn tất
+  }
+
+  Future<void> _updateTask(String id, Task task, String type) async {
+    final completer = Completer<void>();
+    final subscription =
+        BlocProvider.of<TaskBloc>(context).stream.listen((state) {
+      if (state is TaskDetailsDialog || state is TaskError) {
+        completer.complete();
+      }
+    });
+
+    BlocProvider.of<TaskBloc>(context).add(UpdateTask(id, task, type));
+
+    await completer.future;
+    subscription.cancel(); // Hủy đăng ký sau khi hoàn tất
+  }
+
+  Future<bool> checkMember() async {
+    var taskData;
+
+    // Lấy thông tin task
+    if (widget.type == 'task') {
+      taskData = TaskData().tasks.firstWhere(
+          (task) => task['id'] == widget.taskId,
+          orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
+          );
+    } else if (widget.type == 'subtask') {
+      taskData = TaskData().subtasks.firstWhere(
+          (task) => task['id'] == widget.taskId,
+          orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
+          );
+    } else {
+      taskData = TaskData().subsubtasks.firstWhere(
+          (task) => task['id'] == widget.taskId,
+          orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
+          );
+    }
+    if (taskData != null && taskData.isNotEmpty) {
+      // Lấy danh sách project members
+      var projectMembers =
+          await TaskData().getProjectMembers(taskData['projectId']);
+      if (projectMembers != null && projectMembers.length > 2) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

@@ -311,13 +311,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
-        if (TaskData().getUserAvatarFromList(task.assignee) != '') ...[
-          CircleAvatar(
-            radius: 16,
-            backgroundImage: AssetImage(
-                'assets/${TaskData().getUserAvatarFromList(task.assignee)}'),
-          ),
-        ] else if (task.assignee != '') ...[
+        if (task.assignee != '') ...[
           CircleAvatar(
             radius: 16,
             backgroundColor: Colors.white,
@@ -463,15 +457,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       isDismissible: false,
-      isScrollControlled:
-          true, // Allow the bottom sheet to adjust its height based on content
       builder: (context) {
         return SingleChildScrollView(
           child: TaskDetailsDialog(
             taskId: taskId,
             permissions: permissions,
             type: type,
+            openFirst: true,
             selectDay: _selectedDay ?? DateTime.now(),
             projectName: projectName,
             showCompletedTasks: showCompletedTask,
@@ -505,7 +499,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return SingleChildScrollView(
           child: AddTaskDialog(
             taskId: '', // Add appropriate taskId
-            type: 'task', // Add appropriate type
+            type: '', // Add appropriate type
             selectDay: _selectedDay ?? DateTime.now(),
             resetDialog: () => {},
             resetScreen: () => setState(() {

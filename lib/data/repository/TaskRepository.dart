@@ -15,6 +15,7 @@ abstract class TaskRepository {
   );
   Future<void> updateTask(String taskId, Task updatedTaskData, String type);
   Future<void> deleteTask(String id, String type);
+  Future<Map<String, dynamic>> fetchDataFromFirestore(String type, String id);
 }
 
 class FirebaseTaskRepository implements TaskRepository {
@@ -388,6 +389,7 @@ class FirebaseTaskRepository implements TaskRepository {
           .doc(subtaskId);
 
       await subtaskRef.update({'completed': completedStatus});
+      await updateTaskCompletedStatus(projectId, taskId, completedStatus);
     } catch (e) {
       throw Exception('Failed to update subtask completed status');
     }
@@ -527,41 +529,192 @@ class FirebaseTaskRepository implements TaskRepository {
     }
   }
 
-  Future<void> addComment(String id, String type, String content, String author,
-      {String? fileUrl, String? imageUrl}) async {
-    try {
-      var taskData = tasks.firstWhere((task) => task['id'] == id);
+  Map<String, dynamic>? findById(String type, String id) {
+    // Kiểm tra type để xác định danh sách cần tìm kiếm
+    switch (type) {
+      case 'task':
+        return tasks.firstWhere((task) => task['id'] == id, orElse: () => {});
 
-      // Lấy thông tin collection cần thêm comment vào (task, subtask, subsubtask)
-      var commentsRef = FirebaseFirestore.instance
-          .collection('projects')
-          .doc(taskData['projectId'])
-          .collection('tasks')
-          .doc(taskData['id'])
-          .collection('comments');
+      case 'subtask':
+        return subtasks.firstWhere((subtask) => subtask['id'] == id,
+            orElse: () => {});
 
-      // Tạo đối tượng comment mới
-      Map<String, dynamic> comment = {
-        'author': author,
-        'text': type == 'text'
-            ? content
-            : null, // Nếu type là text, thêm nội dung vào trường 'text'
-        'fileUrl': type == 'file'
-            ? fileUrl
-            : null, // Nếu type là file, thêm URL file vào trường 'fileUrl'
-        'imageUrl': type == 'image'
-            ? imageUrl
-            : null, // Nếu type là image, thêm URL hình ảnh vào trường 'imageUrl'
-        'date': DateTime.now().toIso8601String(),
-        'type': type, // Lưu loại comment (text, file, image)
-      };
+      case 'subsubtask':
+        return subsubtasks.firstWhere((subsubtask) => subsubtask['id'] == id,
+            orElse: () => {});
 
-      // Thêm comment vào Firestore
-      await commentsRef.add(comment);
-
-      print('Comment added successfully');
-    } catch (e) {
-      print('Error adding comment: $e');
+      default:
+        // Nếu type không hợp lệ, trả về null
+        print('Invalid type: $type');
+        return null;
     }
+  }
+
+  Future<Map<String, dynamic>> fetchDataFromFirestore(
+      String type, String id) async {
+    try {
+      // Tìm đối tượng trong danh sách tương ứng
+      Map<String, dynamic>? localData = findById(type, id);
+
+      if (localData == null) {
+        print('Object not found in local data');
+        return {};
+      }
+
+      // Dựa vào type, gọi các hàm phù hợp
+      switch (type) {
+        case 'task':
+          return await fetchTaskWithSubcollections(localData, id);
+
+        case 'subtask':
+          return await fetchSubtaskWithSubcollections(localData, id);
+
+        case 'subsubtask':
+          return await fetchSubsubtask(localData, id);
+
+        default:
+          print('Invalid type: $type');
+          return {};
+      }
+    } catch (e) {
+      print('Error fetching data from Firestore: $e');
+      return {};
+    }
+  }
+
+// Hàm lấy task và toàn bộ subtasks, subsubtasks
+  Future<Map<String, dynamic>> fetchTaskWithSubcollections(
+      Map<String, dynamic> localData, String taskId) async {
+    String projectId = localData['projectId'];
+
+    // Lấy thông tin task
+    var taskDoc = await FirebaseFirestore.instance
+        .collection('projects')
+        .doc(projectId)
+        .collection('tasks')
+        .doc(taskId)
+        .get();
+
+    if (!taskDoc.exists) {
+      throw Exception('Task not found');
+    }
+
+    Map<String, dynamic> taskData = taskDoc.data()!;
+    taskData['id'] = taskDoc.id; // Lưu lại id của task
+    taskData['projectId'] = projectId;
+    taskData['subtasks'] = [];
+
+    // Lấy danh sách subtasks
+    var subtasksSnapshot = await FirebaseFirestore.instance
+        .collection('projects')
+        .doc(projectId)
+        .collection('tasks')
+        .doc(taskId)
+        .collection('subtasks')
+        .get();
+
+    for (var subtaskDoc in subtasksSnapshot.docs) {
+      Map<String, dynamic> subtaskData = subtaskDoc.data();
+      subtaskData['id'] = subtaskDoc.id; // Lưu lại id của subtask
+      subtaskData['subsubtasks'] = [];
+
+      // Lấy danh sách subsubtasks
+      var subsubtasksSnapshot = await FirebaseFirestore.instance
+          .collection('projects')
+          .doc(projectId)
+          .collection('tasks')
+          .doc(taskId)
+          .collection('subtasks')
+          .doc(subtaskDoc.id)
+          .collection('subsubtasks')
+          .get();
+
+      subtaskData['subsubtasks'] = subsubtasksSnapshot.docs.map((doc) {
+        Map<String, dynamic> subsubtaskData = doc.data();
+        subsubtaskData['id'] = doc.id; // Lưu lại id của subsubtask
+        return subsubtaskData;
+      }).toList();
+
+      taskData['subtasks'].add(subtaskData);
+    }
+
+    return taskData;
+  }
+
+// Hàm lấy subtask và toàn bộ subsubtasks
+  Future<Map<String, dynamic>> fetchSubtaskWithSubcollections(
+      Map<String, dynamic> localData, String subtaskId) async {
+    String projectId = localData['projectId'];
+    String taskId = localData['taskId'];
+
+    // Lấy thông tin subtask
+    var subtaskDoc = await FirebaseFirestore.instance
+        .collection('projects')
+        .doc(projectId)
+        .collection('tasks')
+        .doc(taskId)
+        .collection('subtasks')
+        .doc(subtaskId)
+        .get();
+
+    if (!subtaskDoc.exists) {
+      throw Exception('Subtask not found');
+    }
+
+    // Thêm id vào subtask
+    Map<String, dynamic> subtaskData = subtaskDoc.data()!;
+    subtaskData['id'] = subtaskDoc.id; // Lưu id của subtask
+    subtaskData['projectId'] = projectId;
+    subtaskData['subsubtasks'] = [];
+
+    // Lấy danh sách subsubtasks
+    var subsubtasksSnapshot = await FirebaseFirestore.instance
+        .collection('projects')
+        .doc(projectId)
+        .collection('tasks')
+        .doc(taskId)
+        .collection('subtasks')
+        .doc(subtaskId)
+        .collection('subsubtasks')
+        .get();
+
+    // Thêm id vào mỗi subsubtask
+    subtaskData['subsubtasks'] = subsubtasksSnapshot.docs.map((doc) {
+      Map<String, dynamic> subsubtaskData = doc.data();
+      subsubtaskData['id'] = doc.id; // Lưu id của subsubtask
+      return subsubtaskData;
+    }).toList();
+
+    return subtaskData;
+  }
+
+  Future<Map<String, dynamic>> fetchSubsubtask(
+      Map<String, dynamic> localData, String subsubtaskId) async {
+    String projectId = localData['projectId'];
+    String taskId = localData['taskId'];
+    String subtaskId = localData['subtaskId'];
+
+    // Lấy thông tin subsubtask
+    var subsubtaskDoc = await FirebaseFirestore.instance
+        .collection('projects')
+        .doc(projectId)
+        .collection('tasks')
+        .doc(taskId)
+        .collection('subtasks')
+        .doc(subtaskId)
+        .collection('subsubtasks')
+        .doc(subsubtaskId)
+        .get();
+
+    if (!subsubtaskDoc.exists) {
+      throw Exception('Subsubtask not found');
+    }
+
+    // Thêm thông tin subsubtaskId và projectId vào kết quả trả về
+    Map<String, dynamic> subsubtaskData = subsubtaskDoc.data()!;
+    subsubtaskData['id'] = subsubtaskId;
+    subsubtaskData['projectId'] = projectId;
+
+    return subsubtaskData;
   }
 }

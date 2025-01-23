@@ -56,3 +56,13 @@ class DeleteTask extends TaskEvent {
 
   DeleteTask(this.taskId, this.type);
 }
+
+class DetailsTask extends TaskEvent {
+  final String id;
+  final String type;
+
+  const DetailsTask(this.type, this.id);
+
+  @override
+  List<Object> get props => [type, id];
+}

@@ -12,6 +12,11 @@ class TaskLoaded extends TaskState {
   TaskLoaded(this.tasks);
 }
 
+class DetailTaskLoaded extends TaskState {
+  final Map<String, dynamic> tasks;
+  DetailTaskLoaded(this.tasks);
+}
+
 class TaskError extends TaskState {
   final String error;
 
