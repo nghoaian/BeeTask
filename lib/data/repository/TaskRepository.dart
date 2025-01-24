@@ -37,6 +37,8 @@ class FirebaseTaskRepository implements TaskRepository {
   Future<List<Map<String, dynamic>>> fetchTasksByDate(
       String date, bool showCompletedTasks, String email) async {
     try {
+      bool checkSubtask = false;
+      bool checkSubSubtask = true;
       List<Map<String, dynamic>> allTasks = [];
 
       // Lấy danh sách projects từ TaskData()
@@ -47,6 +49,7 @@ class FirebaseTaskRepository implements TaskRepository {
         String projectId = project['id']; // Lấy projectId từ project
 
         // Lấy dữ liệu tasks từ Firestore trong collection 'projects'
+        // Lấy tất cả tasks có dueDate trùng với 'date'
         var tasksFuture = FirebaseFirestore.instance
             .collection('projects')
             .doc(projectId)
@@ -60,42 +63,75 @@ class FirebaseTaskRepository implements TaskRepository {
             taskData['type'] = 'task';
             taskData['projectId'] = projectId; // Thêm projectId vào task
             taskData['projectName'] =
-                project['name']; // Thêm projectId vào task
+                project['name']; // Thêm projectName vào task
             return taskData;
           }).toList();
         });
 
-        // Lấy dữ liệu subtasks từ Firestore cho từng task
-        var subtasksFuture = tasksFuture.then((tasks) async {
+// Lấy tất cả subtasks có ngày trùng với 'date' từ tất cả task trong project
+        var subtasksFuture = FirebaseFirestore.instance
+            .collection('projects')
+            .doc(projectId)
+            .collection('tasks')
+            .get() // Lấy tất cả task trong project
+            .then((querySnapshot) async {
           List<Map<String, dynamic>> allSubtasks = [];
-          for (var task in tasks) {
-            // Lấy subtasks của task trong collection 'subtasks' của task
+
+          for (var doc in querySnapshot.docs) {
+            // Lấy tất cả subtasks có dueDate trùng với 'date'
             var subtasksSnapshot = await FirebaseFirestore.instance
                 .collection('projects')
                 .doc(projectId)
                 .collection('tasks')
-                .doc(task['id'])
+                .doc(doc.id)
                 .collection('subtasks')
-                .where('dueDate', isEqualTo: date)
+                .where('dueDate',
+                    isEqualTo: date) // Truy vấn subtask theo dueDate
                 .get();
 
             for (var subtaskDoc in subtasksSnapshot.docs) {
               var subtaskData = subtaskDoc.data();
               subtaskData['id'] = subtaskDoc.id;
               subtaskData['type'] = 'subtask';
-              subtaskData['projectName'] =
-                  project['name']; // Thêm projectId vào task
+              subtaskData['projectName'] = project['name'];
+              allSubtasks.add(subtaskData);
+            }
+          }
 
-              // Lấy subsubtasks của subtask
+          return allSubtasks;
+        });
+
+// Lấy tất cả subsubtasks từ tất cả các subtask trong tất cả các task
+        var subsubtasksFuture = FirebaseFirestore.instance
+            .collection('projects')
+            .doc(projectId)
+            .collection('tasks')
+            .get() // Lấy tất cả tasks trong project
+            .then((querySnapshot) async {
+          List<Map<String, dynamic>> allSubsubtasks = [];
+
+          for (var doc in querySnapshot.docs) {
+            // Lấy tất cả các subtasks trong task
+            var subtasksSnapshot = await FirebaseFirestore.instance
+                .collection('projects')
+                .doc(projectId)
+                .collection('tasks')
+                .doc(doc.id)
+                .collection('subtasks')
+                .get(); // Lấy tất cả subtasks
+
+            for (var subtaskDoc in subtasksSnapshot.docs) {
+              // Lấy tất cả subsubtasks của mỗi subtask
               var subsubtasksSnapshot = await FirebaseFirestore.instance
                   .collection('projects')
                   .doc(projectId)
                   .collection('tasks')
-                  .doc(task['id'])
+                  .doc(doc.id)
                   .collection('subtasks')
-                  .doc(subtaskDoc.id)
+                  .doc(subtaskDoc.id) // Lấy đúng subtask
                   .collection('subsubtasks')
-                  .where('dueDate', isEqualTo: date)
+                  .where('dueDate',
+                      isEqualTo: date) // Truy vấn subsubtask theo dueDate
                   .get();
 
               for (var subsubtaskDoc in subsubtasksSnapshot.docs) {
@@ -103,22 +139,23 @@ class FirebaseTaskRepository implements TaskRepository {
                 subsubtaskData['id'] = subsubtaskDoc.id;
                 subsubtaskData['type'] = 'subsubtask';
                 subsubtaskData['projectName'] = project['name'];
-                allSubtasks.add(subsubtaskData);
+                allSubsubtasks.add(subsubtaskData);
               }
-
-              allSubtasks.add(subtaskData);
             }
           }
-          return allSubtasks;
+
+          return allSubsubtasks;
         });
 
         // Chạy song song các Future
         var tasks = await tasksFuture;
         var subtasks = await subtasksFuture;
+        var subsubtasks = await subsubtasksFuture;
 
         // Kết hợp các kết quả lại với nhau
         allTasks.addAll(tasks);
         allTasks.addAll(subtasks);
+        allTasks.addAll(subsubtasks);
       }
       allTasks.sort((a, b) {
         bool completedA = a['completed'] ?? true;
@@ -480,6 +517,15 @@ class FirebaseTaskRepository implements TaskRepository {
 
     // Xoá tài liệu khỏi Firestore
     try {
+      var commentsRef = snapshot.reference.collection('comments');
+
+      // Lấy danh sách comment
+      var commentsSnapshot = await commentsRef.get();
+
+      // Xoá từng comment
+      for (var commentDoc in commentsSnapshot.docs) {
+        await commentDoc.reference.delete();
+      }
       await docRef.delete();
     } catch (e) {
       throw Exception('Error deleting $type: $e');
@@ -501,6 +547,15 @@ class FirebaseTaskRepository implements TaskRepository {
 
     // Xoá từng subtask và các subsubtasks trong đó
     for (var doc in subtasksSnapshot.docs) {
+      var commentsRef = doc.reference.collection('comments');
+
+      // Lấy danh sách comment
+      var commentsSnapshot = await commentsRef.get();
+
+      // Xoá từng comment
+      for (var commentDoc in commentsSnapshot.docs) {
+        await commentDoc.reference.delete();
+      }
       // Xoá subsubtasks của subtask hiện tại
       await _deleteSubsubtasks(projectId, taskId, doc.id);
 
@@ -524,8 +579,20 @@ class FirebaseTaskRepository implements TaskRepository {
     // Lấy danh sách subsubtasks
     var subsubtasksSnapshot = await subsubtasksRef.get();
 
-    // Xoá từng subsubtask
+    // Xoá từng subsubtask và các comment trong đó
     for (var doc in subsubtasksSnapshot.docs) {
+      // Lấy reference của collection comment trong subsubtask
+      var commentsRef = doc.reference.collection('comments');
+
+      // Lấy danh sách comment
+      var commentsSnapshot = await commentsRef.get();
+
+      // Xoá từng comment
+      for (var commentDoc in commentsSnapshot.docs) {
+        await commentDoc.reference.delete();
+      }
+
+      // Sau khi xóa các comment, xoá subsubtask
       await doc.reference.delete();
     }
   }

@@ -21,7 +21,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   CalendarFormat _calendarFormat = CalendarFormat.month; // Mặc định là tháng
   DateTime _focusedDay = DateTime.now(); // Mặc định là ngày hiện tại
-  DateTime? _selectedDay;
+  DateTime _selectedDay = DateTime.now();
   bool showCompletedTasks =
       true; // Biến trạng thái để hiển thị/ẩn task hoàn thành
 
@@ -33,9 +33,9 @@ class _HomeScreenState extends State<HomeScreen> {
     context.read<TaskBloc>().add(FetchTasksByDate(
         (_selectedDay != null
             ? DateTime(
-                _focusedDay.year,
-                _focusedDay.month,
-                _focusedDay.day,
+                _selectedDay.year,
+                _selectedDay.month,
+                _selectedDay.day,
               ).toIso8601String().substring(0, 10)
             : DateTime.now().toIso8601String().substring(0, 10)),
         showCompletedTasks));
@@ -94,9 +94,9 @@ class _HomeScreenState extends State<HomeScreen> {
           context.read<TaskBloc>().add(FetchTasksByDate(
               (_selectedDay != null
                   ? DateTime(
-                      _focusedDay.year,
-                      _focusedDay.month,
-                      _focusedDay.day,
+                      _selectedDay.year,
+                      _selectedDay.month,
+                      _selectedDay.day,
                     ).toIso8601String().substring(0, 10)
                   : DateTime.now().toIso8601String().substring(0, 10)),
               showCompletedTasks));
@@ -159,9 +159,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 context.read<TaskBloc>().add(FetchTasksByDate(
                     (_selectedDay != null
                         ? DateTime(
-                            _focusedDay.year,
-                            _focusedDay.month,
-                            _focusedDay.day,
+                            _selectedDay.year,
+                            _selectedDay.month,
+                            _selectedDay.day,
                           ).toIso8601String().substring(0, 10)
                         : DateTime.now().toIso8601String().substring(0, 10)),
                     showCompletedTasks));
@@ -260,9 +260,9 @@ class _HomeScreenState extends State<HomeScreen> {
             context.read<TaskBloc>().add(FetchTasksByDate(
                 (_selectedDay != null
                     ? DateTime(
-                        _focusedDay.year,
-                        _focusedDay.month,
-                        _focusedDay.day,
+                        _selectedDay.year,
+                        _selectedDay.month,
+                        _selectedDay.day,
                       ).toIso8601String().substring(0, 10)
                     : DateTime.now().toIso8601String().substring(0, 10)),
                 showCompletedTasks));
@@ -270,9 +270,9 @@ class _HomeScreenState extends State<HomeScreen> {
               context.read<TaskBloc>().add(FetchTasksByDate(
                   (_selectedDay != null
                       ? DateTime(
-                          _focusedDay.year,
-                          _focusedDay.month,
-                          _focusedDay.day,
+                          _selectedDay.year,
+                          _selectedDay.month,
+                          _selectedDay.day,
                         ).toIso8601String().substring(0, 10)
                       : DateTime.now().toIso8601String().substring(0, 10)),
                   showCompletedTasks));
@@ -477,9 +477,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     FetchTasksByDate(
                         (_selectedDay != null
                             ? DateTime(
-                                _focusedDay.year,
-                                _focusedDay.month,
-                                _focusedDay.day,
+                                _selectedDay.year,
+                                _selectedDay.month,
+                                _selectedDay.day,
                               ).toIso8601String().substring(0, 10)
                             : DateTime.now()
                                 .toIso8601String()
@@ -508,9 +508,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     FetchTasksByDate(
                         (_selectedDay != null
                             ? DateTime(
-                                _focusedDay.year,
-                                _focusedDay.month,
-                                _focusedDay.day,
+                                _selectedDay.year,
+                                _selectedDay.month,
+                                _selectedDay.day,
                               ).toIso8601String().substring(0, 10)
                             : DateTime.now()
                                 .toIso8601String()

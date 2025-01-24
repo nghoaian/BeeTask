@@ -268,7 +268,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
       },
       child: Row(
         children: [
-          if (taskData['assignee'] != '' && taskData['assingnee'] != null) ...[
+          if (taskData['assignee'] != '') ...[
             _buildAssigneeAvatar(taskData['assignee']),
             const SizedBox(width: 8), // Khoảng cách giữa avatar và tiêu đề
           ],
@@ -382,7 +382,6 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   changeShowCompletedTasksVisibility();
                 } else if (value == 'deleteTask') {
                   await _confirmAndDeleteTask();
-                  Navigator.pop(context);
                 } else if (value == 'markAsComplete') {
                   taskData['completed'] = true;
 
@@ -1134,11 +1133,12 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
       // Đóng dialog sau khi cập nhật xong
       Navigator.pop(dialogContext); // Dùng context đã lưu ở trên
       if (widget.openFirst != true) {
-        _fetchTask();
+        widget.resetDialog();
+      } else {
+        widget.resetScreen();
       }
 
       // Cập nhật lại màn hình
-      widget.resetScreen();
     } catch (e) {
       // Xử lý lỗi nếu có
       print("Error deleting task: $e");
