@@ -1,3 +1,4 @@
+import 'package:bee_task/util/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -5,9 +6,10 @@ import 'package:flutter/material.dart';
 abstract class UserRepository {
   FirebaseAuth get firebaseAuth;
   Future<bool> checkIfUserEmailExist(String username);
-  Future<void> addUser(String id, String username, String email);
+  Future<void> addUser(String id, String username, String email, String userColor);
   Future<String?> getUserName();
   Future<String?> getUserEmail();
+  Future<String?> getUserColor();
   Future<void> updateUserName(String username);
   Future<void> updateUserEmail(String useremail);
 }
@@ -29,11 +31,12 @@ class FirebaseUserRepository implements UserRepository {
     return result.docs.isNotEmpty;
   }
 
-  Future<void> addUser(String userId, String username, String email) async {
+  Future<void> addUser(String userId, String username, String email, String userColor) async {
     final CollectionReference usersCollection = firestore.collection('users');
     await usersCollection.doc(userId).set({
       'userName': username,
       'userEmail': email,
+      'userColor': userColor,
     });
   }
 
@@ -69,6 +72,22 @@ class FirebaseUserRepository implements UserRepository {
     return null;
   }
 
+  Future<String?> getUserColor() async {
+    User? user = firebaseAuth.currentUser;
+    if (user != null) {
+      try {
+        DocumentSnapshot doc =
+            await firestore.collection('users').doc(user.uid).get();
+        String? colorName = doc.get('userColor') as String?;
+        debugPrint('Fetched userColor: $colorName'); // In giá trị userColor
+        return colorName;
+      } catch (e) {
+        debugPrint('Error fetching user color: $e');
+      }
+    }
+    return null;
+  }
+
   @override
   Future<void> updateUserName(String username) async {
     User? user = firebaseAuth.currentUser;
@@ -83,8 +102,7 @@ class FirebaseUserRepository implements UserRepository {
   Future<void> updateUserEmail(String useremail) async {
     User? user = firebaseAuth.currentUser;
     if (user != null) {
-      final emailExists =
-          await checkIfUserEmailExist(useremail);
+      final emailExists = await checkIfUserEmailExist(useremail);
       if (emailExists) {
         throw Exception("Email already exists in the system.");
       }
@@ -110,3 +128,20 @@ class FirebaseUserRepository implements UserRepository {
     });
   }
 }
+
+// Color _colorFromName(String colorName) {
+//   Map<String, Color> colorMap = {
+//     "red": Colors.red,
+//     "blue": Colors.blue,
+//     "green": Colors.green,
+//     "orange": Colors.orange,
+//     "purple": Colors.purple,
+//     "yellow": Colors.yellow,
+//     "pink": Colors.pink,
+//     "brown": Colors.brown,
+//     "black": Colors.black,
+//     "white": Colors.white,
+//     "grey": Colors.grey,
+//   };
+
+//   return colorMap[colorName.toLowerCase().trim()] ?? AppColors.primary;

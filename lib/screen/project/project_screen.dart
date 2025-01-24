@@ -12,11 +12,15 @@ import 'package:bee_task/data/repository/UserRepository.dart';
 
 class ProjectScreen extends StatefulWidget {
   final String projectId;
+  final String projectName;
+  final bool isShare;
   FirebaseTaskRepository taskRepository;
   FirebaseUserRepository userRepository;
 
   ProjectScreen(
       {required this.projectId,
+      required this.projectName,
+      required this.isShare,
       required this.taskRepository,
       required this.userRepository});
 
@@ -51,7 +55,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
           backgroundColor: Colors.white,
           elevation: 0,
           title: Text(
-            "Testproject",
+            widget.projectName,
             style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
           ),
           centerTitle: true,
@@ -62,6 +66,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
             },
           ),
           actions: [
+            if (widget.isShare == true)
             IconButton(
               icon: Icon(Icons.group, color: Colors.black),
               onPressed: () {

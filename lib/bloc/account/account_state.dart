@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:equatable/equatable.dart';
 
 abstract class AccountState extends Equatable {
@@ -12,11 +14,12 @@ class AccountLoading extends AccountState {}
 class AccountLoaded extends AccountState {
   final String userName;
   final String userEmail;
+  final String userColor;
 
-  AccountLoaded(this.userName, this.userEmail);
+  AccountLoaded(this.userName, this.userEmail, this.userColor);
 
   @override
-  List<Object> get props => [userName, userEmail];
+  List<Object> get props => [userName, userEmail, userColor];
 }
 
 class AccountError extends AccountState {

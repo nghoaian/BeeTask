@@ -17,13 +17,14 @@ class BrowseScreen extends StatefulWidget {
 }
 
 class _BrowseScreenState extends State<BrowseScreen> {
-late FirebaseTaskRepository taskRepository;
+  late FirebaseTaskRepository taskRepository;
   late FirebaseUserRepository userRepository;
 
   @override
   void initState() {
     super.initState();
-    taskRepository = FirebaseTaskRepository(firestore: FirebaseFirestore.instance);
+    taskRepository =
+        FirebaseTaskRepository(firestore: FirebaseFirestore.instance);
     userRepository = FirebaseUserRepository(
       firestore: FirebaseFirestore.instance,
       firebaseAuth: FirebaseAuth.instance,
@@ -85,7 +86,7 @@ late FirebaseTaskRepository taskRepository;
               // Khối 1: Inbox, Filters & Labels, Completed
               buildSectionGroup(
                 [
-                  buildButton("Inbox", Icons.inbox, count: 4),
+                  buildInboxButton(userRepository.getUserEmail(), Icons.inbox),
                   buildDividerWithPadding(),
                   buildButton("Filters & Labels", Icons.grid_view),
                   buildDividerWithPadding(),
@@ -145,11 +146,15 @@ late FirebaseTaskRepository taskRepository;
       {int? count, String? projectId}) {
     return TextButton(
       onPressed: () {
-
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ProjectScreen(projectId: projectId!, taskRepository: taskRepository, userRepository: userRepository),
+            builder: (context) => ProjectScreen(
+                projectId: projectId!,
+                projectName: title,
+                isShare: true,
+                taskRepository: taskRepository,
+                userRepository: userRepository),
           ),
         );
       },
@@ -258,6 +263,41 @@ late FirebaseTaskRepository taskRepository;
         SizedBox(width: 55), // Điều chỉnh độ thụt lề
         Expanded(child: Divider()),
       ],
+    );
+  }
+
+  Widget buildInboxButton(Future<String?> future, IconData icon) {
+    return FutureBuilder<String?>(
+      future: future,
+      builder: (context, snapshot) {
+        final email = snapshot.data ?? "No email";
+        return TextButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ProjectScreen(
+                  projectId: email,
+                  projectName: 'Inbox',
+                  isShare: false,
+                  taskRepository: taskRepository,
+                  userRepository: userRepository,
+                ),
+              ),
+            );
+          },
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.zero,
+          ),
+          child: ListTile(
+            leading: Icon(icon, color: AppColors.primary),
+            title: Text(
+              "Inbox",
+              style: TextStyle(color: Colors.black),
+            ),
+          ),
+        );
+      },
     );
   }
 

@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:bee_task/data/repository/UserRepository.dart';
 import 'package:bloc/bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -25,8 +27,9 @@ class AccountBloc extends Bloc<AccountEvent, AccountState> {
     try {
       final String? userName = await userRepository.getUserName();
       final String? userEmail = await userRepository.getUserEmail();
+      final String? userColor = await userRepository.getUserColor();
       if (userName != null) {
-        emit(AccountLoaded(userName, userEmail!));
+        emit(AccountLoaded(userName, userEmail!, userColor!));
       } else {
         emit(AccountError('User name not found'));
       }
@@ -49,8 +52,9 @@ class AccountBloc extends Bloc<AccountEvent, AccountState> {
       await userRepository.updateUserName(event.username);
 
       final String? userEmail = await userRepository.getUserEmail();
+      final String? userColor = await userRepository.getUserColor();
 
-      emit(AccountLoaded(event.username, userEmail!));
+      emit(AccountLoaded(event.username, userEmail!, userColor!));
     } catch (e) {
       emit(AccountError("Failed to update username: $e"));
     }

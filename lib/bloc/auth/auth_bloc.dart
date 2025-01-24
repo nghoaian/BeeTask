@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:bee_task/data/repository/UserRepository.dart';
+import 'package:bee_task/util/colors.dart';
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'auth_event.dart';
@@ -97,7 +98,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       // Thêm thông tin user vào Firestore
       String userId = userCredential.user!.uid;
-      await userRepository.addUser(userId, event.username, event.email);
+      await userRepository.addUser(userId, event.username, event.email, 'blue');
 
       emit(AuthAuthenticated(user: userCredential.user!));
       debugPrint("Đã phát trạng thái AuthAuthenticated");

@@ -3,9 +3,12 @@ import 'dart:io';
 import 'package:bee_task/bloc/account/account_bloc.dart';
 import 'package:bee_task/bloc/account/account_event.dart';
 import 'package:bee_task/bloc/account/account_state.dart';
+import 'package:bee_task/data/repository/UserRepository.dart';
 import 'package:bee_task/screen/account/update_email.dart';
 import 'package:bee_task/screen/auth/change_password.dart';
 import 'package:bee_task/util/colors.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 // import 'package:image_picker/image_picker.dart';
@@ -17,7 +20,7 @@ class AccountScreen extends StatefulWidget {
 
 class _AccountScreenState extends State<AccountScreen> {
   late TextEditingController _nameController;
-  String _avatarPath = ''; // Đường dẫn đến avatar
+  String _avatarPath = '';
 
   @override
   void initState() {
@@ -93,7 +96,9 @@ class _AccountScreenState extends State<AccountScreen> {
               return Column(
                 children: [
                   AvatarSection(
-                      userName: state.userName, userEmail: state.userEmail),
+                      userName: state.userName,
+                      userEmail: state.userEmail,
+                      userColor: state.userColor),
                   const SizedBox(height: 0),
                   EditButton(),
                   const SizedBox(height: 0),
@@ -153,12 +158,15 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
-  Widget AvatarSection({required String userName, required String userEmail}) {
+  Widget AvatarSection(
+      {required String userName,
+      required String userEmail,
+      required String? userColor}) {
     return Column(
       children: [
         CircleAvatar(
           radius: 50,
-          backgroundColor: AppColors.primary,
+          backgroundColor: _getColorFromString(userColor),
           backgroundImage:
               _avatarPath.isNotEmpty ? FileImage(File(_avatarPath)) : null,
           child: Text(
@@ -261,5 +269,27 @@ class _AccountScreenState extends State<AccountScreen> {
         minimumSize: Size(double.infinity, 50),
       ),
     );
+  }
+
+  Color _getColorFromString(String? colorString) {
+    final color = colorString?.toLowerCase() ?? 'default';
+    switch (color) {
+      case 'orange':
+        return Colors.orange;
+      case 'blue':
+        return const Color.fromARGB(255, 0, 140, 255);
+      case 'red':
+        return Colors.red;
+      case 'green':
+        return Colors.green;
+      case 'yellow':
+        return const Color.fromARGB(255, 238, 211, 0);
+      case 'purple':
+        return Colors.deepPurpleAccent;
+      case 'pink':
+        return const Color.fromARGB(255, 248, 43, 211);
+      default:
+        return AppColors.primary; // Default color if the string is unknown
+    }
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:bee_task/bloc/auth/auth_bloc.dart';
 import 'package:bee_task/bloc/auth/auth_event.dart';
 import 'package:bee_task/bloc/auth/auth_state.dart';
@@ -295,19 +297,50 @@ class _SignupScreenState extends State<SignupScreen> {
       UserCredential userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(email: email, password: password);
 
+      String userColor = getRandomColor();
       // Thêm thông tin user vào Firestore
       String userId = userCredential.user!.uid;
-      await userRepository.addUser(userId, username, email);
+      await userRepository.addUser(userId, username, email, userColor);
+
+      // Tạo project với ID là userName
+      final project = {
+        'name': 'Inbox',
+        'color': 'Charcoal',
+        'owner': email,
+        'members': [email],
+        'permission': [email],
+      };
+
+      await FirebaseFirestore.instance
+          .collection('projects')
+          .doc(email)
+          .set(project);
 
       Future.delayed(Duration(seconds: 2), () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => NavUIScreen()),
-              );
-            });
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => NavUIScreen()),
+        );
+      });
     } on FirebaseAuthException catch (e) {
       _showErrorMsg(context, e.message ?? "Unknown error");
     }
+  }
+
+  String getRandomColor() {
+    List<String> colors = [
+      'orange',
+      'blue',
+      'red',
+      'green',
+      'yellow',
+      'purple',
+      'pink'
+    ];
+
+    Random random = Random();
+    int index = random.nextInt(colors.length);
+    return colors[index];
   }
 
   void _showErrorMsg(BuildContext context, String msg) {
