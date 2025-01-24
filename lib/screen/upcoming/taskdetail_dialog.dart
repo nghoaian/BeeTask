@@ -23,6 +23,7 @@ class TaskDetailsDialog extends StatefulWidget {
   final Function resetScreen;
   final Function resetDialog;
   final bool permissions;
+  bool isCompleted;
   bool openFirst;
 
   TaskDetailsDialog(
@@ -35,6 +36,7 @@ class TaskDetailsDialog extends StatefulWidget {
       required this.selectDay,
       required this.resetDialog,
       required this.permissions,
+      required this.isCompleted,
       required this.openFirst});
 
   @override
@@ -44,6 +46,9 @@ class TaskDetailsDialog extends StatefulWidget {
 class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
   bool isNotOneMem = false;
+  bool checkSubtask = false;
+  bool checkTask = false;
+  var task;
   @override
   void initState() {
     super.initState();
@@ -53,7 +58,6 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
 
   Future<void> check() async {
     isNotOneMem = await checkMember();
-    setState(() {});
   }
 
   @override
@@ -75,8 +79,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
           final state = snapshot.data;
 
           if (state is DetailTaskLoaded) {
-            // Find the specific task by ID
-            final task = state.tasks;
+            task = state.tasks;
 
             if (task == {}) {
               return const Center(child: Text('Task not found.'));
@@ -290,20 +293,17 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                       ),
                     ],
                   ],
-                  PopupMenuItem(
-                    value: 'markAsComplete',
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Mark Task as Complete'),
-                        if (taskData['completed'] == true)
-                          const Icon(
-                            Icons.check,
-                            color: Colors.green,
-                          ),
-                      ],
+                  if (widget.isCompleted == false) ...[
+                    PopupMenuItem(
+                      value: 'markAsComplete',
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Mark Task as Complete'),
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                   PopupMenuItem(
                     value: 'toggleCompletedTasksVisibility',
                     child: Row(
@@ -328,56 +328,54 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                 FocusScope.of(context).requestFocus(FocusNode());
 
                 if (value == 'assignUser') {
-                  if (widget.permissions == true) {
-                    var taskData;
+                  var task;
 
-                    // Lấy thông tin task
-                    if (widget.type == 'task') {
-                      taskData = TaskData().tasks.firstWhere(
-                          (task) => task['id'] == widget.taskId,
-                          orElse: () =>
-                              {} // Nếu không tìm thấy, trả về một Map trống
-                          );
-                    } else if (widget.type == 'subtask') {
-                      taskData = TaskData().subtasks.firstWhere(
-                          (task) => task['id'] == widget.taskId,
-                          orElse: () =>
-                              {} // Nếu không tìm thấy, trả về một Map trống
-                          );
-                    } else {
-                      taskData = TaskData().subsubtasks.firstWhere(
-                          (task) => task['id'] == widget.taskId,
-                          orElse: () =>
-                              {} // Nếu không tìm thấy, trả về một Map trống
-                          );
-                    }
-
-                    if (taskData != null && taskData.isNotEmpty) {
-                      // Lấy danh sách project members
-                      var projectMembers = await TaskData()
-                          .getProjectMembers(taskData['projectId']);
-                      if (projectMembers != null && projectMembers.length > 2) {
-                        String newAssignee = await _changeAssignee(
-                            taskData['assignee'], projectMembers);
-                        Task updateTask = Task(
-                          id: taskData['id'],
-                          title: taskData['title'],
-                          description: taskData['description'],
-                          dueDate: taskData['dueDate'],
-                          priority: taskData['priority'],
-                          assignee: newAssignee, // Cập nhật assignee
-                          type: widget.type,
-                          projectName: widget.projectName,
-                          completed: taskData['completed'],
-                          subtasks: [],
+                  // Lấy thông tin task
+                  if (widget.type == 'task') {
+                    task = TaskData().tasks.firstWhere(
+                        (task) => task['id'] == widget.taskId,
+                        orElse: () =>
+                            {} // Nếu không tìm thấy, trả về một Map trống
                         );
+                  } else if (widget.type == 'subtask') {
+                    task = TaskData().subtasks.firstWhere(
+                        (task) => task['id'] == widget.taskId,
+                        orElse: () =>
+                            {} // Nếu không tìm thấy, trả về một Map trống
+                        );
+                  } else {
+                    task = TaskData().subsubtasks.firstWhere(
+                        (task) => task['id'] == widget.taskId,
+                        orElse: () =>
+                            {} // Nếu không tìm thấy, trả về một Map trống
+                        );
+                  }
 
-                        // Gửi cập nhật lên Firestore
-                        _updateTask(updateTask.id, updateTask, updateTask.type);
-                        setState(() {
-                          taskData['assignee'] = newAssignee;
-                        });
-                      }
+                  if (task != null && task.isNotEmpty) {
+                    // Lấy danh sách project members
+                    var projectMembers =
+                        await TaskData().getProjectMembers(task['projectId']);
+                    if (projectMembers != null && projectMembers.length > 1) {
+                      String newAssignee = await _changeAssignee(
+                          task['assignee'], projectMembers);
+
+                      Task updateTask = Task(
+                        id: taskData['id'],
+                        title: taskData['title'],
+                        description: taskData['description'],
+                        dueDate: taskData['dueDate'],
+                        priority: taskData['priority'],
+                        assignee: newAssignee, // Cập nhật assignee
+                        type: widget.type,
+                        projectName: widget.projectName,
+                        completed: taskData['completed'],
+                        subtasks: [],
+                      );
+                      setState(() {
+                        taskData['assignee'] = newAssignee;
+                      });
+                      // Gửi cập nhật lên Firestore
+                      _updateTask(updateTask.id, updateTask, updateTask.type);
                     }
                   }
                 } else if (value == 'toggleCompletedTasksVisibility') {
@@ -387,7 +385,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   _fetchTask();
                   Navigator.pop(context);
                 } else if (value == 'markAsComplete') {
-                  taskData['completed'] = !(taskData['completed'] ?? false);
+                  taskData['completed'] = true;
 
                   Task task = Task(
                     id: taskData['id'],
@@ -402,8 +400,14 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                     subtasks: [],
                   );
                   _updateTask(task.id, task, task.type);
-
-                  _fetchTask();
+                  setState(() {
+                    taskData['completed'] = taskData['completed'];
+                    if (taskData['completed'] == true) {
+                      checkTask = true;
+                      checkSubtask = true;
+                    }
+                    widget.isCompleted = true;
+                  });
                 }
               });
             },
@@ -611,35 +615,35 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
 
 // Widget để hiển thị số lượng subtask đã hoàn thành
   Widget buildCompletedSubtasksRow() {
-    return FutureBuilder<List<int>>(
-      future: Future.wait([
-        TaskData().getCountByTypeStream(widget.taskId, widget.type).first,
-        TaskData().getCompletedCountStream(widget.taskId, widget.type).first
-      ]),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData) {
-          return Center(child: Text('No data available'));
-        }
-
-        var result = snapshot.data!;
-        int totalSubtasks = result[0];
-        int completedSubtasks = result[1];
-
-        return Row(
-          children: [
-            if (totalSubtasks > 0)
-              Text(
-                'Completed Subtasks: $completedSubtasks / $totalSubtasks',
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-              ),
-          ],
-        );
-      },
+    int totalSubtasks = 0;
+    int completedSubtasks = 0;
+    if (widget.type == 'task') {
+      totalSubtasks = task['subtasks'].length;
+      if (checkTask == false) {
+        completedSubtasks = task['subtasks']
+            .where((subtask) => subtask['completed'] == true)
+            .length;
+      } else {
+        completedSubtasks = task['subtasks'].length;
+      }
+    } else if (widget.type == 'subtask') {
+      totalSubtasks = task['subsubtasks'].length;
+      if (checkSubtask == false) {
+        completedSubtasks = task['subsubtasks']
+            .where((subtask) => subtask['completed'] == true)
+            .length;
+      } else {
+        completedSubtasks = task['subsubtasks'].length;
+      }
+    }
+    return Row(
+      children: [
+        if (totalSubtasks > 0)
+          Text(
+            'Completed Subtasks: $completedSubtasks / $totalSubtasks',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          ),
+      ],
     );
   }
 
@@ -647,164 +651,167 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
   bool isUpdating = false;
 
   Widget buildSubtaskRow(var subtask, String type) {
-    return StreamBuilder<List<int>>(
-      stream: Stream.fromFuture(Future.wait([
-        if (widget.type == 'task') ...[
-          TaskData().getCountByTypeStream(subtask['id'], 'subtask').first,
-          TaskData().getCompletedCountStream(subtask['id'], 'subtask').first
-        ] else ...[
-          TaskData().getCountByTypeStream(subtask['id'], 'subsubtask').first,
-          TaskData().getCompletedCountStream(subtask['id'], 'subsubtask').first
-        ]
-      ])),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting || isUpdating) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData) {
-          return const Center(child: Text('No data available'));
-        }
+    // Cập nhật trạng thái của subtask nếu cần
+    if (checkTask == true) {
+      subtask['completed'] = true;
+      checkSubtask = true;
+    }
 
-        var result = snapshot.data!;
-        int completedSubtasks;
-        int totalSubtasks = result[0];
-        completedSubtasks = result[1];
+    // Biến để lưu trữ số lượng subtasks đã hoàn thành và tổng số subtasks
+    int completedSubtasks = 0;
+    int totalSubtasks = 0;
 
-        return GestureDetector(
-          onTap: () async {
-            showModalBottomSheet(
-              context: context,
-              isDismissible: false,
-              isScrollControlled:
-                  true, // Allow the bottom sheet to adjust its height based on content
-              builder: (context) {
-                return SingleChildScrollView(
-                  child: TaskDetailsDialog(
-                    taskId: subtask['id'],
-                    type: type,
-                    openFirst: false,
-                    selectDay: widget.selectDay,
-                    projectName: widget.projectName,
-                    showCompletedTasks: widget.showCompletedTasks,
-                    permissions: widget.permissions,
-                    taskBloc: widget.taskBloc,
-                    resetScreen: widget.resetScreen,
-                    resetDialog: () => setState(() {
-                      _fetchTask();
-                    }),
-                  ),
-                );
-              },
+    // Lấy tổng số subtasks và số subtasks đã hoàn thành
+    if (widget.type == 'task') {
+      if (checkSubtask == false) {
+        totalSubtasks = subtask['subsubtasks']?.length ?? 0;
+        completedSubtasks = subtask['subsubtasks']
+                ?.where((s) => s['completed'] == true)
+                .length ??
+            0;
+      } else {
+        totalSubtasks = subtask['subsubtasks']?.length ?? 0;
+        completedSubtasks = subtask['subsubtasks']?.length ?? 0;
+      }
+    }
+
+    return GestureDetector(
+      onTap: () async {
+        showModalBottomSheet(
+          context: context,
+          isDismissible: false,
+          isScrollControlled: true,
+          builder: (context) {
+            return SingleChildScrollView(
+              child: TaskDetailsDialog(
+                taskId: subtask['id'],
+                type: type,
+                openFirst: false,
+                isCompleted: subtask['completed'],
+                selectDay: widget.selectDay,
+                projectName: widget.projectName,
+                showCompletedTasks: widget.showCompletedTasks,
+                permissions: widget.permissions,
+                taskBloc: widget.taskBloc,
+                resetScreen: widget.resetScreen,
+                resetDialog: () => setState(() {
+                  _fetchTask();
+                }),
+              ),
             );
           },
-          child: Row(
-            children: [
-              GestureDetector(
-                onTap: () async {
-                  if (isUpdating) return;
-                  setState(() {
-                    isUpdating = true;
-                  });
-
-                  subtask['completed'] = !subtask['completed'];
-                  Task task = Task(
-                    id: subtask['id'],
-                    title: subtask['title'],
-                    description: subtask['description'],
-                    dueDate: subtask['dueDate'],
-                    priority: subtask['priority'],
-                    assignee: subtask['assignee'],
-                    type: type,
-                    projectName: widget.projectName,
-                    completed: subtask['completed'],
-                    subtasks: [],
-                  );
-
-                  _updateTask(task.id, task, task.type);
-
-                  if (subtask['completed'] == true) {
-                    if (subtask['subsubtasks'] != null &&
-                        subtask['subsubtasks'].isNotEmpty) {
-                      for (var subsubtask in subtask['subsubtasks']) {
-                        if (subsubtask['completed'] == false) {
-                          Task task = Task(
-                            id: subsubtask['id'],
-                            title: subsubtask['title'],
-                            description: subsubtask['description'],
-                            dueDate: subsubtask['dueDate'],
-                            priority: subsubtask['priority'],
-                            assignee: subsubtask['assignee'],
-                            type: 'subsubtask',
-                            projectName: widget.projectName,
-                            completed: true,
-                            subtasks: [],
-                          );
-                          _updateTask(task.id, task, task.type);
-                        }
-                      }
-                    }
-                  }
-                  await Future.delayed(const Duration(milliseconds: 300));
-
-                  setState(() {
-                    _fetchTask();
-
-                    isUpdating = false;
-                  });
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  width: 16,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: subtask['completed'] == true
-                        ? Colors.green
-                        : Colors.transparent,
-                    border: Border.all(
-                      color: TaskData().getPriorityColor(subtask['priority']),
-                      width: 2,
-                    ),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: subtask['completed'] == true
-                      ? const Icon(
-                          Icons.check,
-                          color: Colors.white,
-                          size: 10,
-                        )
-                      : null,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  '${subtask['title']}'
-                  '${subtask['subsubtasks'] != null && subtask['subsubtasks'].isNotEmpty ? ' ($completedSubtasks/$totalSubtasks)' : ''}',
-                  style: TextStyle(
-                    color: subtask['completed'] == true
-                        ? Colors.green
-                        : Colors.black,
-                    decoration: subtask['completed'] == true
-                        ? TextDecoration.lineThrough
-                        : null,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              // Hiển thị avatar hoặc khoảng trống
-              if (subtask['assignee'] != '') ...[
-                _buildAssigneeAvatar(subtask['assignee']),
-                const SizedBox(width: 8), // Khoảng cách giữa avatar và tiêu đề
-              ],
-            ],
-          ),
         );
       },
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () async {
+              if (isUpdating) return;
+              setState(() {
+                isUpdating = true;
+                checkTask = false;
+                checkSubtask = false;
+              });
+
+              subtask['completed'] = !subtask['completed'];
+              Task task = Task(
+                id: subtask['id'],
+                title: subtask['title'],
+                description: subtask['description'],
+                dueDate: subtask['dueDate'],
+                priority: subtask['priority'],
+                assignee: subtask['assignee'],
+                type: type,
+                projectName: widget.projectName,
+                completed: subtask['completed'],
+                subtasks: [],
+              );
+
+              _updateTask(task.id, task, task.type);
+
+              if (subtask['completed'] == true) {
+                if (subtask['subsubtasks'] != null &&
+                    subtask['subsubtasks'].isNotEmpty) {
+                  for (var subsubtask in subtask['subsubtasks']) {
+                    if (subsubtask['completed'] == false) {
+                      Task task = Task(
+                        id: subsubtask['id'],
+                        title: subsubtask['title'],
+                        description: subsubtask['description'],
+                        dueDate: subsubtask['dueDate'],
+                        priority: subsubtask['priority'],
+                        assignee: subsubtask['assignee'],
+                        type: 'subsubtask',
+                        projectName: widget.projectName,
+                        completed: true,
+                        subtasks: [],
+                      );
+                      _updateTask(task.id, task, task.type);
+                    }
+                  }
+                }
+              }
+              await Future.delayed(const Duration(milliseconds: 300));
+
+              setState(() {
+                if (subtask['completed'] == false) {
+                  widget.isCompleted = false;
+                }
+                isUpdating = false;
+              });
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: 16,
+              height: 16,
+              decoration: BoxDecoration(
+                color: subtask['completed'] == true
+                    ? Colors.green
+                    : Colors.transparent,
+                border: Border.all(
+                  color: TaskData().getPriorityColor(subtask['priority']),
+                  width: 2,
+                ),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: subtask['completed'] == true
+                  ? const Icon(
+                      Icons.check,
+                      color: Colors.white,
+                      size: 10,
+                    )
+                  : null,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '${subtask['title']}'
+              '${subtask['subsubtasks'] != null && subtask['subsubtasks'].isNotEmpty ? ' ($completedSubtasks/$totalSubtasks)' : ''}',
+              style: TextStyle(
+                color:
+                    subtask['completed'] == true ? Colors.green : Colors.black,
+                decoration: subtask['completed'] == true
+                    ? TextDecoration.lineThrough
+                    : null,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          // Hiển thị avatar hoặc khoảng trống
+          if (subtask['assignee'] != '') ...[
+            _buildAssigneeAvatar(subtask['assignee']),
+            const SizedBox(width: 8), // Khoảng cách giữa avatar và tiêu đề
+          ],
+        ],
+      ),
     );
   }
 
   Widget buildSubsubtasks(var subsubtask, String type, String subtaskId) {
+    if (checkSubtask == true) {
+      subsubtask['completed'] = true;
+    }
     return Column(
       children: [
         Padding(
@@ -822,6 +829,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                       taskId: subsubtask['id'],
                       type: type,
                       openFirst: false,
+                      isCompleted: subsubtask['completed'],
                       permissions: widget.permissions,
                       selectDay: widget.selectDay,
                       projectName: widget.projectName,
@@ -843,6 +851,8 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                     if (isUpdating) return; // Ngăn thao tác khi đang cập nhật
                     setState(() {
                       isUpdating = true; // Bắt đầu cập nhật
+                      checkTask = false;
+                      checkSubtask = false;
                     });
 
                     // Cập nhật trạng thái `completed` cho subsubtask
@@ -887,7 +897,9 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
 
                     setState(() {
                       isUpdating = false; // Hoàn tất cập nhật
-                      _fetchTask();
+                      if (subsubtask['completed'] == false) {
+                        widget.isCompleted = false;
+                      }
                     });
                   },
                   child: AnimatedContainer(
@@ -1132,7 +1144,6 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
   void changeShowCompletedTasksVisibility() async {
     setState(() {
       widget.showCompletedTasks = !widget.showCompletedTasks;
-      ;
     });
   }
 
@@ -1162,7 +1173,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
     final completer = Completer<void>();
     final subscription =
         BlocProvider.of<TaskBloc>(context).stream.listen((state) {
-      if (state is TaskDetailsDialog || state is TaskError) {
+      if (state is DetailTaskLoaded || state is TaskError) {
         completer.complete();
       }
     });
@@ -1214,7 +1225,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
       // Lấy danh sách project members
       var projectMembers =
           await TaskData().getProjectMembers(taskData['projectId']);
-      if (projectMembers != null && projectMembers.length > 2) {
+      if (projectMembers != null && projectMembers.length > 1) {
         return true;
       }
     }

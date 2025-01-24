@@ -313,7 +313,8 @@ class FirebaseTaskRepository implements TaskRepository {
               task['projectId'], task['taskId'], task['subtaskId'], false);
         } else if (type == 'subtask') {
           // Update the parent task to completed = false
-          await updateTaskCompletedStatus(task['projectId'], taskId, false);
+          await updateTaskCompletedStatus(
+              task['projectId'], task['taskId'], false);
         }
       }
 

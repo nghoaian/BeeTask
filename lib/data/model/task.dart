@@ -68,7 +68,6 @@ class Task {
     String? description,
     String? dueDate,
     String? priority,
-    String? avatar,
     String? assignee,
     String? type,
     String? projectName,

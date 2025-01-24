@@ -211,8 +211,8 @@ class _HomeScreenState extends State<HomeScreen> {
       margin: const EdgeInsets.all(8.0),
       child: GestureDetector(
         onTap: () {
-          _showTaskDetailsDialog(
-              item.id, item.type, showCompletedTasks, item.projectName);
+          _showTaskDetailsDialog(item.id, item.type, showCompletedTasks,
+              item.projectName, item.completed);
         },
         child: Padding(
           padding: const EdgeInsets.all(8.0),
@@ -451,7 +451,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Hàm hiển thị dialog chi tiết công việc
   void _showTaskDetailsDialog(String taskId, String type,
-      bool showCompletedTask, String projectName) async {
+      bool showCompletedTask, String projectName, bool isCompleted) async {
     bool permissions =
         await TaskData().isUserInProjectPermissions(type, taskId);
 
@@ -465,6 +465,7 @@ class _HomeScreenState extends State<HomeScreen> {
             taskId: taskId,
             permissions: permissions,
             type: type,
+            isCompleted: isCompleted,
             openFirst: true,
             selectDay: _selectedDay ?? DateTime.now(),
             projectName: projectName,
