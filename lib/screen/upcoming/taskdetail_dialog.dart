@@ -268,7 +268,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
       },
       child: Row(
         children: [
-          if (taskData['assignee'] != '') ...[
+          if (taskData['assignee'] != '' && taskData['assingnee'] != null) ...[
             _buildAssigneeAvatar(taskData['assignee']),
             const SizedBox(width: 8), // Khoảng cách giữa avatar và tiêu đề
           ],
@@ -382,7 +382,6 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   changeShowCompletedTasksVisibility();
                 } else if (value == 'deleteTask') {
                   await _confirmAndDeleteTask();
-                  _fetchTask();
                   Navigator.pop(context);
                 } else if (value == 'markAsComplete') {
                   taskData['completed'] = true;
@@ -618,22 +617,26 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
     int totalSubtasks = 0;
     int completedSubtasks = 0;
     if (widget.type == 'task') {
-      totalSubtasks = task['subtasks'].length;
-      if (checkTask == false) {
-        completedSubtasks = task['subtasks']
-            .where((subtask) => subtask['completed'] == true)
-            .length;
-      } else {
-        completedSubtasks = task['subtasks'].length;
+      if (task['subtasks'] != null) {
+        totalSubtasks = task['subtasks'].length;
+        if (checkTask == false) {
+          completedSubtasks = task['subtasks']
+              .where((subtask) => subtask['completed'] == true)
+              .length;
+        } else {
+          completedSubtasks = task['subtasks'].length;
+        }
       }
     } else if (widget.type == 'subtask') {
-      totalSubtasks = task['subsubtasks'].length;
-      if (checkSubtask == false) {
-        completedSubtasks = task['subsubtasks']
-            .where((subtask) => subtask['completed'] == true)
-            .length;
-      } else {
-        completedSubtasks = task['subsubtasks'].length;
+      if (task['subsubtasks'] != null) {
+        totalSubtasks = task['subsubtasks'].length;
+        if (checkSubtask == false) {
+          completedSubtasks = task['subsubtasks']
+              .where((subtask) => subtask['completed'] == true)
+              .length;
+        } else {
+          completedSubtasks = task['subsubtasks'].length;
+        }
       }
     }
     return Row(
@@ -664,14 +667,16 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
     // Lấy tổng số subtasks và số subtasks đã hoàn thành
     if (widget.type == 'task') {
       if (checkSubtask == false) {
-        totalSubtasks = subtask['subsubtasks']?.length ?? 0;
-        completedSubtasks = subtask['subsubtasks']
-                ?.where((s) => s['completed'] == true)
-                .length ??
-            0;
-      } else {
-        totalSubtasks = subtask['subsubtasks']?.length ?? 0;
-        completedSubtasks = subtask['subsubtasks']?.length ?? 0;
+        if (subtask['subsubtasks'] != null) {
+          totalSubtasks = subtask['subsubtasks']?.length ?? 0;
+          completedSubtasks = subtask['subsubtasks']
+                  ?.where((s) => s['completed'] == true)
+                  .length ??
+              0;
+        } else {
+          totalSubtasks = subtask['subsubtasks']?.length ?? 0;
+          completedSubtasks = subtask['subsubtasks']?.length ?? 0;
+        }
       }
     }
 
@@ -1128,7 +1133,9 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
 
       // Đóng dialog sau khi cập nhật xong
       Navigator.pop(dialogContext); // Dùng context đã lưu ở trên
-      _fetchTask();
+      if (widget.openFirst != true) {
+        _fetchTask();
+      }
 
       // Cập nhật lại màn hình
       widget.resetScreen();
