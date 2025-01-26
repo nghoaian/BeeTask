@@ -382,6 +382,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   changeShowCompletedTasksVisibility();
                 } else if (value == 'deleteTask') {
                   await _confirmAndDeleteTask();
+                  Navigator.pop(context);
                 } else if (value == 'markAsComplete') {
                   taskData['completed'] = true;
 
