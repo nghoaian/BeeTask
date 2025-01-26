@@ -24,6 +24,9 @@ class _HomeScreenState extends State<HomeScreen> {
   DateTime _selectedDay = DateTime.now();
   bool showCompletedTasks =
       true; // Biến trạng thái để hiển thị/ẩn task hoàn thành
+  var tasks = TaskData().tasks;
+  var subtasks = TaskData().subtasks;
+  var subsubtasks = TaskData().subsubtasks;
 
   @override
   void initState() {
@@ -220,25 +223,7 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildTaskHeaderRow(item),
-              StreamBuilder<Widget>(
-                stream: _buildSubtaskAndTypeRow(
-                    item), // Gọi hàm trả về Stream<Widget>
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return CircularProgressIndicator(); // Hiển thị loading khi dữ liệu đang được tải
-                  }
-                  if (snapshot.hasError) {
-                    return Text(
-                        'Error: ${snapshot.error}'); // Hiển thị lỗi nếu có
-                  }
-                  if (snapshot.hasData) {
-                    return snapshot.data ??
-                        SizedBox.shrink(); // Hiển thị widget nếu có dữ liệu
-                  }
-                  return SizedBox
-                      .shrink(); // Nếu không có dữ liệu, trả về SizedBox
-                },
-              ),
+              _buildSubtaskAndTypeRow(item),
               _buildTaskDescription(item.description),
             ],
           ),
@@ -254,19 +239,93 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         GestureDetector(
           onTap: () {
-            task.completed = !task.completed;
             context.read<TaskBloc>().add(UpdateTask(task.id, task, task.type));
 
-            context.read<TaskBloc>().add(FetchTasksByDate(
-                (_selectedDay != null
-                    ? DateTime(
-                        _selectedDay.year,
-                        _selectedDay.month,
-                        _selectedDay.day,
-                      ).toIso8601String().substring(0, 10)
-                    : DateTime.now().toIso8601String().substring(0, 10)),
-                showCompletedTasks));
             setState(() {
+              task.completed = !task.completed;
+              if (task.completed == true) {
+                if (task.type == 'task') {
+                  var relevantTask = tasks.firstWhere((t) => t['id'] == task.id,
+                      orElse: () => {});
+          
+
+                  // Nếu tìm thấy task, tìm các subtasks liên quan
+                  if (relevantTask != null || relevantTask.isNotEmpty) {
+                    relevantTask['completed'] = true;
+
+                    var relevantSubtasks = subtasks
+                        .where((subtask) =>
+                            subtask['taskId'] == relevantTask['id'])
+                        .toList();
+                    relevantSubtasks.forEach((subtask) {
+                      subtask['completed'] = true;
+                      var relevantSubSubtasks = subsubtasks
+                          .where((subsubtask) =>
+                              subsubtask['subtaskId'] == subtask['id'])
+                          .toList();
+                      relevantSubSubtasks.forEach((subsubtask) {
+                        subsubtask['completed'] = true;
+                      });
+                    });
+                  }
+                } else if (task.type == 'subtask') {
+                  var relevantSubTask = subtasks
+                      .firstWhere((t) => t['id'] == task.id, orElse: () => {});
+
+                  if (relevantSubTask != null || relevantSubTask.isNotEmpty) {
+                    relevantSubTask['completed'] = true;
+
+                    var relevantSubSubtasks = subsubtasks
+                        .where((subsubtask) =>
+                            subsubtask['subtaskId'] == relevantSubTask['id'])
+                        .toList();
+                    relevantSubSubtasks.forEach((subsubtask) {
+                      subsubtask['completed'] = true;
+                    });
+                  }
+                }
+              } else {
+                if (task.type == 'subsubtask') {
+                  var relevantSubSubTask = subsubtasks
+                      .firstWhere((t) => t['id'] == task.id, orElse: () => {});
+
+                  if (relevantSubSubTask != null ||
+                      relevantSubSubTask.isNotEmpty) {
+                    relevantSubSubTask['completed'] = false;
+
+                    var relevantSubtasks = subtasks
+                        .where((subtask) =>
+                            subtask['id'] == relevantSubSubTask['subtaskId'])
+                        .toList();
+                    relevantSubtasks.forEach((subtask) {
+                      subtask['completed'] = false;
+                    });
+
+                    var relevantTasks = tasks
+                        .where((taskItem) =>
+                            taskItem['id'] == relevantSubSubTask['taskId'])
+                        .toList();
+                    relevantTasks.forEach((taskItem) {
+                      taskItem['completed'] = false;
+                    });
+                  }
+                } else if (task.type == 'subtask') {
+                  var relevantSubTask = subtasks
+                      .firstWhere((t) => t['id'] == task.id, orElse: () => {});
+
+                  if (relevantSubTask != null || relevantSubTask.isNotEmpty) {
+                    relevantSubTask['completed'] = false;
+
+                    var relevantTasks = tasks
+                        .where((taskItem) =>
+                            taskItem['id'] == relevantSubTask['taskId'])
+                        .toList();
+                    relevantTasks.forEach((taskItem) {
+                      taskItem['completed'] = false;
+                    });
+                  }
+                }
+              }
               context.read<TaskBloc>().add(FetchTasksByDate(
                   (_selectedDay != null
                       ? DateTime(
@@ -328,55 +387,71 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Stream<Widget> _buildSubtaskAndTypeRow(Task task) async* {
-    try {
-      // Sử dụng StreamZip để lắng nghe cả 2 Stream cùng lúc
-      await for (var result in StreamZip([
-        TaskData().getCountByTypeStream(
-            task.id, task.type), // Stream cho số lượng totalSubtasks
-        TaskData().getCompletedCountStream(
-            task.id, task.type), // Stream cho completedSubtasks
-      ])) {
-        int completedSubtasks = result[1]; // Số lượng completedSubtasks
-        int totalSubtasks = result[0]; // Số lượng totalSubtasks
+  Widget _buildSubtaskAndTypeRow(Task task) {
+    // Số lượng subtasks đã hoàn thành và tổng số subtasks
+    int completedSubtasks = 0;
+    int totalSubtasks = 0;
 
-        // Lý do muốn hiển thị luôn projectName, vì vậy đặt ngoài điều kiện
-        yield Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // Hiển thị Text cho số lượng subtasks nếu totalSubtasks > 0
-            if (totalSubtasks > 0)
-              Text(
-                '$completedSubtasks / $totalSubtasks',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[600],
-                ),
-              ),
-            if (totalSubtasks == 0)
-              SizedBox.shrink(), // Nếu không có subtasks, không hiển thị gì
+    if (task.type == 'task') {
+      // Kiểm tra nếu 'subtasks' không null và không rỗng
+      // Tìm các subtasks có taskId trùng với id của task
+      var relevantSubtasks =
+          subtasks.where((subtask) => subtask['taskId'] == task.id).toList();
 
-            Expanded(
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  task.projectName, // Luôn hiển thị projectName
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: TaskData().getPriorityColor(task.priority),
-                  ),
-                ),
+      totalSubtasks = relevantSubtasks.length;
+
+      // Đếm số subtask có completed = true
+      completedSubtasks = relevantSubtasks
+          .where((subtask) => subtask['completed'] == true)
+          .length;
+    } else if (task.type == 'subtask') {
+      // Kiểm tra nếu 'subsubtasks' không null và không rỗng
+
+      // Tương tự cho subsubtask
+      var relevantSubsubtasks = subsubtasks
+          .where((subsubtask) => subsubtask['subtaskId'] == task.id)
+          .toList();
+
+      totalSubtasks = relevantSubsubtasks.length;
+      completedSubtasks = relevantSubsubtasks
+          .where((subsubtask) => subsubtask['completed'] == true)
+          .length;
+    } else {
+      totalSubtasks = 0;
+      completedSubtasks = 0;
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // Hiển thị số lượng subtasks nếu có subtasks
+        if (totalSubtasks > 0)
+          Text(
+            '$completedSubtasks / $totalSubtasks',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[600],
+            ),
+          ),
+        if (totalSubtasks == 0)
+          const SizedBox.shrink(), // Nếu không có subtasks, không hiển thị gì
+
+        Expanded(
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              task.projectName, // Luôn hiển thị projectName
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: TaskData().getPriorityColor(task.priority),
               ),
             ),
-          ],
-        );
-      }
-    } catch (e) {
-      // Nếu có lỗi, trả về SizedBox để không làm UI bị vỡ
-      yield SizedBox.shrink();
-    }
+          ),
+        ),
+      ],
+    );
   }
 
   // Widget hiển thị mô tả công việc
