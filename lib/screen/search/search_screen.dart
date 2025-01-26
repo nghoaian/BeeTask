@@ -1,4 +1,16 @@
+import 'package:bee_task/bloc/task/task_event.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:bee_task/screen/TaskData.dart';
+import 'package:bee_task/bloc/task/task_bloc.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:bee_task/screen/upcoming/taskdetail_dialog.dart';
+import 'package:bee_task/screen/project/project_screen.dart';
+import 'package:bee_task/data/repository/TaskRepository.dart';
+import 'package:bee_task/data/repository/UserRepository.dart';
+import 'package:bee_task/data/model/task.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -8,156 +20,513 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
+  final FocusNode _searchFocusNode = FocusNode();
+  String _selectedSearchType = 'Task'; // Lựa chọn tìm kiếm mặc định là Task
+  String _searchQuery = ''; // Nội dung tìm kiếm hiện tại
+  late FirebaseTaskRepository taskRepository;
+  late FirebaseUserRepository userRepository;
+
+  // Dữ liệu mẫu
+  var tasks = TaskData().tasks;
+  var subtasks = TaskData().subtasks;
+  var subsubtasks = TaskData().subsubtasks;
+  var projects = TaskData().projects;
+
+  @override
+  void initState() {
+    super.initState();
+
+    taskRepository =
+        FirebaseTaskRepository(firestore: FirebaseFirestore.instance);
+    userRepository = FirebaseUserRepository(
+      firestore: FirebaseFirestore.instance,
+      firebaseAuth: FirebaseAuth.instance,
+    );
+  }
+
+  @override
+  void dispose() {
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Search'),
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            // Search Bar
-            SearchBar(),
-            // Recently Visited Section
-            RecentlyVisitedSection(),
-          ],
+        backgroundColor: Colors.grey[200], // Nền màu xám nhạt
+        title: const Text(
+          'Search',
+          style: TextStyle(color: Colors.black), // Chữ màu đen
         ),
+        elevation: 0, // Xóa đổ bóng của AppBar
+        iconTheme: const IconThemeData(color: Colors.black), // Màu biểu tượng
       ),
-      floatingActionButton: _buildFloatingActionButton(),
-    );
-  }
-
-  FloatingActionButton _buildFloatingActionButton() {
-    return FloatingActionButton(
-      onPressed: () {
-        // Xử lý khi nhấn nút thêm công việc
-        print('Add');
-      },
-      child:
-          Icon(Icons.add, color: Colors.white), // Đặt màu biểu tượng là trắng
-      backgroundColor: Colors.red, // Đặt nền màu đỏ
-      shape: CircleBorder(), // Đảm bảo hình tròn
-    );
-  }
-}
-
-/// SearchBar Widget
-class SearchBar extends StatelessWidget {
-  const SearchBar({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: TextField(
-        decoration: InputDecoration(
-          prefixIcon: IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              // Xử lý sự kiện nhấn nút kính lúp
-              print("Search button clicked!");
-            },
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Search Bar
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              focusNode: _searchFocusNode,
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value; // Cập nhật kết quả tìm kiếm
+                });
+              },
+              decoration: InputDecoration(
+                fillColor: Colors.grey[200], // Màu nền xám nhạt
+                filled: true, // Kích hoạt màu nền
+                prefixIcon: const Icon(Icons.search),
+                hintText: 'Tasks, projects, and more',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                  borderSide: BorderSide.none, // Xóa viền mặc định
+                ),
+              ),
+            ),
           ),
-          hintText: 'Tasks, projects, and more',
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8.0),
+          const SizedBox(height: 16.0),
+          // Nội dung thay đổi dựa trên trạng thái của thanh tìm kiếm
+          Expanded(
+            child: Column(
+              children: [
+                _searchQuery != ''
+                    ? _buildSearchOptions() // Hiển thị ba lựa chọn khi nhấn vào thanh tìm kiếm
+                    : _buildDefaultContent(), // Hiển thị nội dung mặc định khi chưa nhấn
+                const SizedBox(height: 16.0),
+                if (_searchQuery != '')
+                  _buildSearchResults(), // Hiển thị kết quả tìm kiếm
+              ],
+            ),
           ),
-        ),
+          const SizedBox(
+              height: 8.0), // Khoảng trống giữa phần tìm kiếm và kết quả
+        ],
       ),
     );
   }
-}
 
-/// RecentlyVisitedSection Widget
-class RecentlyVisitedSection extends StatelessWidget {
-  const RecentlyVisitedSection({super.key});
-
-  @override
-  Widget build(BuildContext context) {
+  /// Hiển thị ba lựa chọn tìm kiếm: Task, Project, Description
+  Widget _buildSearchOptions() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Recently visited',
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            'Search by:',
+            style: Theme.of(context).textTheme.headlineSmall,
           ),
-          const SizedBox(height: 8.0),
-          // Grouped items with rounded corners
-          buildSectionGroup([
-            buildButtonItem(Icons.filter_alt_outlined, 'Filters & Labels'),
-            buildDividerWithPadding(),
-            buildButtonItem(Icons.calendar_today, 'Upcoming'),
-            buildDividerWithPadding(),
-            buildButtonItem(Icons.today, 'Today'),
-            buildDividerWithPadding(),
-            buildButtonItem(Icons.home, 'Home', emoji: '🏡'),
-            buildDividerWithPadding(),
-            buildButtonItem(Icons.tag, 'Testproject', isTeam: true),
-            buildDividerWithPadding(),
-            buildButtonItem(Icons.notifications, 'Notifications'),
-          ]),
+          const SizedBox(height: 16.0),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: ['Task', 'Project', 'Description'].map((type) {
+              final isSelected = _selectedSearchType == type;
+              return ChoiceChip(
+                label: Text(type),
+                selected: isSelected,
+                selectedColor: Colors.red[300], // Màu cho mục được chọn
+                onSelected: (selected) {
+                  if (selected) {
+                    setState(() {
+                      _selectedSearchType = type; // Cập nhật loại tìm kiếm
+                    });
+                  }
+                },
+              );
+            }).toList(),
+          ),
         ],
       ),
     );
   }
 
-  Widget buildButtonItem(IconData icon, String title,
-      {String? emoji, bool isTeam = false}) {
-    return TextButton(
-      onPressed: () {
-        // Handle button tap
-        print('Tapped on $title');
-      },
-      style: TextButton.styleFrom(
-        padding: const EdgeInsets.all(0),
+  /// Hiển thị nội dung mặc định
+  Widget _buildDefaultContent() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.search,
+            size: 80,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: 16.0),
+          const Text(
+            'Start searching for tasks, projects, or descriptions!',
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
-      child: ListTile(
-        leading: Icon(icon, color: Colors.red),
-        title: Row(
-          children: [
-            Text(title),
-            if (emoji != null) Text(' $emoji'),
-            if (isTeam)
-              const Padding(
-                padding: EdgeInsets.only(left: 4.0),
-                child: Icon(Icons.people, size: 16, color: Colors.grey),
+    );
+  }
+
+  /// Hiển thị kết quả tìm kiếm
+  Widget _buildSearchResults() {
+    // Tạo danh sách chứa các kết quả đã lọc
+    List<Map<String, dynamic>> filteredTasks = [];
+    List<Map<String, dynamic>> filteredProjects = [];
+
+    if (_selectedSearchType == 'Task') {
+      // Tìm trong danh sách tasks theo title hoặc description
+      filteredTasks = [...tasks, ...subtasks, ...subsubtasks].where((task) {
+        return task['title'].toLowerCase().contains(_searchQuery.toLowerCase());
+      }).toList();
+    } else if (_selectedSearchType == 'Project') {
+      // Tìm trong danh sách projects theo name
+      filteredProjects = projects.where((project) {
+        return project['name']
+            .toLowerCase()
+            .contains(_searchQuery.toLowerCase());
+      }).toList();
+    } else if (_selectedSearchType == 'Description') {
+      // Tìm trong danh sách tasks theo description
+      filteredTasks = [...tasks, ...subtasks, ...subsubtasks].where((task) {
+        return task['description']
+            .toLowerCase()
+            .contains(_searchQuery.toLowerCase());
+      }).toList();
+    }
+
+    // Kiểm tra nếu không có kết quả nào
+    if (_selectedSearchType == 'Task' || _selectedSearchType == 'Description') {
+      if (filteredTasks.isEmpty) {
+        return Expanded(
+          child: Center(
+            child: Text(
+              'No tasks found for "$_searchQuery"',
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          ),
+        );
+      }
+
+      // Hiển thị danh sách kết quả cho Task
+      return Expanded(
+        child: ListView.builder(
+          itemCount: filteredTasks.length,
+          itemBuilder: (context, index) {
+            final task = filteredTasks[index];
+            return _buildItemCard(task);
+          },
+        ),
+      );
+    } else if (_selectedSearchType == 'Project') {
+      if (filteredProjects.isEmpty) {
+        return Expanded(
+          child: Center(
+            child: Text(
+              'No projects found for "$_searchQuery"',
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          ),
+        );
+      }
+
+      // Hiển thị danh sách kết quả cho Project
+      return Expanded(
+        child: ListView.builder(
+          itemCount: filteredProjects.length,
+          itemBuilder: (context, index) {
+            final project = filteredProjects[index];
+            return Card(
+              margin: const EdgeInsets.all(8.0),
+              child: ListTile(
+                title: Text(
+                  project['name'],
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  'Owner: ${project['owner']}',
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                ),
+                trailing: Icon(Icons.arrow_forward, color: Colors.grey[700]),
+                onTap: () {
+                  // Xử lý khi chọn một project
+                  _navigateToProjectDetails(project);
+                },
               ),
-          ],
+            );
+          },
+        ),
+      );
+    }
+
+    // Trường hợp không xác định
+    return const SizedBox.shrink();
+  }
+
+// Hàm điều hướng đến chi tiết Project
+  void _navigateToProjectDetails(var project) {
+    // Ví dụ điều hướng sang màn hình chi tiết của Project
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProjectScreen(
+            projectId: project['id'],
+            projectName: project['name'],
+            isShare: true,
+            taskRepository: taskRepository,
+            userRepository: userRepository),
+      ),
+    );
+  }
+
+  Widget _buildItemCard(var item) {
+    return Card(
+      margin: const EdgeInsets.all(8.0),
+      child: GestureDetector(
+        onTap: () {
+          _showTaskDetailsDialog(item['id'], item['type'], true,
+              item['projectName'], item['completed']);
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildTaskHeaderRow(item),
+              _buildSubtaskAndTypeRow(item), // Thay bằng hàm không dùng stream
+              _buildTaskDescription(item['description']),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget buildDividerWithPadding() {
+  /// Xây dựng hàng hiển thị số lượng subtasks và projectName
+  Widget _buildSubtaskAndTypeRow(var task) {
+    // Số lượng subtasks đã hoàn thành và tổng số subtasks
+    int completedSubtasks = 0;
+    int totalSubtasks = 0;
+
+    if (task['type'] == 'task') {
+      // Kiểm tra nếu 'subtasks' không null và không rỗng
+      // Tìm các subtasks có taskId trùng với id của task
+      var relevantSubtasks =
+          subtasks.where((subtask) => subtask['taskId'] == task['id']).toList();
+
+      totalSubtasks = relevantSubtasks.length;
+
+      // Đếm số subtask có completed = true
+      completedSubtasks = relevantSubtasks
+          .where((subtask) => subtask['completed'] == true)
+          .length;
+    } else if (task['type'] == 'subtask') {
+      // Kiểm tra nếu 'subsubtasks' không null và không rỗng
+
+      // Tương tự cho subsubtask
+      var relevantSubsubtasks = subsubtasks
+          .where((subsubtask) => subsubtask['subtaskId'] == task['id'])
+          .toList();
+
+      totalSubtasks = relevantSubsubtasks.length;
+      completedSubtasks = relevantSubsubtasks
+          .where((subsubtask) => subsubtask['completed'] == true)
+          .length;
+    } else {
+      totalSubtasks = 0;
+      completedSubtasks = 0;
+    }
+
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const SizedBox(width: 55), // Indentation for divider
-        const Expanded(child: Divider()),
+        // Hiển thị số lượng subtasks nếu có subtasks
+        if (totalSubtasks > 0)
+          Text(
+            '$completedSubtasks / $totalSubtasks',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[600],
+            ),
+          ),
+        if (totalSubtasks == 0)
+          const SizedBox.shrink(), // Nếu không có subtasks, không hiển thị gì
+
+        Expanded(
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              task['projectName'], // Luôn hiển thị projectName
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: TaskData().getPriorityColor(task['priority']),
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
 
-  Widget buildSectionGroup(List<Widget> sectionWidgets) {
-    return Container(
-      margin: const EdgeInsets.only(top: 10.0),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 5,
-            offset: const Offset(0, 2),
+  Widget _buildTaskDescription(String description) {
+    return Text(
+      description,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        fontSize: 14,
+        color: Colors.grey[600],
+      ),
+    );
+  }
+
+  Widget _buildTaskHeaderRow(var task) {
+    return Row(
+      children: [
+        GestureDetector(
+          onTap: () {
+            Task updateTask = Task(
+              id: task['id'],
+              title: task['title'],
+              description: task['description'],
+              dueDate: task['dueDate'],
+              priority: task['priority'],
+              assignee: task['assignee'],
+              type: task['type'],
+              projectName: task['projectName'],
+              completed: !task['completed'],
+              subtasks: [],
+            );
+            setState(() {
+              task['completed'] = !task['completed'];
+              if (task['completed'] == true) {
+                if (task['type'] == 'task') {
+                  var relevantSubtasks = subtasks
+                      .where((subtask) => subtask['taskId'] == task['id'])
+                      .toList();
+                  relevantSubtasks.forEach((subtask) {
+                    subtask['completed'] = true;
+                    var relevantSubSubtasks = subsubtasks
+                        .where((subsubtask) =>
+                            subsubtask['subtaskId'] == subtask['id'])
+                        .toList();
+                    relevantSubSubtasks.forEach((subsubtask) {
+                      subsubtask['completed'] = true;
+                    });
+                  });
+                } else if (task['type'] == 'subtask') {
+                  var relevantSubSubtasks = subsubtasks
+                      .where(
+                          (subsubtask) => subsubtask['subtaskId'] == task['id'])
+                      .toList();
+                  relevantSubSubtasks.forEach((subsubtask) {
+                    subsubtask['completed'] = true;
+                  });
+                }
+              } else {
+                if (task['type'] == 'subsubtask') {
+                  var relevantSubtasks = subtasks
+                      .where((subtask) => subtask['id'] == task['subtaskId'])
+                      .toList();
+                  relevantSubtasks.forEach((subtask) {
+                    subtask['completed'] = false;
+                  });
+
+                  var relevantTasks = tasks
+                      .where((taskItem) => taskItem['id'] == task['taskId'])
+                      .toList();
+                  relevantTasks.forEach((taskItem) {
+                    taskItem['completed'] = false;
+                  });
+                } else if (task['type'] == 'subtask') {
+                  var relevantTasks = tasks
+                      .where((taskItem) => taskItem['id'] == task['taskId'])
+                      .toList();
+                  relevantTasks.forEach((taskItem) {
+                    taskItem['completed'] = false;
+                  });
+                }
+              }
+            });
+            Provider.of<TaskBloc>(context, listen: false)
+                .add(UpdateTask(task['id'], updateTask, task['type']));
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: 16,
+            height: 16,
+            decoration: BoxDecoration(
+              color: task['completed'] ? Colors.green : Colors.transparent,
+              border: Border.all(
+                color: TaskData().getPriorityColor(task['priority']),
+                width: 2,
+              ),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: task['completed']
+                ? const Icon(
+                    Icons.check,
+                    color: Colors.white,
+                    size: 10,
+                  )
+                : null,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            task['title'],
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+              decoration: task['completed'] ? TextDecoration.lineThrough : null,
+            ),
+          ),
+        ),
+        if (task['assignee'] != '') ...[
+          CircleAvatar(
+            radius: 16,
+            backgroundColor: Colors.white,
+            child: Text(
+              task['assignee'][0].toUpperCase(),
+              style: const TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
-      ),
-      child: Column(
-        children: sectionWidgets,
-      ),
+      ],
+    );
+  }
+
+  void _showTaskDetailsDialog(String taskId, String type,
+      bool showCompletedTask, String projectName, bool isCompleted) async {
+    bool permissions =
+        await TaskData().isUserInProjectPermissions(type, taskId);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: false,
+      builder: (context) {
+        return SingleChildScrollView(
+          child: TaskDetailsDialog(
+            taskId: taskId,
+            permissions: permissions,
+            type: type,
+            isCompleted: isCompleted,
+            openFirst: true,
+            selectDay: DateTime.now(),
+            projectName: projectName,
+            showCompletedTasks: showCompletedTask,
+            taskBloc: BlocProvider.of<TaskBloc>(context),
+            resetDialog: () => {},
+            resetScreen: () => setState(() {}),
+          ),
+        );
+      },
     );
   }
 }
