@@ -49,7 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset:
-          true, // Đảm bảo rằng không gian được điều chỉnh khi bàn phím xuất hiện
+          true, 
 
       appBar: _buildAppBar(), // Gọi hàm để xây dựng AppBar
       body: Column(

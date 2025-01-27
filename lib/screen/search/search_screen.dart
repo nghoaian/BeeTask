@@ -76,13 +76,13 @@ class _SearchScreenState extends State<SearchScreen> {
                 });
               },
               decoration: InputDecoration(
-                fillColor: Colors.grey[200], // Màu nền xám nhạt
-                filled: true, // Kích hoạt màu nền
+                fillColor: Colors.grey[300],
+                filled: true,
                 prefixIcon: const Icon(Icons.search),
                 hintText: 'Tasks, projects, and more',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8.0),
-                  borderSide: BorderSide.none, // Xóa viền mặc định
+                  borderSide: BorderSide.none,
                 ),
               ),
             ),
@@ -101,8 +101,7 @@ class _SearchScreenState extends State<SearchScreen> {
               ],
             ),
           ),
-          const SizedBox(
-              height: 8.0), // Khoảng trống giữa phần tìm kiếm và kết quả
+          const SizedBox(height: 8.0),
         ],
       ),
     );
@@ -127,11 +126,11 @@ class _SearchScreenState extends State<SearchScreen> {
               return ChoiceChip(
                 label: Text(type),
                 selected: isSelected,
-                selectedColor: Colors.red[300], // Màu cho mục được chọn
+                selectedColor: Colors.red[300],
                 onSelected: (selected) {
                   if (selected) {
                     setState(() {
-                      _selectedSearchType = type; // Cập nhật loại tìm kiếm
+                      _selectedSearchType = type;
                     });
                   }
                 },
@@ -247,7 +246,6 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
                 trailing: Icon(Icons.arrow_forward, color: Colors.grey[700]),
                 onTap: () {
-                  // Xử lý khi chọn một project
                   _navigateToProjectDetails(project);
                 },
               ),
@@ -257,13 +255,11 @@ class _SearchScreenState extends State<SearchScreen> {
       );
     }
 
-    // Trường hợp không xác định
     return const SizedBox.shrink();
   }
 
 // Hàm điều hướng đến chi tiết Project
   void _navigateToProjectDetails(var project) {
-    // Ví dụ điều hướng sang màn hình chi tiết của Project
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -291,7 +287,7 @@ class _SearchScreenState extends State<SearchScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildTaskHeaderRow(item),
-              _buildSubtaskAndTypeRow(item), // Thay bằng hàm không dùng stream
+              _buildSubtaskAndTypeRow(item),
               _buildTaskDescription(item['description']),
             ],
           ),
@@ -302,26 +298,19 @@ class _SearchScreenState extends State<SearchScreen> {
 
   /// Xây dựng hàng hiển thị số lượng subtasks và projectName
   Widget _buildSubtaskAndTypeRow(var task) {
-    // Số lượng subtasks đã hoàn thành và tổng số subtasks
     int completedSubtasks = 0;
     int totalSubtasks = 0;
 
     if (task['type'] == 'task') {
-      // Kiểm tra nếu 'subtasks' không null và không rỗng
-      // Tìm các subtasks có taskId trùng với id của task
       var relevantSubtasks =
           subtasks.where((subtask) => subtask['taskId'] == task['id']).toList();
 
       totalSubtasks = relevantSubtasks.length;
 
-      // Đếm số subtask có completed = true
       completedSubtasks = relevantSubtasks
           .where((subtask) => subtask['completed'] == true)
           .length;
     } else if (task['type'] == 'subtask') {
-      // Kiểm tra nếu 'subsubtasks' không null và không rỗng
-
-      // Tương tự cho subsubtask
       var relevantSubsubtasks = subsubtasks
           .where((subsubtask) => subsubtask['subtaskId'] == task['id'])
           .toList();
@@ -338,7 +327,6 @@ class _SearchScreenState extends State<SearchScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Hiển thị số lượng subtasks nếu có subtasks
         if (totalSubtasks > 0)
           Text(
             '$completedSubtasks / $totalSubtasks',
@@ -348,14 +336,12 @@ class _SearchScreenState extends State<SearchScreen> {
               color: Colors.grey[600],
             ),
           ),
-        if (totalSubtasks == 0)
-          const SizedBox.shrink(), // Nếu không có subtasks, không hiển thị gì
-
+        if (totalSubtasks == 0) const SizedBox.shrink(),
         Expanded(
           child: Align(
             alignment: Alignment.centerRight,
             child: Text(
-              task['projectName'], // Luôn hiển thị projectName
+              task['projectName'],
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,

@@ -10,6 +10,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:bee_task/screen/upcoming/addtask_dialog.dart';
 
 class BrowseScreen extends StatefulWidget {
   @override
@@ -38,7 +39,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
           ProjectBloc(FirebaseFirestore.instance)..add(LoadProjectsEvent()),
       child: Scaffold(
         body: buildBody(),
-        floatingActionButton: buildFloatingActionButton(),
+        floatingActionButton: _buildFloatingActionButton(context),
         backgroundColor: Colors.grey[200],
       ),
     );
@@ -129,16 +130,14 @@ class _BrowseScreenState extends State<BrowseScreen> {
     );
   }
 
-  FloatingActionButton buildFloatingActionButton() {
+  FloatingActionButton _buildFloatingActionButton(BuildContext context) {
     return FloatingActionButton(
       onPressed: () {
-        // Xử lý khi nhấn nút thêm công việc
-        print('Add');
+        _showAddTaskDialog(context);
       },
-      child:
-          Icon(Icons.add, color: Colors.white), // Đặt màu biểu tượng là trắng
-      backgroundColor: AppColors.primary, // Đặt nền màu đỏ
-      shape: CircleBorder(), // Đảm bảo hình tròn
+      child: Icon(Icons.add, color: Colors.white),
+      backgroundColor: Colors.red,
+      shape: CircleBorder(),
     );
   }
 
@@ -295,6 +294,23 @@ class _BrowseScreenState extends State<BrowseScreen> {
               "Inbox",
               style: TextStyle(color: Colors.black),
             ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showAddTaskDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SingleChildScrollView(
+          child: AddTaskDialog(
+            taskId: '', // Add appropriate taskId
+            type: '', // Add appropriate type
+            selectDay: DateTime.now(),
+            resetDialog: () => {},
+            resetScreen: () => {},
           ),
         );
       },

@@ -1,6 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'project_event.dart';
 import 'project_state.dart';
@@ -21,8 +22,13 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
       LoadProjectsEvent event, Emitter<ProjectState> emit) async {
     emit(ProjectLoading());
     try {
+      User? user = FirebaseAuth.instance.currentUser;
+
       // Lấy danh sách projects từ Firestore
-      final querySnapshot = await firestore.collection('projects').get();
+      final querySnapshot = await firestore
+          .collection('projects')
+          .where('members', arrayContains: user?.email)
+          .get();
 
       final projects = querySnapshot.docs.map((doc) {
         return {
