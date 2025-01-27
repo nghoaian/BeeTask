@@ -442,4 +442,26 @@ class TaskData {
       return false; // Return false if an error occurs
     }
   }
+
+  Color getColorFromString(String? colorString) {
+    final color = colorString?.toLowerCase() ?? 'default';
+    switch (color) {
+      case 'orange':
+        return Colors.orange;
+      case 'blue':
+        return const Color.fromARGB(255, 0, 140, 255);
+      case 'red':
+        return Colors.red;
+      case 'green':
+        return Colors.green;
+      case 'yellow':
+        return const Color.fromARGB(255, 238, 211, 0);
+      case 'purple':
+        return Colors.deepPurpleAccent;
+      case 'pink':
+        return const Color.fromARGB(255, 248, 43, 211);
+      default:
+        return AppColors.primary; // Default color if the string is unknown
+    }
+  }
 }

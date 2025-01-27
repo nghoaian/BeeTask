@@ -48,6 +48,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
   bool isNotOneMem = false;
   bool checkSubtask = false;
   bool checkTask = false;
+  var users = TaskData().users;
   var task;
   @override
   void initState() {
@@ -1139,9 +1140,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
         widget.resetScreen();
       }
 
-      // Cập nhật lại màn hình
     } catch (e) {
-      // Xử lý lỗi nếu có
       print("Error deleting task: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error deleting task: $e')),
@@ -1157,9 +1156,11 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
 
   Widget _buildAssigneeAvatar(String assingee) {
     if (assingee != '') {
+      var user = users.firstWhere((user) => user['userEmail'] == assingee);
+
       return CircleAvatar(
-        radius: 15, // Kích thước radius của avatar
-        backgroundColor: Colors.white,
+        radius: 15, 
+        backgroundColor: TaskData().getColorFromString(user['userColor']),
         child: Text(
           assingee[0].toUpperCase(),
           style: const TextStyle(
@@ -1169,10 +1170,9 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
         ),
       );
     } else {
-      // Trả về khoảng trống có kích thước tương đương CircleAvatar
       return const SizedBox(
-        width: 30, // 2 * radius
-        height: 30, // 2 * radius
+        width: 30, 
+        height: 30, 
       );
     }
   }

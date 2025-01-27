@@ -21,12 +21,12 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   final FocusNode _searchFocusNode = FocusNode();
-  String _selectedSearchType = 'Task'; // Lựa chọn tìm kiếm mặc định là Task
-  String _searchQuery = ''; // Nội dung tìm kiếm hiện tại
+  String _selectedSearchType = 'Task';
+  String _searchQuery = '';
   late FirebaseTaskRepository taskRepository;
   late FirebaseUserRepository userRepository;
+  var users = TaskData().users;
 
-  // Dữ liệu mẫu
   var tasks = TaskData().tasks;
   var subtasks = TaskData().subtasks;
   var subsubtasks = TaskData().subsubtasks;
@@ -381,6 +381,9 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildTaskHeaderRow(var task) {
+    var user =
+        users.firstWhere((user) => user['userEmail'] == task['assignee']);
+
     return Row(
       children: [
         GestureDetector(
@@ -486,8 +489,8 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
         if (task['assignee'] != '') ...[
           CircleAvatar(
-            radius: 16,
-            backgroundColor: Colors.white,
+            radius: 15,
+            backgroundColor: TaskData().getColorFromString(user['userColor']),
             child: Text(
               task['assignee'][0].toUpperCase(),
               style: const TextStyle(

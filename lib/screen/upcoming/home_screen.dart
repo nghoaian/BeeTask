@@ -27,6 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
   var tasks = TaskData().tasks;
   var subtasks = TaskData().subtasks;
   var subsubtasks = TaskData().subsubtasks;
+  var users = TaskData().users;
 
   @override
   void initState() {
@@ -235,6 +236,8 @@ class _HomeScreenState extends State<HomeScreen> {
   // Widget xây dựng hàng tiêu đề công việc
 
   Widget _buildTaskHeaderRow(Task task) {
+    var user = users.firstWhere((user) => user['userEmail'] == task.assignee);
+
     return Row(
       children: [
         GestureDetector(
@@ -247,7 +250,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (task.type == 'task') {
                   var relevantTask = tasks.firstWhere((t) => t['id'] == task.id,
                       orElse: () => {});
-          
 
                   // Nếu tìm thấy task, tìm các subtasks liên quan
                   if (relevantTask != null || relevantTask.isNotEmpty) {
@@ -373,7 +375,7 @@ class _HomeScreenState extends State<HomeScreen> {
         if (task.assignee != '') ...[
           CircleAvatar(
             radius: 16,
-            backgroundColor: Colors.white,
+            backgroundColor: TaskData().getColorFromString(user['userColor']),
             child: Text(
               task.assignee[0].toUpperCase(),
               style: const TextStyle(
