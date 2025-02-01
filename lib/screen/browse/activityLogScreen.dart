@@ -324,11 +324,7 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                                         onPressed: () {
                                           Navigator.of(context).pop();
                                         },
-                                        child: Text("Cancel"),
-                                      ),
-                                      TextButton(
-                                        onPressed: () {},
-                                        child: Text("Restore"),
+                                        child: Text("OK"),
                                       ),
                                     ],
                                   );
