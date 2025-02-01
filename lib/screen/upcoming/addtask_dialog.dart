@@ -572,7 +572,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
 
             // Tạo đối tượng Task
             Task taskData = Task(
-              id: '', // Sử dụng widget.taskId nếu có, nếu không để trống
+              id: '',
               title: task['task'].toString(),
               description: task['description'].toString(),
               dueDate: _formatDueDate(_selectedDay?.toIso8601String() ?? ''),
@@ -586,18 +586,14 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
 
             try {
               if (widget.type == 'task') {
-                context.read<TaskBloc>().add(
-                    AddTask('subtask', taskData, widget.taskId, projectId));
-             
+                context.read<TaskBloc>().add(AddTask(
+                    'noID', 'subtask', taskData, widget.taskId, projectId));
               } else if (widget.type == 'subtask') {
-                context.read<TaskBloc>().add(
-                    AddTask('subsubtask', taskData, widget.taskId, projectId));
-                
+                context.read<TaskBloc>().add(AddTask(
+                    'noID', 'subsubtask', taskData, widget.taskId, projectId));
               } else {
-                context
-                    .read<TaskBloc>()
-                    .add(AddTask('task', taskData, widget.taskId, projectId));
-               
+                context.read<TaskBloc>().add(AddTask(
+                    'noID', 'task', taskData, widget.taskId, projectId));
               }
 
               // Simulate a delay of 2 seconds before closing the dialog and adding the task

@@ -50,6 +50,9 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
   bool checkTask = false;
   var users = TaskData().users;
   var project = TaskData().projects;
+  var tasks = TaskData().tasks;
+  var subtasks = TaskData().subtasks;
+  var subsubtasks = TaskData().subsubtasks;
   var task;
   @override
   void initState() {
@@ -317,6 +320,16 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                         ],
                       ),
                     ),
+                  ] else ...[
+                    PopupMenuItem(
+                      value: 'markAsComplete',
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Mark Task as Uncomplete'),
+                        ],
+                      ),
+                    ),
                   ],
                   PopupMenuItem(
                     value: 'toggleCompletedTasksVisibility',
@@ -415,13 +428,128 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                       widget.type));
                   Navigator.pop(context);
                 } else if (value == 'markAsComplete') {
-                  taskData['completed'] = true;
+                  String status = 'complete';
+                  if (taskData['completed'] == true) {
+                    status = 'uncomplete';
+                  }
                   context.read<TaskBloc>().add(logTaskActivity(
                       taskData['projectId'],
                       taskData['id'],
-                      'complete',
+                      status,
                       {},
                       widget.type));
+
+                  setState(() {
+                    widget.isCompleted = !widget.isCompleted;
+                    taskData['completed'] = !taskData['completed'];
+                    if (taskData['completed'] == true) {
+                      checkTask = true;
+                      checkSubtask = true;
+                    } else {
+                      checkTask = false;
+                      checkSubtask = false;
+                    }
+                    if (taskData['completed'] == true) {
+                      if (taskData['type'] == 'task') {
+                        var relevantTask = tasks.firstWhere(
+                            (t) => t['id'] == taskData['id'],
+                            orElse: () => {});
+
+                        // Nếu tìm thấy task, tìm các subtasks liên quan
+                        if (relevantTask != null || relevantTask.isNotEmpty) {
+                          relevantTask['completed'] = true;
+
+                          var relevantSubtasks = subtasks
+                              .where((subtask) =>
+                                  subtask['taskId'] == relevantTask['id'])
+                              .toList();
+                          relevantSubtasks.forEach((subtask) {
+                            subtask['completed'] = true;
+                            var relevantSubSubtasks = subsubtasks
+                                .where((subsubtask) =>
+                                    subsubtask['subtaskId'] == subtask['id'])
+                                .toList();
+                            relevantSubSubtasks.forEach((subsubtask) {
+                              subsubtask['completed'] = true;
+                            });
+                          });
+                        }
+                      } else if (taskData['type'] == 'subtask') {
+                        var relevantSubTask = subtasks.firstWhere(
+                            (t) => t['id'] == taskData['id'],
+                            orElse: () => {});
+
+                        if (relevantSubTask != null ||
+                            relevantSubTask.isNotEmpty) {
+                          relevantSubTask['completed'] = true;
+
+                          var relevantSubSubtasks = subsubtasks
+                              .where((subsubtask) =>
+                                  subsubtask['subtaskId'] ==
+                                  relevantSubTask['id'])
+                              .toList();
+                          relevantSubSubtasks.forEach((subsubtask) {
+                            subsubtask['completed'] = true;
+                          });
+                        }
+                      }
+                    } else {
+                      if (taskData['type'] == 'subsubtask') {
+                        var relevantSubSubTask = subsubtasks.firstWhere(
+                            (t) => t['id'] == taskData['id'],
+                            orElse: () => {});
+
+                        if (relevantSubSubTask != null ||
+                            relevantSubSubTask.isNotEmpty) {
+                          relevantSubSubTask['completed'] = false;
+
+                          var relevantSubtasks = subtasks
+                              .where((subtask) =>
+                                  subtask['id'] ==
+                                  relevantSubSubTask['subtaskId'])
+                              .toList();
+                          relevantSubtasks.forEach((subtask) {
+                            subtask['completed'] = false;
+                          });
+
+                          var relevantTasks = tasks
+                              .where((taskItem) =>
+                                  taskItem['id'] ==
+                                  relevantSubSubTask['taskId'])
+                              .toList();
+                          relevantTasks.forEach((taskItem) {
+                            taskItem['completed'] = false;
+                          });
+                        }
+                      } else if (taskData['type'] == 'subtask') {
+                        var relevantSubTask = subtasks.firstWhere(
+                            (t) => t['id'] == taskData['id'],
+                            orElse: () => {});
+
+                        if (relevantSubTask != null ||
+                            relevantSubTask.isNotEmpty) {
+                          relevantSubTask['completed'] = false;
+
+                          var relevantTasks = tasks
+                              .where((taskItem) =>
+                                  taskItem['id'] == relevantSubTask['taskId'])
+                              .toList();
+                          relevantTasks.forEach((taskItem) {
+                            taskItem['completed'] = false;
+                          });
+                        }
+                      } else {
+                        var relevantTask = tasks.firstWhere(
+                            (t) => t['id'] == taskData['id'],
+                            orElse: () => {});
+
+                        // Nếu tìm thấy task, tìm các subtasks liên quan
+                        if (relevantTask != null || relevantTask.isNotEmpty) {
+                          relevantTask['completed'] = false;
+                        }
+                      }
+                    }
+                  });
 
                   Task task = Task(
                     id: taskData['id'],
@@ -436,14 +564,6 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                     subtasks: [],
                   );
                   _updateTask(task.id, task, task.type);
-                  setState(() {
-                    taskData['completed'] = taskData['completed'];
-                    if (taskData['completed'] == true) {
-                      checkTask = true;
-                      checkSubtask = true;
-                    }
-                    widget.isCompleted = true;
-                  });
                 }
               });
             },

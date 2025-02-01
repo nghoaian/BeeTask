@@ -79,7 +79,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 fillColor: Colors.grey[300],
                 filled: true,
                 prefixIcon: const Icon(Icons.search),
-                hintText: 'Tasks, projects, and more',
+                hintText: 'Tasks, pvvrojects, and more',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8.0),
                   borderSide: BorderSide.none,
@@ -478,7 +478,7 @@ class _SearchScreenState extends State<SearchScreen> {
             radius: 15,
             backgroundColor: TaskData().getColorFromString(user['userColor']),
             child: Text(
-              task['assignee'][0].toUpperCase(),
+              user['userName'][0].toUpperCase(),
               style: const TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.bold,

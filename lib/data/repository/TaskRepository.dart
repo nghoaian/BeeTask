@@ -9,6 +9,7 @@ abstract class TaskRepository {
   Future<List<Map<String, dynamic>>> fetchTasksByDate(
       String date, bool showCompletedTasks, String email);
   Future<void> addTask(
+    String thisTaskId,
     String type, // Type: 'task', 'subtask', or 'subsubtask'
     Task task, // Đối tượng Task chứa thông tin cần thiết
     String taskId, // taskId nếu là subtask hoặc subsubtask
@@ -91,8 +92,8 @@ class FirebaseTaskRepository implements TaskRepository {
   }
 
   @override
-  Future<bool> addTask(
-      String type, Task task, String taskId, String projectId) async {
+  Future<String?> addTask(String thisTaskId, String type, Task task,
+      String taskId, String projectId) async {
     try {
       // Lấy thông tin cần thiết từ đối tượng Task
       Map<String, dynamic> taskDataAdd = {
@@ -104,74 +105,141 @@ class FirebaseTaskRepository implements TaskRepository {
         'completed': task.completed,
       };
 
-      if (type == 'task') {
-        // Thêm task vào collection 'tasks' trong project
-        await firestore
-            .collection('projects')
-            .doc(projectId)
-            .collection('tasks')
-            .add(taskDataAdd);
-      } else if (type == 'subtask' && taskId != '') {
-        // Thêm vào collection 'subtasks' của task
-        await firestore
-            .collection('projects')
-            .doc(projectId)
-            .collection('tasks')
-            .doc(taskId)
-            .collection('subtasks')
-            .add(taskDataAdd);
+      DocumentReference? docRef; // Biến để lưu ID của tài liệu mới thêm
 
-        // Cập nhật completed của task cha thành false
-        await firestore
-            .collection('projects')
-            .doc(projectId)
-            .collection('tasks')
-            .doc(taskId)
-            .update({'completed': false});
-      } else if (type == 'subsubtask' && taskId != '') {
-        var findTask = subtasks.firstWhere((item) => item['id'] == taskId,
-            orElse: () => throw Exception('Task not found'));
+      if (thisTaskId == 'noID') {
+        if (type == 'task') {
+          // Thêm task vào collection 'tasks' trong project
+          docRef = await firestore
+              .collection('projects')
+              .doc(projectId)
+              .collection('tasks')
+              .add(taskDataAdd);
+        } else if (type == 'subtask' && taskId.isNotEmpty) {
+          // Thêm vào collection 'subtasks' của task
+          docRef = await firestore
+              .collection('projects')
+              .doc(projectId)
+              .collection('tasks')
+              .doc(taskId)
+              .collection('subtasks')
+              .add(taskDataAdd);
 
-        // Thêm vào collection 'subsubtasks' của subtask
-        await firestore
-            .collection('projects')
-            .doc(projectId)
-            .collection('tasks')
-            .doc(findTask['taskId'])
-            .collection('subtasks')
-            .doc(taskId)
-            .collection('subsubtasks')
-            .add(taskDataAdd);
+          // Cập nhật completed của task cha thành false
+          await firestore
+              .collection('projects')
+              .doc(projectId)
+              .collection('tasks')
+              .doc(taskId)
+              .update({'completed': false});
+        } else if (type == 'subsubtask' && taskId.isNotEmpty) {
+          var findTask = subtasks.firstWhere((item) => item['id'] == taskId,
+              orElse: () => throw Exception('Task not found'));
 
-        // Cập nhật completed của subtask cha và task cha thành false
-        await firestore
-            .collection('projects')
-            .doc(projectId)
-            .collection('tasks')
-            .doc(findTask['taskId'])
-            .collection('subtasks')
-            .doc(taskId)
-            .update({'completed': false});
+          // Thêm vào collection 'subsubtasks' của subtask
+          docRef = await firestore
+              .collection('projects')
+              .doc(projectId)
+              .collection('tasks')
+              .doc(findTask['taskId'])
+              .collection('subtasks')
+              .doc(taskId)
+              .collection('subsubtasks')
+              .add(taskDataAdd);
 
-        await firestore
-            .collection('projects')
-            .doc(projectId)
-            .collection('tasks')
-            .doc(findTask['taskId'])
-            .update({'completed': false});
+          // Cập nhật completed của subtask cha và task cha thành false
+          await firestore
+              .collection('projects')
+              .doc(projectId)
+              .collection('tasks')
+              .doc(findTask['taskId'])
+              .collection('subtasks')
+              .doc(taskId)
+              .update({'completed': false});
+
+          await firestore
+              .collection('projects')
+              .doc(projectId)
+              .collection('tasks')
+              .doc(findTask['taskId'])
+              .update({'completed': false});
+        } else {
+          return null; // Trả về null nếu không thể thêm task
+        }
       } else {
-        return false;
-      }
-      User? user = firebaseAuth.currentUser;
+        if (type == 'task') {
+          // Thêm task vào collection 'tasks' trong project
+          docRef = await firestore
+              .collection('projects')
+              .doc(projectId)
+              .collection('tasks')
+              .doc(thisTaskId);
+          await docRef.set(taskDataAdd);
+        } else if (type == 'subtask' && taskId.isNotEmpty) {
+          // Thêm vào collection 'subtasks' của task
+          docRef = await firestore
+              .collection('projects')
+              .doc(projectId)
+              .collection('tasks')
+              .doc(taskId)
+              .collection('subtasks')
+              .doc(thisTaskId);
+          await docRef.set(taskDataAdd);
+          // Cập nhật completed của task cha thành false
+          await firestore
+              .collection('projects')
+              .doc(projectId)
+              .collection('tasks')
+              .doc(taskId)
+              .update({'completed': false});
+        } else if (type == 'subsubtask' && taskId.isNotEmpty) {
+          var findTask = subtasks.firstWhere((item) => item['id'] == taskId,
+              orElse: () => throw Exception('Task not found'));
 
-      if (user != null && user.email != null) {
-        logTaskActivity(projectId, taskId, 'add', {}, user.email!, type);
+          // Thêm vào collection 'subsubtasks' của subtask
+          docRef = await firestore
+              .collection('projects')
+              .doc(projectId)
+              .collection('tasks')
+              .doc(findTask['taskId'])
+              .collection('subtasks')
+              .doc(taskId)
+              .collection('subsubtasks')
+              .doc(thisTaskId);
+          await docRef.set(taskDataAdd);
+          // Cập nhật completed của subtask cha và task cha thành false
+          await firestore
+              .collection('projects')
+              .doc(projectId)
+              .collection('tasks')
+              .doc(findTask['taskId'])
+              .collection('subtasks')
+              .doc(taskId)
+              .update({'completed': false});
+
+          await firestore
+              .collection('projects')
+              .doc(projectId)
+              .collection('tasks')
+              .doc(findTask['taskId'])
+              .update({'completed': false});
+        } else {
+          return null; // Trả về null nếu không thể thêm task
+        }
       }
-      return true;
+
+      if (docRef != null) {
+        User? user = firebaseAuth.currentUser;
+        if (user != null && user.email != null) {
+          logTaskActivity(projectId, docRef.id, 'add', {}, user.email!, type);
+        }
+        return docRef.id; // Trả về ID của task vừa được thêm
+      }
     } catch (e) {
       print("Error: $e");
-      return false;
+      return null;
     }
+    return null;
   }
 
   Future<bool> updateTask(

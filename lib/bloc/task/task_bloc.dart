@@ -114,8 +114,8 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
   Future<bool> _onAddTask(AddTask event, Emitter<TaskState> emit) async {
     try {
-      await taskRepository.addTask(
-          event.type, event.task, event.taskId, event.projectId);
+      await taskRepository.addTask(event.thisTaskId, event.type, event.task,
+          event.taskId, event.projectId);
       return true;
     } catch (e) {
       emit(TaskError(e.toString()));

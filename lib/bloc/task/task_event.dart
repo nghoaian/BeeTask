@@ -32,8 +32,8 @@ class AddTask extends TaskEvent {
   final String type;
   final String taskId;
   final String projectId;
-
-  AddTask(this.type, this.task, this.taskId, this.projectId);
+  final String thisTaskId;
+  AddTask(this.thisTaskId, this.type, this.task, this.taskId, this.projectId);
 
   @override
   List<Object> get props => [task];

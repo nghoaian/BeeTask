@@ -1,9 +1,12 @@
+import 'package:bee_task/bloc/task/task_event.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:bee_task/screen/TaskData.dart';
-import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // Add this import for date formatting
 import 'package:bee_task/screen/upcoming/taskdetail_dialog.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:bee_task/bloc/task/task_bloc.dart';
+import 'package:bee_task/screen/upcoming/CommentsDialog.dart';
+import 'package:bee_task/data/model/task.dart';
 
 class ActivityLogScreen extends StatefulWidget {
   const ActivityLogScreen({super.key});
@@ -72,27 +75,46 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
     }
   }
 
-  // Group logs by date (ignoring time)
   Map<String, List<Map<String, dynamic>>> groupLogsByDate() {
     Map<String, List<Map<String, dynamic>>> groupedLogs = {};
 
     for (var log in filteredLogs) {
-      String timestamp = log['timestamp'];
-      String date = timestamp.split(",")[1].trim(); // Extract date (dd-MM-yyyy)
+      String timestamp = log['timestamp']; // "11:39, 29-01-2025"
+      List<String> parts = timestamp.split(", ");
 
-      if (!groupedLogs.containsKey(date)) {
-        groupedLogs[date] = [];
+      if (parts.length < 2) continue; // Bỏ qua nếu format sai
+
+      String timePart = parts[0]; // "11:39"
+      String datePart = parts[1]; // "29-01-2025"
+
+      if (!groupedLogs.containsKey(datePart)) {
+        groupedLogs[datePart] = [];
       }
 
-      groupedLogs[date]?.add(log);
+      groupedLogs[datePart]?.add(log);
     }
 
-    // Sort the grouped logs by date in descending order (from today to the past)
-    var sortedGroupedLogs = Map.fromEntries(
-      groupedLogs.entries.toList()
-        ..sort((a, b) => DateTime.parse(b.key.split('-').reversed.join('-'))
-            .compareTo(DateTime.parse(a.key.split('-').reversed.join('-')))),
-    );
+    // Sắp xếp ngày theo thứ tự giảm dần
+    List<String> sortedDates = groupedLogs.keys.toList()
+      ..sort((a, b) {
+        DateTime dateA = DateFormat("dd-MM-yyyy").parse(a);
+        DateTime dateB = DateFormat("dd-MM-yyyy").parse(b);
+        return dateB.compareTo(dateA); // Ngày mới hơn lên trước
+      });
+
+    // Sắp xếp log trong mỗi ngày theo giờ giảm dần
+    Map<String, List<Map<String, dynamic>>> sortedGroupedLogs = {};
+    for (var date in sortedDates) {
+      List<Map<String, dynamic>> logs = groupedLogs[date]!;
+      logs.sort((a, b) {
+        String timeA = a['timestamp'].split(", ")[0]; // "11:39"
+        String timeB = b['timestamp'].split(", ")[0]; // "12:05"
+        return DateFormat("HH:mm")
+            .parse(timeB)
+            .compareTo(DateFormat("HH:mm").parse(timeA));
+      });
+      sortedGroupedLogs[date] = logs;
+    }
 
     return sortedGroupedLogs;
   }
@@ -202,11 +224,34 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                         var user = users.firstWhere(
                             (user) => user['userEmail'] == log['userEmail']);
 
-                        // Extract values
+                        var task;
+                        if (log['type'] == 'task') {
+                          task = TaskData().tasks.firstWhere(
+                                (taskF) => taskF['id'] == log['taskId'],
+                                orElse: () => {"id": "noTask"},
+                              );
+                        } else if (log['type'] == 'subtask') {
+                          task = TaskData().subtasks.firstWhere(
+                                (taskF) => taskF['id'] == log['taskId'],
+                                orElse: () => {"id": "noTask"},
+                              );
+                        } else {
+                          task = TaskData().subsubtasks.firstWhere(
+                                (taskF) => taskF['id'] == log['taskId'],
+                                orElse: () => {"id": "noTask"},
+                              );
+                        }
+
+                        var project = TaskData().projects.firstWhere(
+                            (project) => project['id'] == task['projectId'],
+                            orElse: () =>
+                                {} // Nếu không tìm thấy, trả về một Map trống
+                            );
                         String action = log['action'] ?? "Unknown Action";
                         String projectId =
                             log['projectId'] ?? "Unknown Project";
                         String taskId = log['taskId'] ?? "Unknown Task";
+                        String taskName = task['title'] ?? "Unknown Task";
                         String userEmail = log['userEmail'] ?? "Unknown User";
                         String timestamp = log['timestamp'] ?? "No Timestamp";
                         String type = log['type'] ?? "task";
@@ -215,15 +260,20 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                         String logText = '';
                         if (action.contains('comment')) {
                           if (action == "add_comment") {
-                            logText = "$userEmail add a comment in the $type";
+                            logText =
+                                "$userEmail add a comment in the $type $taskName";
                           } else if (action == "edit_comment") {
-                            logText = "$userEmail edit a comment in the $type";
+                            logText =
+                                "$userEmail edit a comment in the $type $taskName";
                           } else if (action == "delete_comment") {
                             logText =
-                                "$userEmail delete a comment in the $type";
+                                "$userEmail delete a comment in the $type $taskName";
                           }
                         } else {
-                          logText = "$userEmail $action a $type :";
+                          if (action == 'delete') {
+                            taskName = log['changedFields']['title'];
+                          }
+                          logText = "$userEmail $action a $type $taskName";
                         }
 
                         if ((action.toLowerCase() == "update" &&
@@ -251,42 +301,85 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                                 .isUserInProjectPermissions(
                                     type, log['taskId']);
 
-                            // showModalBottomSheet(
-                            //   context: context,
-                            //   isScrollControlled: true,
-                            //   isDismissible: false,
-                            //   builder: (context) {
-                            //     return SingleChildScrollView(
-                            //       child: TaskDetailsDialog(
-                            //         taskId: taskId,
-                            //         permissions: permissions,
-                            //         type: type,
-                            //         isCompleted: isCompleted,
-                            //         openFirst: true,
-                            //         selectDay: _selectedDay ?? DateTime.now(),
-                            //         projectName: projectName,
-                            //         showCompletedTasks: showCompletedTask,
-                            //         taskBloc: BlocProvider.of<TaskBloc>(context),
-                            //         resetDialog: () => {},
-                            //         resetScreen: () => setState(() {
-                            //           context.read<TaskBloc>().add(
-                            //                 FetchTasksByDate(
-                            //                     (_selectedDay != null
-                            //                         ? DateTime(
-                            //                             _selectedDay.year,
-                            //                             _selectedDay.month,
-                            //                             _selectedDay.day,
-                            //                           ).toIso8601String().substring(0, 10)
-                            //                         : DateTime.now()
-                            //                             .toIso8601String()
-                            //                             .substring(0, 10)),
-                            //                     showCompletedTasks),
-                            //               );
-                            //         }),
-                            //       ),
-                            //     );
-                            //   },
-                            // );
+                            if (log['action'].contains('comment')) {
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                builder: (context) => CommentsDialog(
+                                  idTask:
+                                      log['taskId'], // Pass idTask to dialog
+                                  type: log['type'], // Pass type to dialog
+                                ),
+                              );
+                            } else if (log['action'] == 'delete') {
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: Text("Restore $type"),
+                                    content:
+                                        Text("This $type has been deleted."),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: Text("Cancel"),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {},
+                                        child: Text("Restore"),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            } else {
+                              try {
+                                showModalBottomSheet(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  isDismissible: false,
+                                  builder: (context) {
+                                    return SingleChildScrollView(
+                                      child: TaskDetailsDialog(
+                                        taskId: taskId,
+                                        permissions: permissions,
+                                        type: type,
+                                        isCompleted: task['completed'],
+                                        openFirst: true,
+                                        selectDay: DateTime.now(),
+                                        projectName: project['name'],
+                                        showCompletedTasks: true,
+                                        taskBloc:
+                                            BlocProvider.of<TaskBloc>(context),
+                                        resetDialog: () => {},
+                                        resetScreen: () => {},
+                                      ),
+                                    );
+                                  },
+                                );
+                              } catch (e) {
+                                showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: Text("Task Already Deleted"),
+                                      content: Text(
+                                          "This task has already been deleted."),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                          child: Text("OK"),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              }
+                            }
                           },
                           child: Card(
                             margin: EdgeInsets.symmetric(
