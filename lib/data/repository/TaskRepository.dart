@@ -1,4 +1,5 @@
 import 'package:bee_task/screen/TaskData.dart';
+import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:bee_task/data/model/task.dart';
@@ -16,6 +17,14 @@ abstract class TaskRepository {
   Future<void> updateTask(String taskId, Task updatedTaskData, String type);
   Future<void> deleteTask(String id, String type);
   Future<Map<String, dynamic>> fetchDataFromFirestore(String type, String id);
+  Future<void> logTaskActivity(
+    String projectId,
+    String taskId,
+    String action,
+    Map<String, dynamic> changedFields,
+    String userEmail,
+    String type,
+  );
 }
 
 class FirebaseTaskRepository implements TaskRepository {
@@ -102,7 +111,6 @@ class FirebaseTaskRepository implements TaskRepository {
             .doc(projectId)
             .collection('tasks')
             .add(taskDataAdd);
-        return true;
       } else if (type == 'subtask' && taskId != '') {
         // Thêm vào collection 'subtasks' của task
         await firestore
@@ -120,7 +128,6 @@ class FirebaseTaskRepository implements TaskRepository {
             .collection('tasks')
             .doc(taskId)
             .update({'completed': false});
-        return true;
       } else if (type == 'subsubtask' && taskId != '') {
         var findTask = subtasks.firstWhere((item) => item['id'] == taskId,
             orElse: () => throw Exception('Task not found'));
@@ -152,10 +159,15 @@ class FirebaseTaskRepository implements TaskRepository {
             .collection('tasks')
             .doc(findTask['taskId'])
             .update({'completed': false});
-        return true;
       } else {
         return false;
       }
+      User? user = firebaseAuth.currentUser;
+
+      if (user != null && user.email != null) {
+        logTaskActivity(projectId, taskId, 'add', {}, user.email!, type);
+      }
+      return true;
     } catch (e) {
       print("Error: $e");
       return false;
@@ -693,5 +705,35 @@ class FirebaseTaskRepository implements TaskRepository {
     subsubtaskData['projectId'] = projectId;
 
     return subsubtaskData;
+  }
+
+  Future<void> logTaskActivity(
+    String projectId,
+    String taskId,
+    String action,
+    Map<String, dynamic> changedFields,
+    String userEmail,
+    String type,
+  ) async {
+    final taskActivitiesCollection =
+        FirebaseFirestore.instance.collection('task_activities');
+
+    try {
+      // Lấy thời gian hiện tại và định dạng ngày giờ
+      final now = DateTime.now();
+      final formattedDate = DateFormat('HH:mm, dd-MM-yyyy').format(now);
+
+      await taskActivitiesCollection.add({
+        'projectId': projectId,
+        'taskId': taskId,
+        'action': action,
+        'changedFields': changedFields ?? {},
+        'userEmail': userEmail,
+        'type': type,
+        'timestamp': formattedDate,
+      });
+    } catch (e) {
+      print('Failed to log activity: $e');
+    }
   }
 }

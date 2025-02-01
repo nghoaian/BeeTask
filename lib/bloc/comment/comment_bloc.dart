@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'comment_event.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'comment_state.dart';
 import 'package:bee_task/data/repository/CommentRepository.dart';
 
@@ -13,6 +14,7 @@ class CommentBloc extends Bloc<CommentEvent, CommentState> {
     on<AddCommentEvent>(_onAddComment);
     on<EditCommentEvent>(_onUpdateComment);
     on<DeleteCommentEvent>(_onDeleteComment);
+    on<logTaskActivity>(_onLogTaskActivity);
   }
 
   // Handle FetchCommentsEvent
@@ -67,6 +69,19 @@ class CommentBloc extends Bloc<CommentEvent, CommentState> {
           event.commentId, event.id, event.type);
       var comments = await commentRepository.getComments(event.id, event.type);
       emit(CommentLoadedState(comments: comments));
+    } catch (e) {
+      emit(CommentErrorState(error: 'Error editing comment: $e'));
+    }
+  }
+
+  Future<void> _onLogTaskActivity(
+      logTaskActivity event, Emitter<CommentState> emit) async {
+    try {
+      final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
+      User? user = firebaseAuth.currentUser;
+
+      final taskActivity = await commentRepository.logTaskActivity(event.projectId,event.taskId,
+          event.action, event.changedFields, user?.email ?? '', event.type);
     } catch (e) {
       emit(CommentErrorState(error: 'Error editing comment: $e'));
     }

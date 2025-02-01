@@ -48,8 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset:
-          true, 
+      resizeToAvoidBottomInset: true,
 
       appBar: _buildAppBar(), // Gọi hàm để xây dựng AppBar
       body: Column(
@@ -61,6 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: _buildTaskList(),
           ), // Danh sách các công việc theo ngày
+          const SizedBox(height: 8.0),
         ],
       ),
       floatingActionButton:
@@ -237,11 +237,31 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildTaskHeaderRow(Task task) {
     var user = users.firstWhere((user) => user['userEmail'] == task.assignee);
+    var t;
+    if (task.type == 'task') {
+      t = TaskData().tasks.firstWhere((taskF) => taskF['id'] == task.id,
+          orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
+          );
+    } else if (task.type == 'subtask') {
+      t = TaskData().subtasks.firstWhere((taskF) => taskF['id'] == task.id,
+          orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
+          );
+    } else {
+      t = TaskData().subsubtasks.firstWhere((taskF) => taskF['id'] == task.id,
+          orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
+          );
+    }
 
     return Row(
       children: [
         GestureDetector(
           onTap: () {
+            String status = 'complete';
+            if (task.completed == true) {
+              status = 'uncomplete';
+            }
+            context.read<TaskBloc>().add(logTaskActivity(
+                t['projectId'], task.id, status, {}, task.type));
             context.read<TaskBloc>().add(UpdateTask(task.id, task, task.type));
 
             setState(() {
@@ -326,6 +346,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       taskItem['completed'] = false;
                     });
                   }
+                } else {
+                  var relevantTask = tasks.firstWhere((t) => t['id'] == task.id,
+                      orElse: () => {});
+
+                  // Nếu tìm thấy task, tìm các subtasks liên quan
+                  if (relevantTask != null || relevantTask.isNotEmpty) {
+                    relevantTask['completed'] = false;
+                  }
                 }
               }
               context.read<TaskBloc>().add(FetchTasksByDate(
@@ -377,7 +405,7 @@ class _HomeScreenState extends State<HomeScreen> {
             radius: 16,
             backgroundColor: TaskData().getColorFromString(user['userColor']),
             child: Text(
-              task.assignee[0].toUpperCase(),
+              user['userName'][0].toUpperCase(),
               style: const TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.bold,

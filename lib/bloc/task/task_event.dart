@@ -66,3 +66,14 @@ class DetailsTask extends TaskEvent {
   @override
   List<Object> get props => [type, id];
 }
+
+class logTaskActivity extends TaskEvent {
+  final projectId;
+  final String taskId;
+  final String action;
+  final Map<String, dynamic> changedFields;
+
+  final String type;
+  const logTaskActivity(
+      this.projectId, this.taskId, this.action, this.changedFields, this.type);
+}

@@ -1,9 +1,12 @@
+import 'dart:math';
+
 import 'package:bee_task/bloc/task/task_event.dart';
 import 'package:bee_task/bloc/task/task_state.dart';
 import 'package:bee_task/data/model/task.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bee_task/data/repository/TaskRepository.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:bee_task/data/repository/UserRepository.dart';
 
 class TaskBloc extends Bloc<TaskEvent, TaskState> {
@@ -20,6 +23,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     on<DeleteTask>(_onDeleteTask);
     on<LoadTasks>(_loadTasks);
     on<DetailsTask>(_onDetailTaskLoaded);
+    on<logTaskActivity>(_onLogTaskActivity);
   }
 
   /// Hàm xử lý sự kiện LoadTasks
@@ -148,6 +152,24 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       final detailTask =
           await taskRepository.fetchDataFromFirestore(event.type, event.id);
       emit(DetailTaskLoaded(detailTask)); // Phát trạng thái mới
+    } catch (e) {
+      emit(TaskError('Failed to load task details: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onLogTaskActivity(
+      logTaskActivity event, Emitter<TaskState> emit) async {
+    try {
+      final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
+      User? user = firebaseAuth.currentUser;
+
+      final taskActivity = await taskRepository.logTaskActivity(
+          event.projectId,
+          event.taskId,
+          event.action,
+          event.changedFields,
+          user?.email ?? '',
+          event.type);
     } catch (e) {
       emit(TaskError('Failed to load task details: ${e.toString()}'));
     }

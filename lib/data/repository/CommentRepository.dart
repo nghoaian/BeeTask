@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import 'package:bee_task/data/repository/TaskRepository.dart';
 
 abstract class CommentRepository {
   FirebaseAuth get firebaseAuth;
@@ -28,6 +29,14 @@ abstract class CommentRepository {
     String id,
     String type,
   );
+  Future<void> logTaskActivity(
+    String projectId,
+    String taskId,
+    String action,
+    Map<String, dynamic> changedFields,
+    String userEmail,
+    String type,
+  );
 }
 
 class FirebaseCommentRepository implements CommentRepository {
@@ -43,7 +52,6 @@ class FirebaseCommentRepository implements CommentRepository {
   List<Map<String, dynamic>> subtasks = TaskData().subtasks;
   List<Map<String, dynamic>> subsubtasks = TaskData().subsubtasks;
   List<Map<String, dynamic>> users = TaskData().users;
-  List<Map<String, dynamic>> pr = TaskData().users;
   Future<void> addComment(
       String id, String type, String author, String content) async {
     try {
@@ -86,13 +94,24 @@ class FirebaseCommentRepository implements CommentRepository {
   Future<void> editComment(
       String commentId, String id, String type, String content) async {
     try {
-      var taskData = tasks.firstWhere((task) => task['id'] == id);
-
-      var commentRef = _firestore
-          .collection('projects')
-          .doc(taskData['projectId'])
-          .collection('tasks')
-          .doc(taskData['id'])
+      String path = '';
+      if (type == 'task') {
+        var taskData = tasks.firstWhere((task) => task['id'] == id);
+        path = 'projects/${taskData['projectId']}/tasks/$id';
+      } else if (type == 'subtask') {
+        var subtaskData = subtasks.firstWhere((task) => task['id'] == id);
+        path =
+            'projects/${subtaskData['projectId']}/tasks/${subtaskData['taskId']}/subtasks/$id';
+      } else if (type == 'subsubtask') {
+        var subsubtaskData = subsubtasks.firstWhere((task) => task['id'] == id);
+        path =
+            'projects/${subsubtaskData['projectId']}/tasks/${subsubtaskData['taskId']}/subtasks/${subsubtaskData['subtaskId']}/subsubtasks/$id';
+      } else {
+        throw Exception('Invalid type or id');
+      }
+      print(path);
+      var commentsSnapshot = await FirebaseFirestore.instance
+          .doc(path)
           .collection('comments')
           .doc(commentId);
 
@@ -100,7 +119,7 @@ class FirebaseCommentRepository implements CommentRepository {
         'text': content ?? null,
       };
 
-      await commentRef.update(updatedComment);
+      await commentsSnapshot.update(updatedComment);
     } catch (e) {
       throw Exception('Error editing comment: $e');
     }
@@ -182,6 +201,36 @@ class FirebaseCommentRepository implements CommentRepository {
       return Future.value(allComments);
     } catch (e) {
       throw Exception('Error fetching comments: $e');
+    }
+  }
+
+  Future<void> logTaskActivity(
+    String projectId,
+    String taskId,
+    String action,
+    Map<String, dynamic> changedFields,
+    String userEmail,
+    String type,
+  ) async {
+    final taskActivitiesCollection =
+        FirebaseFirestore.instance.collection('task_activities');
+
+    try {
+      // Lấy thời gian hiện tại và định dạng ngày giờ
+      final now = DateTime.now();
+      final formattedDate = DateFormat('HH:mm, dd-MM-yyyy').format(now);
+
+      await taskActivitiesCollection.add({
+        'projectId': projectId,
+        'taskId': taskId,
+        'action': action,
+        'changedFields': changedFields ?? {},
+        'userEmail': userEmail,
+        'type': type,
+        'timestamp': formattedDate,
+      });
+    } catch (e) {
+      print('Failed to log activity: $e');
     }
   }
 }

@@ -11,6 +11,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bee_task/screen/upcoming/addtask_dialog.dart';
+import 'package:bee_task/screen/browse/activityLogScreen.dart';
 
 class BrowseScreen extends StatefulWidget {
   @override
@@ -89,9 +90,9 @@ class _BrowseScreenState extends State<BrowseScreen> {
                 [
                   buildInboxButton(userRepository.getUserEmail(), Icons.inbox),
                   buildDividerWithPadding(),
-                  buildButton("Filters & Labels", Icons.grid_view),
+                  buildButton("Activity log", Icons.history),
                   buildDividerWithPadding(),
-                  buildButton("Completed", Icons.check_circle),
+                  buildButton('Notifications', Icons.notifications),
                 ],
               ),
 
@@ -145,17 +146,22 @@ class _BrowseScreenState extends State<BrowseScreen> {
       {int? count, String? projectId}) {
     return TextButton(
       onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ProjectScreen(
-                projectId: projectId!,
-                projectName: title,
-                isShare: true,
-                taskRepository: taskRepository,
-                userRepository: userRepository),
-          ),
-        );
+        if (title == 'Inbox') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProjectScreen(
+                  projectId: projectId!,
+                  projectName: title,
+                  isShare: true,
+                  taskRepository: taskRepository,
+                  userRepository: userRepository),
+            ),
+          );
+        } else if (title == 'Activity log') {
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => ActivityLogScreen()));
+        }
       },
       style: TextButton.styleFrom(
         padding: EdgeInsets.zero,

@@ -49,3 +49,18 @@ class DeleteCommentEvent extends CommentEvent {
     required this.type,
   });
 }
+
+class logTaskActivity extends CommentEvent {
+  final String projectId;
+  final String taskId;
+  final String action;
+  final Map<String, dynamic> changedFields;
+
+  final String type;
+  logTaskActivity(
+      {required this.projectId,
+      required this.taskId,
+      required this.action,
+      required this.changedFields,
+      required this.type});
+}

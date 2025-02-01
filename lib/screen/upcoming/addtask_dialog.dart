@@ -501,7 +501,6 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
           child: const Text('Cancel'),
         ),
         const SizedBox(width: 16),
-
         // Nút Save
         ElevatedButton(
           onPressed: () async {
@@ -589,13 +588,16 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
               if (widget.type == 'task') {
                 context.read<TaskBloc>().add(
                     AddTask('subtask', taskData, widget.taskId, projectId));
+             
               } else if (widget.type == 'subtask') {
                 context.read<TaskBloc>().add(
                     AddTask('subsubtask', taskData, widget.taskId, projectId));
+                
               } else {
                 context
                     .read<TaskBloc>()
                     .add(AddTask('task', taskData, widget.taskId, projectId));
+               
               }
 
               // Simulate a delay of 2 seconds before closing the dialog and adding the task

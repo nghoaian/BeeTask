@@ -49,6 +49,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
   bool checkSubtask = false;
   bool checkTask = false;
   var users = TaskData().users;
+  var project = TaskData().projects;
   var task;
   @override
   void initState() {
@@ -239,6 +240,17 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   ),
                   ElevatedButton(
                     onPressed: () {
+                      context.read<TaskBloc>().add(logTaskActivity(
+                          taskData['projectId'],
+                          taskData['id'],
+                          'update',
+                          {
+                            'title': {
+                              'oldValue': taskData['title'],
+                              'newValue': temporaryTitle,
+                            },
+                          },
+                          widget.type));
                       taskData['title'] = temporaryTitle;
 
                       Task task = Task(
@@ -257,6 +269,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                       setState(() {
                         taskData['title'] = temporaryTitle;
                       });
+
                       Navigator.pop(context);
                     },
                     child: const Text('Save'),
@@ -359,6 +372,17 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                     if (projectMembers != null && projectMembers.length > 1) {
                       String newAssignee = await _changeAssignee(
                           task['assignee'], projectMembers);
+                      context.read<TaskBloc>().add(logTaskActivity(
+                          taskData['projectId'],
+                          taskData['id'],
+                          'update',
+                          {
+                            'assignee': {
+                              'oldValue': taskData['assignee'],
+                              'newValue': newAssignee,
+                            },
+                          },
+                          widget.type));
 
                       Task updateTask = Task(
                         id: taskData['id'],
@@ -383,9 +407,21 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   changeShowCompletedTasksVisibility();
                 } else if (value == 'deleteTask') {
                   await _confirmAndDeleteTask();
+                  context.read<TaskBloc>().add(logTaskActivity(
+                      taskData['projectId'],
+                      taskData['id'],
+                      'delete',
+                      taskData,
+                      widget.type));
                   Navigator.pop(context);
                 } else if (value == 'markAsComplete') {
                   taskData['completed'] = true;
+                  context.read<TaskBloc>().add(logTaskActivity(
+                      taskData['projectId'],
+                      taskData['id'],
+                      'complete',
+                      {},
+                      widget.type));
 
                   Task task = Task(
                     id: taskData['id'],
@@ -478,6 +514,17 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                 value: taskData['priority'] ?? 'Trung bình', // Default priority
                 onChanged: (String? newValue) {
                   if (newValue != null) {
+                    context.read<TaskBloc>().add(logTaskActivity(
+                        taskData['projectId'],
+                        taskData['id'],
+                        'update',
+                        {
+                          'priority': {
+                            'oldValue': taskData['priority'],
+                            'newValue': newValue,
+                          },
+                        },
+                        widget.type));
                     setState(() {
                       taskData['priority'] = newValue; // Update priority
                       Task task = Task(
@@ -580,9 +627,19 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                 // Nút Save
                 TextButton(
                   onPressed: () {
+                    context.read<TaskBloc>().add(logTaskActivity(
+                        taskData['projectId'],
+                        taskData['id'],
+                        'update',
+                        {
+                          'description': {
+                            'oldValue': taskData['description'],
+                            'newValue': temporaryDescription,
+                          },
+                        },
+                        widget.type));
                     setState(() {
-                      taskData['description'] =
-                          temporaryDescription; // Lưu mô tả tạm vào taskData
+                      taskData['description'] = temporaryDescription;
                       Task task = Task(
                         id: taskData['id'],
                         title: taskData['title'],
@@ -718,6 +775,24 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                 checkTask = false;
                 checkSubtask = false;
               });
+              String status = 'complete';
+              if (subtask['completed'] == true) {
+                status = 'uncomplete';
+              }
+              var taskF;
+              if (type == 'subtask') {
+                taskF = TaskData().subtasks.firstWhere(
+                    (taskF) => taskF['id'] == subtask['id'],
+                    orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
+                    );
+              } else {
+                taskF = TaskData().subsubtasks.firstWhere(
+                    (taskF) => taskF['id'] == subtask['id'],
+                    orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
+                    );
+              }
+              context.read<TaskBloc>().add(logTaskActivity(
+                  taskF['projectId'], subtask['id'], status, {}, type));
 
               subtask['completed'] = !subtask['completed'];
               Task task = Task(
@@ -860,6 +935,24 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                       checkTask = false;
                       checkSubtask = false;
                     });
+                    String status = 'complete';
+                    if (subsubtask['completed'] == true) {
+                      status = 'uncomplete';
+                    }
+                    var taskF;
+
+                    taskF = TaskData().subsubtasks.firstWhere(
+                        (taskF) => taskF['id'] == subsubtask['id'],
+                        orElse: () =>
+                            {} // Nếu không tìm thấy, trả về một Map trống
+                        );
+
+                    context.read<TaskBloc>().add(logTaskActivity(
+                        taskF['projectId'],
+                        subsubtask['id'],
+                        status,
+                        {},
+                        'subsubtask'));
 
                     // Cập nhật trạng thái `completed` cho subsubtask
                     subsubtask['completed'] = !subsubtask['completed'];
@@ -1139,7 +1232,6 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
       } else {
         widget.resetScreen();
       }
-
     } catch (e) {
       print("Error deleting task: $e");
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1159,10 +1251,10 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
       var user = users.firstWhere((user) => user['userEmail'] == assingee);
 
       return CircleAvatar(
-        radius: 15, 
+        radius: 15,
         backgroundColor: TaskData().getColorFromString(user['userColor']),
         child: Text(
-          assingee[0].toUpperCase(),
+          user['userName'][0].toUpperCase(),
           style: const TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.bold,
@@ -1171,8 +1263,8 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
       );
     } else {
       return const SizedBox(
-        width: 30, 
-        height: 30, 
+        width: 30,
+        height: 30,
       );
     }
   }

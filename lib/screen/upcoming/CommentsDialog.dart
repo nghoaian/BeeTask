@@ -25,6 +25,9 @@ class CommentsDialog extends StatefulWidget {
 class _CommentsDialogState extends State<CommentsDialog> {
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
   User? user;
+  var tasks = TaskData().tasks;
+  var subtasks = TaskData().subtasks;
+  var subsubtasks = TaskData().subsubtasks;
 
   @override
   void initState() {
@@ -64,6 +67,27 @@ class _CommentsDialogState extends State<CommentsDialog> {
         type: widget.type,
         content: commentText,
         author: user?.email ?? ''));
+    var taskData;
+    if (widget.type == 'task') {
+      taskData = TaskData()
+          .tasks
+          .firstWhere((task) => task['id'] == widget.idTask, orElse: () => {});
+    } else if (widget.type == 'subtask') {
+      taskData = TaskData()
+          .subtasks
+          .firstWhere((task) => task['id'] == widget.idTask, orElse: () => {});
+    } else {
+      taskData = TaskData()
+          .subsubtasks
+          .firstWhere((task) => task['id'] == widget.idTask, orElse: () => {});
+    }
+    BlocProvider.of<CommentBloc>(context).add(logTaskActivity(
+      projectId: taskData['projectId'],
+      taskId: widget.idTask,
+      action: 'add_comment',
+      changedFields: {'content': commentText},
+      type: widget.type,
+    ));
 
     await completer.future;
     subscription.cancel(); // Hủy đăng ký sau khi hoàn tất
@@ -101,6 +125,27 @@ class _CommentsDialogState extends State<CommentsDialog> {
     BlocProvider.of<CommentBloc>(context).add(DeleteCommentEvent(
       commentId: commentId,
       id: widget.idTask,
+      type: widget.type,
+    ));
+    var taskData;
+    if (widget.type == 'task') {
+      taskData = TaskData()
+          .tasks
+          .firstWhere((task) => task['id'] == widget.idTask, orElse: () => {});
+    } else if (widget.type == 'subtask') {
+      taskData = TaskData()
+          .subtasks
+          .firstWhere((task) => task['id'] == widget.idTask, orElse: () => {});
+    } else {
+      taskData = TaskData()
+          .subsubtasks
+          .firstWhere((task) => task['id'] == widget.idTask, orElse: () => {});
+    }
+    BlocProvider.of<CommentBloc>(context).add(logTaskActivity(
+      projectId: taskData['projectId'],
+      taskId: widget.idTask,
+      action: 'delete_comment',
+      changedFields: {},
       type: widget.type,
     ));
 
@@ -176,6 +221,32 @@ class _CommentsDialogState extends State<CommentsDialog> {
             ),
             TextButton(
               onPressed: () {
+                var taskData;
+                if (widget.type == 'task') {
+                  taskData = TaskData().tasks.firstWhere(
+                      (task) => task['id'] == widget.idTask,
+                      orElse: () => {});
+                } else if (widget.type == 'subtask') {
+                  taskData = TaskData().subtasks.firstWhere(
+                      (task) => task['id'] == widget.idTask,
+                      orElse: () => {});
+                } else {
+                  taskData = TaskData().subsubtasks.firstWhere(
+                      (task) => task['id'] == widget.idTask,
+                      orElse: () => {});
+                }
+                BlocProvider.of<CommentBloc>(context).add(logTaskActivity(
+                  projectId: taskData['projectId'],
+                  taskId: widget.idTask,
+                  action: 'edit_comment',
+                  changedFields: {
+                    'comment': {
+                      'oldValue': comment['text'],
+                      'newValue': editController.text.trim(),
+                    },
+                  },
+                  type: widget.type,
+                ));
                 setState(() {
                   comment['text'] = editController.text.trim();
                   _editComments(comment['id'], comment['text']);
@@ -293,7 +364,29 @@ class _CommentsDialogState extends State<CommentsDialog> {
                   if (value == 'edit') {
                     _editComment(comment);
                   } else if (value == 'delete') {
+                    var taskData;
+                    if (widget.type == 'task') {
+                      taskData = TaskData().tasks.firstWhere(
+                          (task) => task['id'] == widget.idTask,
+                          orElse: () => {});
+                    } else if (widget.type == 'subtask') {
+                      taskData = TaskData().subtasks.firstWhere(
+                          (task) => task['id'] == widget.idTask,
+                          orElse: () => {});
+                    } else {
+                      taskData = TaskData().subsubtasks.firstWhere(
+                          (task) => task['id'] == widget.idTask,
+                          orElse: () => {});
+                    }
+                    BlocProvider.of<CommentBloc>(context).add(logTaskActivity(
+                      projectId: taskData['projectId'],
+                      taskId: widget.idTask,
+                      action: 'add_comment',
+                      changedFields: comment,
+                      type: widget.type,
+                    ));
                     _deleteComments(comment['id']);
+
                     _fetchComments();
                   }
                 },
