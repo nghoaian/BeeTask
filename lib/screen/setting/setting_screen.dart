@@ -4,6 +4,8 @@ import 'package:bee_task/util/colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:bee_task/screen/TaskData.dart';
+import 'package:bee_task/screen/setting/statisticsScreen.dart';
+import 'package:bee_task/screen/browse/activityLogScreen.dart';
 
 class SettingScreen extends StatefulWidget {
   @override
@@ -33,6 +35,8 @@ class _SettingScreenState extends State<SettingScreen> {
             // First section
             _buildSection(
               children: [
+                _buildSectionTitle('PERSONALIZATION'),
+
                 _buildListTile(
                   icon: Icons.person,
                   title: 'Account',
@@ -45,50 +49,28 @@ class _SettingScreenState extends State<SettingScreen> {
                 ),
                 // buildDividerWithPadding(),
                 _buildListTile(
-                  icon: Icons.settings,
-                  title: 'General',
-                ),
-                // buildDividerWithPadding(),
-                _buildListTile(
-                  icon: Icons.calendar_today,
-                  title: 'Calendar',
-                ),
-              ],
-            ),
-            // Second section
-            _buildSectionTitle('PERSONALIZATION'),
-            _buildSection(
-              children: [
-                _buildListTile(
-                  icon: Icons.menu,
-                  title: 'Navigation',
-                ),
-                // buildDividerWithPadding(),
-                _buildListTile(
-                  icon: Icons.add_circle_outline,
-                  title: 'Quick Add',
-                ),
-              ],
-            ),
-            // Third section
-            _buildSectionTitle('PRODUCTIVITY'),
-            _buildSection(
-              children: [
-                _buildListTile(
                   icon: Icons.show_chart,
-                  title: 'Productivity',
+                  title: 'Statistics',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => StatisScreen()),
+                    );
+                  },
                 ),
                 _buildListTile(
-                  icon: Icons.alarm,
-                  title: 'Reminders',
-                ),
-                _buildListTile(
-                  icon: Icons.notifications,
-                  title: 'Notifications',
+                  icon: Icons.history,
+                  title: 'Activity log',
+                  onTap: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => ActivityLogScreen()));
+                  },
                 ),
               ],
             ),
-            // Fourth section
+
             _buildLogoutButton(),
           ],
         ),
