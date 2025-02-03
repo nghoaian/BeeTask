@@ -631,7 +631,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
             builder: (_) => AlertDialog(
               title: const Text('Edit Priority'),
               content: DropdownButton<String>(
-                value: taskData['priority'] ?? 'Medium', // Default priority
+                value: taskData['priority'] ?? 'Low', // Default priority
                 onChanged: (String? newValue) {
                   if (newValue != null) {
                     context.read<TaskBloc>().add(logTaskActivity(
