@@ -10,11 +10,11 @@ class AppColors {
   static const error = Colors.red;
   static Color getPriorityColor(String priority) {
     switch (priority) {
-      case 'Cao':
+      case 'High':
         return Colors.red;
-      case 'Trung bình':
+      case 'Medium':
         return Colors.orange;
-      case 'Thấp':
+      case 'Low':
         return Colors.grey;
       default:
         return Colors.blue;

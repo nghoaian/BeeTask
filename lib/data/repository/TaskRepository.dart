@@ -75,12 +75,26 @@ class FirebaseTaskRepository implements TaskRepository {
 
       // Sắp xếp kết quả theo completed
       allTasks.sort((a, b) {
+        // 1. Sắp xếp theo completed (false trước, true sau)
         bool completedA = a['completed'] ?? true;
         bool completedB = b['completed'] ?? true;
-        return completedA ? 1 : -1;
+        if (completedA != completedB) {
+          return completedA ? 1 : -1;
+        }
+
+        // 2. Sắp xếp theo priority (High -> Medium -> Low)
+        Map<String, int> priorityOrder = {'High': 3, 'Medium': 2, 'Low': 1};
+        int priorityA = priorityOrder[a['priority']] ?? 0;
+        int priorityB = priorityOrder[b['priority']] ?? 0;
+        if (priorityA != priorityB) {
+          return priorityB
+              .compareTo(priorityA); // Sắp xếp giảm dần (High trước)
+        }
+
+        // 3. Sắp xếp theo projectId
+        return (a['projectId'] ?? "").compareTo(b['projectId'] ?? "");
       });
 
-      // Nếu không muốn hiển thị các task đã hoàn thành, loại bỏ chúng
       if (showCompletedTasks == false) {
         allTasks.removeWhere((task) => task['completed'] == true);
       }

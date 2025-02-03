@@ -631,7 +631,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
             builder: (_) => AlertDialog(
               title: const Text('Edit Priority'),
               content: DropdownButton<String>(
-                value: taskData['priority'] ?? 'Trung bình', // Default priority
+                value: taskData['priority'] ?? 'Medium', // Default priority
                 onChanged: (String? newValue) {
                   if (newValue != null) {
                     context.read<TaskBloc>().add(logTaskActivity(
@@ -664,7 +664,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                     Navigator.pop(context); // Close the dialog
                   }
                 },
-                items: ['Cao', 'Trung bình', 'Thấp']
+                items: ['High', 'Medium', 'Low']
                     .map((priority) => DropdownMenuItem<String>(
                           value: priority,
                           child: Text(priority),
@@ -676,7 +676,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
         }
       },
       child: Text(
-        'Priority: ${taskData['priority'] ?? 'Trung bình'}', // Display priority
+        'Priority: ${taskData['priority'] ?? 'Low'}', // Display priority
         style: const TextStyle(fontWeight: FontWeight.bold),
       ),
     );

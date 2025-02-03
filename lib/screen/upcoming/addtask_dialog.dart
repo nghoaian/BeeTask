@@ -35,8 +35,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
   final TextEditingController descriptionController =
       TextEditingController(); // Controller cho mô tả
   final TextEditingController priorityController = TextEditingController(
-      text:
-          'Thấp'); // Controller cho mức độ ưu tiên có giá trị mặc định là Thấp
+      text: 'Low'); // Controller cho mức độ ưu tiên có giá trị mặc định là Thấp
   final TextEditingController dateController =
       TextEditingController(); // Controller cho ngày
 
@@ -337,7 +336,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
           value: priorityController.text.isEmpty
               ? null
               : priorityController.text, // Giá trị hiện tại trong controller
-          items: ['Thấp', 'Trung Bình', 'Cao'].map((priority) {
+          items: ['Low', 'Medium', 'Hign'].map((priority) {
             return DropdownMenuItem<String>(
               value: priority,
               child: Text(priority),
