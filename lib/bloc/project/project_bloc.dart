@@ -16,6 +16,8 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     on<AddProjectEvent>(_onAddProject);
     on<GetColorForProjectEvent>(_getColorForProject);
     on<LoadProjectMembers>(_onLoadProjectMembers);
+    on<RemoveProjectMember>(_onRemoveProjectMember);
+    on<LoadProjectPermissions>(_onLoadProjectPermissions);
   }
 
   Future<void> _onLoadProjects(
@@ -110,6 +112,35 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
       emit(ProjectMemberLoaded(filteredMemberDetails));
     } catch (e) {
       emit(ProjectError('Failed to load project members: $e'));
+    }
+  }
+
+  Future<void> _onRemoveProjectMember(
+      RemoveProjectMember event, Emitter<ProjectState> emit) async {
+    try {
+      final projectRef = firestore.collection('projects').doc(event.projectId);
+      await projectRef.update({
+        'members': FieldValue.arrayRemove([event.userEmail])
+      });
+      add(LoadProjectMembers(event.projectId)); // Tải lại danh sách members
+    } catch (e) {
+      emit(ProjectError("Failed to remove project member: $e"));
+    }
+  }
+
+  Future<void> _onLoadProjectPermissions(
+      LoadProjectPermissions event, Emitter<ProjectState> emit) async {
+    try {
+      final projectDoc = await firestore.collection('projects').doc(event.projectId).get();
+      final permissions = projectDoc.data()?['permissions'] as List<dynamic>? ?? [];
+
+      if (permissions.contains(event.userEmail)) {
+        emit(ProjectPermissionLoaded(canEdit: true));
+      } else {
+        emit(ProjectPermissionLoaded(canEdit: false));
+      }
+    } catch (e) {
+      emit(ProjectError('Failed to load project permissions: $e'));
     }
   }
 }

@@ -33,3 +33,23 @@ class LoadProjectMembers extends ProjectEvent {
   @override
   List<Object?> get props => [projectId];
 }
+
+class RemoveProjectMember extends ProjectEvent {
+  final String projectId;
+  final String userEmail;
+
+  RemoveProjectMember(this.projectId, this.userEmail);
+
+  @override
+  List<Object?> get props => [projectId, userEmail];
+}
+
+class LoadProjectPermissions extends ProjectEvent {
+  final String projectId;
+  final String userEmail;
+
+  LoadProjectPermissions(this.projectId, this.userEmail);
+
+  @override
+  List<Object?> get props => [projectId, userEmail];
+}

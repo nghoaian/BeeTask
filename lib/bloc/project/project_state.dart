@@ -44,3 +44,12 @@ class ProjectMemberLoaded extends ProjectState {
   @override
   List<Object?> get props => [members];
 }
+
+class ProjectPermissionLoaded extends ProjectState {
+  final bool canEdit;
+
+  ProjectPermissionLoaded({required this.canEdit});
+
+  @override
+  List<Object?> get props => [canEdit];
+}
