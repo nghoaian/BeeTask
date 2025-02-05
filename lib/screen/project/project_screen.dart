@@ -715,7 +715,9 @@ class _ProjectScreenState extends State<ProjectScreen> {
             showCompletedTasks: true,
             taskBloc: _taskBloc,
             resetDialog: () => {},
-            resetScreen: () => setState(() {}),
+            resetScreen: () => setState(() {
+              _taskBloc.add(LoadTasks(widget.projectId));
+            }),
             permissions: permissions,
             isCompleted: task.completed ?? false,
             openFirst: true,
@@ -741,7 +743,9 @@ class _ProjectScreenState extends State<ProjectScreen> {
             showCompletedTasks: true,
             taskBloc: _taskBloc,
             resetDialog: () => {},
-            resetScreen: () => setState(() {}),
+            resetScreen: () => setState(() {
+              _taskBloc.add(LoadTasks(widget.projectId));
+            }),
             permissions: permissions,
             isCompleted: task.completed ?? false,
             openFirst: true,
@@ -767,8 +771,10 @@ class _ProjectScreenState extends State<ProjectScreen> {
             showCompletedTasks: true,
             taskBloc: _taskBloc,
             resetDialog: () => {},
-            resetScreen: () => setState(() {}),
-            permissions: true,
+            resetScreen: () => setState(() {
+              _taskBloc.add(LoadTasks(widget.projectId));
+            }),
+            permissions: permissions,
             isCompleted: task.completed ?? false,
             openFirst: true,
             selectDay: DateTime.now(),

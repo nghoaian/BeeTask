@@ -492,6 +492,49 @@ class TaskData {
       return false; // Return false if an error occurs
     }
   }
+  Future<bool> ProjectPermissions(String projectId) async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+
+      // Check if there's a logged-in user
+      if (user == null) {
+        print('No current user');
+        return false;
+      }
+      
+
+      // Fetch the project document from Firestore
+      DocumentSnapshot projectSnapshot = await FirebaseFirestore.instance
+          .collection('projects')
+          .doc(projectId)
+          .get();
+
+      // Check if the project exists
+      if (!projectSnapshot.exists) {
+        print('Project not found');
+        return false;
+      }
+
+      // Get the permissions array from the project data
+      var projectData = projectSnapshot.data() as Map<String, dynamic>?;
+      var permissions = projectData?['permissions'];
+
+      // Check if permissions is null or not an array
+      if (permissions == null || !(permissions is List)) {
+        print('Permissions field is either missing or not an array');
+        return false;
+      }
+
+      // Debugging: Log the user email and permissions array
+
+      return permissions
+          .any((email) => email.toLowerCase() == user.email?.toLowerCase());
+    } catch (e) {
+      // Log error
+      print('Error checking user permissions: $e');
+      return false; // Return false if an error occurs
+    }
+  }
 
   Color getColorFromString(String? colorString) {
     final color = colorString?.toLowerCase() ?? 'default';

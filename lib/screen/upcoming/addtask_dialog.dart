@@ -136,7 +136,8 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     );
   }
 
-  Widget _buildProjectDropdown() {
+  Future<Widget> _buildProjectDropdown() async {
+    bool check = await TaskData().ProjectPermissions(widget.projectId);
     // Kiểm tra nếu widget.taskId không phải là rỗng
     if (widget.taskId.isNotEmpty || widget.taskId != '') {
       var task;
@@ -181,7 +182,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
           ),
         ],
       );
-    } else if (projectID != '') {
+    } else if (projectID != '' && check == true) {
       projectController.text = projectID;
       return _buildProjectDropdownWithChoices();
     }
@@ -687,7 +688,18 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
           children: [
             _buildTaskNameField(),
             const SizedBox(height: 12),
-            _buildProjectDropdown(),
+            FutureBuilder<Widget>(
+              future: _buildProjectDropdown(),
+              builder: (BuildContext context, AsyncSnapshot<Widget> snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return CircularProgressIndicator();
+                } else if (snapshot.hasError) {
+                  return Text('Error: ${snapshot.error}');
+                } else {
+                  return snapshot.data ?? SizedBox.shrink();
+                }
+              },
+            ),
             const SizedBox(height: 12),
             _buildAssigneeDropdown(),
             const SizedBox(height: 12),
