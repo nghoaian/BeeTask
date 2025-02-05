@@ -68,6 +68,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
       backgroundColor: Colors.grey[200],
       elevation: 0,
       centerTitle: true,
+      automaticallyImplyLeading: false,
     );
   }
 
