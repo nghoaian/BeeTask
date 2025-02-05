@@ -6,25 +6,33 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class AddProjectScreen extends StatefulWidget {
-  final Function(Map<String, dynamic>)
-      onProjectAdded; // Callback khi thêm project
+class EditProjectScreen extends StatefulWidget {
+  final String projectId;
+  final String projectName;
 
-  const AddProjectScreen({Key? key, required this.onProjectAdded})
+  const EditProjectScreen(
+      {Key? key, required this.projectId, required this.projectName})
       : super(key: key);
 
   @override
-  _AddProjectScreenState createState() => _AddProjectScreenState();
+  _EditProjectScreenState createState() => _EditProjectScreenState();
 }
 
-class _AddProjectScreenState extends State<AddProjectScreen> {
-  final TextEditingController projectNameController =
-      TextEditingController(); // Controller cho tên project
-  String selectedColor = 'Charcoal'; // Màu mặc định
-  bool isFavorite = false; // Trạng thái yêu thích mặc định
+class _EditProjectScreenState extends State<EditProjectScreen> {
+  late TextEditingController projectNameController;
+  late String selectedColor;
+  late bool isFavorite;
   late final FirebaseUserRepository userRepository;
 
   final List<String> colors = ['Charcoal', 'Red', 'Blue', 'Green'];
+
+  @override
+  void initState() {
+    super.initState();
+    projectNameController = TextEditingController(text: widget.projectName);
+    selectedColor = 'Charcoal'; // Màu mặc định
+    isFavorite = false; // Trạng thái yêu thích mặc định
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,32 +61,20 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Text('Cancel', style: TextStyle(color: AppColors.primary),),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: AppColors.primary),
+                ),
               ),
               const Spacer(),
               ElevatedButton(
                 onPressed: () async {
                   if (projectNameController.text.isNotEmpty) {
-                    String? userEmail = FirebaseAuth.instance.currentUser?.email;
-                    final project = {
-                      'name': projectNameController.text,
-                      'color': selectedColor,
-                      'isFavorite': isFavorite,
-                      'owner': userEmail,
-                      'members': [userEmail],
-                    };
 
-                    print('Project to be added: $project'); // Debug: In ra thông tin project
-
-                    try {
-                      widget.onProjectAdded(project); // Gửi dữ liệu project
-                      print('Project added successfully'); // Debug: Thành công gửi dữ liệu
-                      Navigator.pop(context); // Đóng màn hình
-                    } catch (e) {
-                      print('Error adding project: $e'); // Debug: In lỗi
-                    }
-                  } else {
-                    print('Project name is empty'); // Debug: Tên project trống
+                    context
+                        .read<ProjectBloc>()
+                        .add(UpdateProject(widget.projectId, projectNameController.text));
+                    Navigator.pop(context);
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -113,6 +109,21 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
         labelStyle: TextStyle(color: Colors.grey[600]),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Colors.grey, // Đặt màu viền mặc định
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Colors.grey, // Đặt màu viền khi không được chọn
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Colors.grey, // Đặt màu viền khi được chọn
+          ),
         ),
         filled: true,
         fillColor: Colors.grey[100],
@@ -137,9 +148,9 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
             });
           },
           activeColor: Colors.white,
-            activeTrackColor: AppColors.primary,
-            inactiveThumbColor: Colors.white,
-            inactiveTrackColor: Colors.grey[400],
+          activeTrackColor: AppColors.primary,
+          inactiveThumbColor: Colors.white,
+          inactiveTrackColor: Colors.grey[400],
         ),
       ],
     );

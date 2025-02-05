@@ -6,12 +6,15 @@ import 'package:flutter/material.dart';
 abstract class UserRepository {
   FirebaseAuth get firebaseAuth;
   Future<bool> checkIfUserEmailExist(String username);
-  Future<void> addUser(String id, String username, String email, String userColor);
+  Future<void> addUser(
+      String id, String username, String email, String userColor);
   Future<String?> getUserName();
   Future<String?> getUserEmail();
   Future<String?> getUserColor();
   Future<void> updateUserName(String username);
   Future<void> updateUserEmail(String useremail);
+  Future<String?> getUserNameByEmail(String email);
+  Future<String?> getUserColorByEmail(String email);
 }
 
 class FirebaseUserRepository implements UserRepository {
@@ -31,7 +34,8 @@ class FirebaseUserRepository implements UserRepository {
     return result.docs.isNotEmpty;
   }
 
-  Future<void> addUser(String userId, String username, String email, String userColor) async {
+  Future<void> addUser(
+      String userId, String username, String email, String userColor) async {
     final CollectionReference usersCollection = firestore.collection('users');
     await usersCollection.doc(userId).set({
       'userName': username,
@@ -126,6 +130,42 @@ class FirebaseUserRepository implements UserRepository {
     await userDoc.update({
       'userImage': userImage,
     });
+  }
+
+  @override
+  Future<String?> getUserNameByEmail(String email) async {
+    try {
+      final querySnapshot = await firestore
+          .collection('users')
+          .where('userEmail', isEqualTo: email)
+          .limit(1)
+          .get();
+      if (querySnapshot.docs.isNotEmpty) {
+        return querySnapshot.docs.first.get('userName') as String?;
+      }
+    } catch (e) {
+      debugPrint('Error fetching user name by email: $e');
+    }
+    return null;
+  }
+
+  @override
+  Future<String?> getUserColorByEmail(String email) async {
+    try {
+      final querySnapshot = await firestore
+          .collection('users')
+          .where('userEmail', isEqualTo: email)
+          .limit(1)
+          .get();
+      if (querySnapshot.docs.isNotEmpty) {
+        String? colorName = querySnapshot.docs.first.get('userColor') as String?;
+        debugPrint('Fetched userColor by email: $colorName'); // In giá trị userColor
+        return colorName;
+      }
+    } catch (e) {
+      debugPrint('Error fetching user color by email: $e');
+    }
+    return null;
   }
 }
 

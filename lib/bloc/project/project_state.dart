@@ -53,3 +53,22 @@ class ProjectPermissionLoaded extends ProjectState {
   @override
   List<Object?> get props => [canEdit];
 }
+
+class ProjectUpdated extends ProjectState {
+  final String projectId;
+  final String projectName;
+
+  ProjectUpdated(this.projectId, this.projectName);
+
+  @override
+  List<Object> get props => [projectId, projectName];
+}
+
+class ProjectDeleted extends ProjectState {
+  final String projectId;
+
+  ProjectDeleted(this.projectId);
+
+  @override
+  List<Object> get props => [projectId];
+}

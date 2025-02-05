@@ -16,6 +16,25 @@ class AddProjectEvent extends ProjectEvent {
   List<Object?> get props => [project];
 }
 
+class UpdateProject extends ProjectEvent {
+  final String projectId;
+  final String projectName;
+
+  UpdateProject(this.projectId, this.projectName);
+
+  @override
+  List<Object> get props => [projectId, projectName];
+}
+
+class DeleteProject extends ProjectEvent {
+  final String projectId;
+
+  DeleteProject(this.projectId);
+
+  @override
+  List<Object> get props => [projectId];
+}
+
 class GetColorForProjectEvent extends ProjectEvent {
   final String projectId;
 

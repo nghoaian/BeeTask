@@ -36,8 +36,8 @@ class _NavUIScreen extends State<NavUIScreen> {
       ),
       bottomNavigationBar: ClipRRect(
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(30.0),
-          topRight: Radius.circular(30.0),
+          topLeft: Radius.circular(24.0),
+          topRight: Radius.circular(24.0),
         ),
         child: Container(
           decoration: const BoxDecoration(

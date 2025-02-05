@@ -1,4 +1,5 @@
 import 'package:bee_task/bloc/task/task_event.dart';
+import 'package:bee_task/util/colors.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:bee_task/screen/TaskData.dart';
@@ -77,7 +78,9 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
             child: TextField(
               controller: taskNameController,
               decoration: const InputDecoration(
-                border: OutlineInputBorder(),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                ),
                 hintText: 'Enter task name',
               ),
               textInputAction: TextInputAction.done,
@@ -225,7 +228,9 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
             });
           },
           decoration: const InputDecoration(
-            border: OutlineInputBorder(),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(10)),
+            ),
             hintText: 'Select a project',
           ),
         ),
@@ -348,7 +353,9 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
             });
           },
           decoration: const InputDecoration(
-            border: OutlineInputBorder(),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(10)),
+            ),
             hintText: 'Select priority',
           ),
         ),
@@ -379,7 +386,9 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                   TextInputType.multiline, // Loại bàn phím hỗ trợ nhiều dòng
               decoration: const InputDecoration(
                 hintText: 'Enter task description',
-                border: OutlineInputBorder(), // Viền ngoài cho trường nhập
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                ), // Viền ngoài cho trường nhập
               ),
             ),
           ),
@@ -457,7 +466,9 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
           readOnly: true, // Prevent user from typing directly
           decoration: const InputDecoration(
             hintText: 'Select a date',
-            border: OutlineInputBorder(), // Border for the input field
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(10)),
+            ), // Border for the input field
             suffixIcon:
                 Icon(Icons.calendar_today), // Calendar icon on the right
           ),
@@ -492,12 +503,12 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
             Navigator.pop(context); // Đóng dialog khi người dùng nhấn Cancel
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.grey[400],
+            backgroundColor: Colors.grey[200],
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
           ),
-          child: const Text('Cancel'),
+          child: const Text('Cancel', style: TextStyle(color: AppColors.primary),),
         ),
         const SizedBox(width: 16),
         // Nút Save
@@ -627,12 +638,12 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
             }
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blue,
+            backgroundColor: AppColors.primary,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
           ),
-          child: const Text('Save'),
+          child: const Text('Save', style: TextStyle(color: Colors.white),),
         ),
       ],
     );
@@ -647,6 +658,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
       title = 'Add New Task';
     }
     return AlertDialog(
+      backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: const Text(
         'Add New Task',

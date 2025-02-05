@@ -201,9 +201,9 @@ class _ProjectMembersCardState extends State<ProjectMembersCard> {
                     child: Text('Remove'),
                   ),
                 ],
-                color: Colors.grey[50], // Đặt màu nền trắng
+                color: Colors.grey[50],
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8), // Bo góc 16px
+                  borderRadius: BorderRadius.circular(8),
                 ),
               )
             ],

@@ -3,8 +3,10 @@ import 'package:bee_task/bloc/project/project_event.dart';
 import 'package:bee_task/bloc/project/project_state.dart';
 import 'package:bee_task/data/repository/TaskRepository.dart';
 import 'package:bee_task/data/repository/UserRepository.dart';
+import 'package:bee_task/screen/browse/notification_screen.dart';
 import 'package:bee_task/screen/project/add_project_screen.dart';
 import 'package:bee_task/screen/project/project_screen.dart';
+import 'package:bee_task/screen/setting/statisticsScreen.dart';
 import 'package:bee_task/util/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -38,42 +40,34 @@ class _BrowseScreenState extends State<BrowseScreen> {
     return BlocProvider(
       create: (context) =>
           ProjectBloc(FirebaseFirestore.instance)..add(LoadProjectsEvent()),
-      child: Scaffold(
-        body: buildBody(),
-        floatingActionButton: _buildFloatingActionButton(context),
-        backgroundColor: Colors.grey[200],
+      child: BlocListener<ProjectBloc, ProjectState>(
+        listener: (context, state) {
+          if (state is ProjectError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
+          }
+        },
+        child: Scaffold(
+          appBar: buildAppBar(),
+          body: buildBody(),
+          floatingActionButton: _buildFloatingActionButton(context),
+          backgroundColor: Colors.grey[200],
+        ),
       ),
     );
   }
 
   AppBar buildAppBar() {
     return AppBar(
-      backgroundColor: Colors.white,
-      elevation: 0,
-      leading: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: CircleAvatar(
-          backgroundColor: Colors.blue,
-          child: Text(
-            'A',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
+      title: const Text(
+        'Browse',
+        style: TextStyle(
+            color: Colors.black, fontWeight: FontWeight.bold, fontSize: 24),
       ),
-      actions: [
-        IconButton(
-          icon: Icon(Icons.notifications, color: AppColors.primary),
-          onPressed: () {},
-        ),
-        IconButton(
-          icon: Icon(Icons.settings, color: AppColors.primary),
-          onPressed: () {},
-        ),
-      ],
+      backgroundColor: Colors.grey[200],
+      elevation: 0,
+      centerTitle: true,
     );
   }
 
@@ -89,9 +83,9 @@ class _BrowseScreenState extends State<BrowseScreen> {
               buildSectionGroup(
                 [
                   buildInboxButton(userRepository.getUserEmail(), Icons.inbox),
-                  buildDividerWithPadding(),
-                  buildButton("Activity log", Icons.history),
-                  buildDividerWithPadding(),
+                  // buildDividerWithPadding(),
+                  buildButton("Statistics", Icons.show_chart),
+                  // buildDividerWithPadding(),
                   buildButton('Notifications', Icons.notifications),
                 ],
               ),
@@ -105,8 +99,11 @@ class _BrowseScreenState extends State<BrowseScreen> {
                   if (state is ProjectLoading) {
                     return Center(child: CircularProgressIndicator());
                   } else if (state is ProjectLoaded) {
+                    final projects = state.projects
+                        .where((project) => project["name"] != "Inbox")
+                        .toList();
                     return buildSectionGroup(
-                      state.projects.map((project) {
+                      projects.map((project) {
                         return buildButton(
                           project["name"],
                           Icons.tag,
@@ -137,7 +134,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
         _showAddTaskDialog(context);
       },
       child: Icon(Icons.add, color: Colors.white),
-      backgroundColor: Colors.red,
+      backgroundColor: AppColors.primary,
       shape: CircleBorder(),
     );
   }
@@ -146,21 +143,30 @@ class _BrowseScreenState extends State<BrowseScreen> {
       {int? count, String? projectId}) {
     return TextButton(
       onPressed: () {
-        if (title == 'Inbox') {
+        if (title == 'Notifications') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => NotificationScreen()),
+          );
+        } else if (title == 'Statistics') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => StatisScreen()),
+          );
+        } else {
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => ProjectScreen(
-                  projectId: projectId!,
-                  projectName: title,
-                  isShare: true,
-                  taskRepository: taskRepository,
-                  userRepository: userRepository),
+                projectId: projectId!,
+                projectName: title,
+                isShare: true,
+                isEditProject: true,
+                taskRepository: taskRepository,
+                userRepository: userRepository,
+              ),
             ),
           );
-        } else if (title == 'Activity log') {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (context) => ActivityLogScreen()));
         }
       },
       style: TextButton.styleFrom(
@@ -190,40 +196,31 @@ class _BrowseScreenState extends State<BrowseScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 16.0), // Thụt vào bên phải
-          child: TextButton.icon(
-            onPressed: () {
-              // Xử lý khi bấm vào "My Projects"
-              print("My Projects clicked!");
-            },
-            icon: const Text(
-              "My Projects",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-            label: Icon(Icons.chevron_right, color: Colors.black),
-            style: TextButton.styleFrom(
-              padding: EdgeInsets.zero,
+        const Padding(
+          padding: EdgeInsets.only(left: 16.0), // Thụt vào bên phải
+          child: Text(
+            "My Projects",
+            style: TextStyle(
+              fontSize: 21,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
             ),
           ),
         ),
         Row(
           children: [
             IconButton(
-              icon: Icon(Icons.add, color: Colors.grey),
+              icon: Icon(Icons.add, color: Colors.grey[800]),
               onPressed: () {
                 showDialog(
                   context: context,
                   builder: (BuildContext context) {
-                    return Dialog(
+                    return AlertDialog(
+                      backgroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: AddProjectScreen(
+                      content: AddProjectScreen(
                         onProjectAdded: (project) {
                           // Thêm logic xử lý sau khi nhận project mới
                           print('New project added: $project');
@@ -237,10 +234,10 @@ class _BrowseScreenState extends State<BrowseScreen> {
                 );
               },
             ),
-            IconButton(
-              icon: Icon(Icons.expand_more, color: Colors.grey),
-              onPressed: () {},
-            ),
+            // IconButton(
+            //   icon: Icon(Icons.expand_more, color: Colors.grey),
+            //   onPressed: () {},
+            // ),
           ],
         ),
       ],
@@ -285,6 +282,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
                   projectId: email,
                   projectName: 'Inbox',
                   isShare: false,
+                  isEditProject: false,
                   taskRepository: taskRepository,
                   userRepository: userRepository,
                 ),
@@ -308,15 +306,20 @@ class _BrowseScreenState extends State<BrowseScreen> {
 
   void _showAddTaskDialog(BuildContext context) {
     showModalBottomSheet(
+      backgroundColor: Colors.white,
       context: context,
+      isScrollControlled: true,
       builder: (context) {
-        return SingleChildScrollView(
-          child: AddTaskDialog(
-            taskId: '', // Add appropriate taskId
-            type: '', // Add appropriate type
-            selectDay: DateTime.now(),
-            resetDialog: () => {},
-            resetScreen: () => {},
+        return FractionallySizedBox(
+          heightFactor: 0.85,
+          child: SingleChildScrollView(
+            child: AddTaskDialog(
+              taskId: '', // Add appropriate taskId
+              type: '', // Add appropriate type
+              selectDay: DateTime.now(),
+              resetDialog: () => {},
+              resetScreen: () => {},
+            ),
           ),
         );
       },

@@ -1,4 +1,5 @@
 import 'package:bee_task/bloc/task/task_event.dart';
+import 'package:bee_task/util/colors.dart';
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -67,135 +68,153 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<TaskState>(
-      stream: BlocProvider.of<TaskBloc>(context).stream,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting ||
-            snapshot.data is TaskLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (snapshot.hasError) {
-          return Center(
-              child: Text('Error fetching task details: ${snapshot.error}'));
-        }
-
-        if (snapshot.hasData) {
-          final state = snapshot.data;
-
-          if (state is DetailTaskLoaded) {
-            task = state.tasks;
-
-            if (task == {}) {
-              return const Center(child: Text('Task not found.'));
+    return ClipRRect(
+      borderRadius: BorderRadius.only(
+        topLeft: Radius.circular(26.0),
+        topRight: Radius.circular(26.0),
+      ),
+      child: Container(
+        color: Colors.white,
+        child: StreamBuilder<TaskState>(
+          stream: BlocProvider.of<TaskBloc>(context).stream,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting ||
+                snapshot.data is TaskLoading) {
+              return const Center(child: CircularProgressIndicator());
             }
 
-            return AlertDialog(
-              title: _buildTaskNameEditDialog(context, task),
-              content: SizedBox(
-                width: double.maxFinite,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildPriorityEditDialog(context, task),
-                    const SizedBox(height: 8.0),
-                    _buildProjectText(widget.projectName),
-                    const SizedBox(height: 8.0),
-                    _buildDescriptionEdit(context, task),
-                    const SizedBox(height: 16.0),
-                    buildCompletedSubtasksRow(),
-                    const SizedBox(height: 12.0),
+            if (snapshot.hasError) {
+              return Center(
+                  child:
+                      Text('Error fetching task details: ${snapshot.error}'));
+            }
 
-                    // Dynamically display subtasks and subsubtasks
-                    if ((task['subtasks'] != null &&
-                        task['subtasks'].isNotEmpty)) ...[
-                      Flexible(
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxHeight: MediaQuery.of(context).size.height * 0.4,
-                          ),
-                          child: SingleChildScrollView(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Subtasks:',
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold)),
-                                const SizedBox(height: 8.0),
-                                for (var subtask in task['subtasks'] ?? []) ...[
-                                  if (!widget.showCompletedTasks &&
-                                      !subtask['completed']) ...[
-                                    buildSubtaskRow(subtask, 'subtask'),
-                                    if (subtask['subsubtasks'] != null &&
-                                        subtask['subsubtasks'].isNotEmpty)
-                                      for (var subsubtask
-                                          in subtask['subsubtasks'] ?? [])
-                                        if (!subsubtask['completed'])
-                                          buildSubsubtasks(subsubtask,
-                                              'subsubtask', subtask['id']),
-                                  ] else if (widget.showCompletedTasks) ...[
-                                    buildSubtaskRow(subtask, 'subtask'),
-                                    if (subtask['subsubtasks'] != null &&
-                                        subtask['subsubtasks'].isNotEmpty)
-                                      for (var subsubtask
-                                          in subtask['subsubtasks'] ?? [])
-                                        buildSubsubtasks(subsubtask,
-                                            'subsubtask', subtask['id']),
+            if (snapshot.hasData) {
+              final state = snapshot.data;
+
+              if (state is DetailTaskLoaded) {
+                task = state.tasks;
+
+                if (task == {}) {
+                  return const Center(child: Text('Task not found.'));
+                }
+
+                return AlertDialog(
+                  backgroundColor: Colors.white,
+                  title: _buildTaskNameEditDialog(context, task),
+                  content: SizedBox(
+                    width: double.maxFinite,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildPriorityEditDialog(context, task),
+                        const SizedBox(height: 8.0),
+                        _buildProjectText(widget.projectName),
+                        const SizedBox(height: 8.0),
+                        _buildDescriptionEdit(context, task),
+                        const SizedBox(height: 16.0),
+                        buildCompletedSubtasksRow(),
+                        const SizedBox(height: 12.0),
+
+                        // Dynamically display subtasks and subsubtasks
+                        if ((task['subtasks'] != null &&
+                            task['subtasks'].isNotEmpty)) ...[
+                          Flexible(
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxHeight:
+                                    MediaQuery.of(context).size.height * 0.4,
+                              ),
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Subtasks:',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                    const SizedBox(height: 8.0),
+                                    for (var subtask
+                                        in task['subtasks'] ?? []) ...[
+                                      if (!widget.showCompletedTasks &&
+                                          !subtask['completed']) ...[
+                                        buildSubtaskRow(subtask, 'subtask'),
+                                        if (subtask['subsubtasks'] != null &&
+                                            subtask['subsubtasks'].isNotEmpty)
+                                          for (var subsubtask
+                                              in subtask['subsubtasks'] ?? [])
+                                            if (!subsubtask['completed'])
+                                              buildSubsubtasks(subsubtask,
+                                                  'subsubtask', subtask['id']),
+                                      ] else if (widget.showCompletedTasks) ...[
+                                        buildSubtaskRow(subtask, 'subtask'),
+                                        if (subtask['subsubtasks'] != null &&
+                                            subtask['subsubtasks'].isNotEmpty)
+                                          for (var subsubtask
+                                              in subtask['subsubtasks'] ?? [])
+                                            buildSubsubtasks(subsubtask,
+                                                'subsubtask', subtask['id']),
+                                      ],
+                                    ],
                                   ],
-                                ],
-                              ],
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                    ] else if ((task['subsubtasks'] != null &&
-                        task['subsubtasks'].isNotEmpty)) ...[
-                      Flexible(
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxHeight: MediaQuery.of(context).size.height * 0.4,
-                          ),
-                          child: SingleChildScrollView(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Subtasks:',
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold)),
-                                const SizedBox(height: 8.0),
-                                for (var subsubtask
-                                    in task['subsubtasks'] ?? []) ...[
-                                  if (widget.showCompletedTasks == false) ...[
-                                    if (subsubtask['completed'] == false)
-                                      buildSubtaskRow(subsubtask, 'subsubtask'),
-                                  ] else ...[
-                                    buildSubtaskRow(subsubtask, 'subsubtask'),
-                                  ]
-                                ]
-                              ],
+                        ] else if ((task['subsubtasks'] != null &&
+                            task['subsubtasks'].isNotEmpty)) ...[
+                          Flexible(
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxHeight:
+                                    MediaQuery.of(context).size.height * 0.4,
+                              ),
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Subtasks:',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                    const SizedBox(height: 8.0),
+                                    for (var subsubtask
+                                        in task['subsubtasks'] ?? []) ...[
+                                      if (widget.showCompletedTasks ==
+                                          false) ...[
+                                        if (subsubtask['completed'] == false)
+                                          buildSubtaskRow(
+                                              subsubtask, 'subsubtask'),
+                                      ] else ...[
+                                        buildSubtaskRow(
+                                            subsubtask, 'subsubtask'),
+                                      ]
+                                    ]
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                    ],
+                        ],
+                      ],
+                    ),
+                  ),
+                  actions: [
+                    if (widget.type != 'subsubtask' &&
+                        widget.permissions == true)
+                      buildAddSubtaskButton(),
+                    buildAddCommentAndUploadButton(),
+                    buildCloseButton(context),
                   ],
-                ),
-              ),
-              actions: [
-                if (widget.type != 'subsubtask' && widget.permissions == true)
-                  buildAddSubtaskButton(),
-                buildAddCommentAndUploadButton(),
-                buildCloseButton(context),
-              ],
-            );
-          } else if (state is TaskError) {
-            return Center(child: Text('Error: ${state.error}'));
-          }
-        }
+                );
+              } else if (state is TaskError) {
+                return Center(child: Text('Error: ${state.error}'));
+              }
+            }
 
-        return const Center(child: Text('No data available'));
-      },
+            return const Center(child: Text('No data available'));
+          },
+        ),
+      ),
     );
   }
 
@@ -579,9 +598,9 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
       padding: const EdgeInsets.only(bottom: 10.0),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(4),
-          boxShadow: [BoxShadow(color: Colors.grey.shade300, blurRadius: 5)],
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(12),
+          //boxShadow: [BoxShadow(color: Colors.grey.shade300, blurRadius: 5)],
         ),
         child: TextButton(
           onPressed: () {
@@ -606,12 +625,12 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
             padding: const EdgeInsets.symmetric(vertical: 8.0),
             minimumSize: Size(double.infinity, 40),
           ),
-          child: Row(
+          child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
+              Text(
                 'Add Subtask',
-                style: TextStyle(color: Colors.red, fontSize: 14),
+                style: TextStyle(color: AppColors.primary, fontSize: 14),
               ),
             ],
           ),
@@ -629,47 +648,66 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
           showDialog(
             context: context,
             builder: (_) => AlertDialog(
+              backgroundColor: Colors.white,
               title: const Text('Edit Priority'),
-              content: DropdownButton<String>(
-                value: taskData['priority'] ?? 'Low', // Default priority
-                onChanged: (String? newValue) {
-                  if (newValue != null) {
-                    context.read<TaskBloc>().add(logTaskActivity(
-                        taskData['projectId'],
-                        taskData['id'],
-                        'update',
-                        {
-                          'priority': {
-                            'oldValue': taskData['priority'],
-                            'newValue': newValue,
+              content: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: DropdownButton<String>(
+                  value: taskData['priority'] ?? 'Low', // Default priority
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      context.read<TaskBloc>().add(logTaskActivity(
+                          taskData['projectId'],
+                          taskData['id'],
+                          'update',
+                          {
+                            'priority': {
+                              'oldValue': taskData['priority'],
+                              'newValue': newValue,
+                            },
                           },
-                        },
-                        widget.type));
-                    setState(() {
-                      taskData['priority'] = newValue; // Update priority
-                      Task task = Task(
-                        id: taskData['id'],
-                        title: taskData['title'],
-                        description: taskData['description'],
-                        dueDate: taskData['dueDate'],
-                        priority: taskData['priority'],
-                        assignee: taskData['assignee'],
-                        type: widget.type,
-                        projectName: widget.projectName,
-                        completed: taskData['completed'],
-                        subtasks: [],
-                      );
-                      _updateTask(task.id, task, task.type);
-                    });
-                    Navigator.pop(context); // Close the dialog
-                  }
-                },
-                items: ['High', 'Medium', 'Low']
-                    .map((priority) => DropdownMenuItem<String>(
-                          value: priority,
-                          child: Text(priority),
-                        ))
-                    .toList(),
+                          widget.type));
+                      setState(() {
+                        taskData['priority'] = newValue; // Update priority
+                        Task task = Task(
+                          id: taskData['id'],
+                          title: taskData['title'],
+                          description: taskData['description'],
+                          dueDate: taskData['dueDate'],
+                          priority: taskData['priority'],
+                          assignee: taskData['assignee'],
+                          type: widget.type,
+                          projectName: widget.projectName,
+                          completed: taskData['completed'],
+                          subtasks: [],
+                        );
+                        _updateTask(task.id, task, task.type);
+                      });
+                      Navigator.pop(context); // Close the dialog
+                    }
+                  },
+                  items: ['High', 'Medium', 'Low']
+                      .map((priority) => DropdownMenuItem<String>(
+                            value: priority,
+                            // child: Container(
+                            //   decoration: BoxDecoration(
+                            //     color: Colors
+                            //         .white, // Đặt màu nền của DropdownMenuItem thành màu trắng
+                            //     borderRadius:
+                            //         BorderRadius.circular(16), // Bo góc 16
+                            //   ),
+                            //   child: Padding(
+                            //     padding: const EdgeInsets.all(8.0),
+                            //     child: Text(priority),
+                            //   ),
+                            // ),
+                            child: Text(priority),
+                          ))
+                      .toList(),
+                ),
               ),
             ),
           );
@@ -712,6 +750,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
             });
 
             return AlertDialog(
+              backgroundColor: Colors.white,
               title: const Text('Edit Description'),
               content: SingleChildScrollView(
                 child: ConstrainedBox(
@@ -742,7 +781,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   onPressed: () {
                     Navigator.pop(context); // Đóng dialog mà không lưu
                   },
-                  child: const Text('Cancel'),
+                  child: const Text('Cancel', style: TextStyle(color: AppColors.primary,)),
                 ),
                 // Nút Save
                 TextButton(
@@ -776,7 +815,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                     });
                     Navigator.pop(context); // Đóng dialog sau khi lưu
                   },
-                  child: const Text('Save'),
+                  child: const Text('Save', style: TextStyle(color: AppColors.primary),),
                 ),
               ],
             );
@@ -1181,9 +1220,9 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
       padding: const EdgeInsets.only(bottom: 10.0),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(4),
-          boxShadow: [BoxShadow(color: Colors.grey.shade300, blurRadius: 5)],
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(12),
+          //boxShadow: [BoxShadow(color: Colors.grey.shade300, blurRadius: 5)],
         ),
         child: Row(
           children: [
@@ -1207,7 +1246,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                 ),
                 child: const Text(
                   'Add Comment',
-                  style: TextStyle(fontSize: 14),
+                  style: TextStyle(fontSize: 14, color: AppColors.secondary),
                 ),
               ),
             ),
@@ -1228,7 +1267,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
         });
         Navigator.pop(context);
       },
-      child: const Text('Close'),
+      child: const Text('Close', style: TextStyle(color: Colors.red),),
     );
   }
 
@@ -1376,7 +1415,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
         child: Text(
           user['userName'][0].toUpperCase(),
           style: const TextStyle(
-            color: Colors.black,
+            color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),

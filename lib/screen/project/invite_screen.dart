@@ -32,7 +32,7 @@ class _InvitePeopleScreenState extends State<InvitePeopleScreen> {
         ),
         title: Text(
           "Invite People",
-          style: TextStyle(color: Colors.black, fontSize: 18),
+          style: TextStyle(color: Colors.black, fontSize: 22, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         actions: [
@@ -50,8 +50,8 @@ class _InvitePeopleScreenState extends State<InvitePeopleScreen> {
                 child: Text(
                   "Invite",
                   style: TextStyle(
-                    color: selectedEmail != null ? Colors.red : Colors.grey,
-                    fontSize: 16,
+                    color: selectedEmail != null ? AppColors.primary : Colors.grey,
+                    fontSize: 18,
                   ),
                 ),
               );

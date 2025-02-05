@@ -1,3 +1,4 @@
+import 'package:bee_task/util/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:bee_task/screen/TaskData.dart';
@@ -32,7 +33,14 @@ class _StatisScreenState extends State<StatisScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Task Completion Statistics")),
+      backgroundColor: Colors.grey[200],
+      appBar: AppBar(
+        title: const Text(
+          "Task Completion Statistics",
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 22),
+        ),
+        backgroundColor: Colors.grey[200],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Center(
@@ -40,7 +48,7 @@ class _StatisScreenState extends State<StatisScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                SizedBox(height: 20),
+                // SizedBox(height: 20),
                 Column(
                   children: projects.map((project) {
                     return _buildProjectChart(project);
@@ -73,8 +81,13 @@ class _StatisScreenState extends State<StatisScreen> {
       PieChartSectionData(
         value: completedTasks.toDouble(),
         title: "${completedPercentage.toStringAsFixed(1)}%",
-        color: Colors.blueAccent,
+        color: AppColors.primary,
         radius: 50,
+        titleStyle: const TextStyle(
+          color: Colors.white, // Đặt màu chữ thành màu trắng
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+        ),
       ),
       PieChartSectionData(
         value: (totalTasks - completedTasks).toDouble(),
@@ -93,7 +106,8 @@ class _StatisScreenState extends State<StatisScreen> {
               builder: (context) => ProjectScreen(
                   projectId: project['id'],
                   projectName: project['name'],
-                  isShare: true,
+                  isShare: project['name'] == 'Inbox' ? false : true,
+                  isEditProject: project['name'] == 'Inbox' ? false : true,
                   taskRepository: taskRepository,
                   userRepository: userRepository),
             ),
@@ -101,7 +115,8 @@ class _StatisScreenState extends State<StatisScreen> {
         },
         child: Card(
           margin: EdgeInsets.symmetric(vertical: 10),
-          elevation: 3,
+          elevation: 1,
+          color: Colors.white,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Padding(

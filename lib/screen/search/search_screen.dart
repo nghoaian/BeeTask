@@ -1,4 +1,5 @@
 import 'package:bee_task/bloc/task/task_event.dart';
+import 'package:bee_task/util/colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -53,21 +54,24 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.grey[200], // Nền màu xám nhạt
+        backgroundColor: Colors.white,
         title: const Text(
           'Search',
-          style: TextStyle(color: Colors.black), // Chữ màu đen
+          style: TextStyle(
+              color: Colors.black,
+              fontSize: 30,
+              fontWeight: FontWeight.bold), // Chữ màu đen
         ),
-        elevation: 0, // Xóa đổ bóng của AppBar
+        elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black), // Màu biểu tượng
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Search Bar
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: TextField(
               focusNode: _searchFocusNode,
               onChanged: (value) {
@@ -76,12 +80,12 @@ class _SearchScreenState extends State<SearchScreen> {
                 });
               },
               decoration: InputDecoration(
-                fillColor: Colors.grey[300],
+                fillColor: Colors.grey[200],
                 filled: true,
                 prefixIcon: const Icon(Icons.search),
-                hintText: 'Tasks, pvvrojects, and more',
+                hintText: 'Tasks, Pojects, Descriptions...',
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
+                  borderRadius: BorderRadius.circular(16.0),
                   borderSide: BorderSide.none,
                 ),
               ),
@@ -110,30 +114,51 @@ class _SearchScreenState extends State<SearchScreen> {
   /// Hiển thị ba lựa chọn tìm kiếm: Task, Project, Description
   Widget _buildSearchOptions() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Search by:',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 16.0),
+          // Text(
+          //   'Search by:',
+          //   style: Theme.of(context).textTheme.headlineSmall,
+          // ),
+          // const SizedBox(height: 16.0),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: ['Task', 'Project', 'Description'].map((type) {
               final isSelected = _selectedSearchType == type;
-              return ChoiceChip(
-                label: Text(type),
-                selected: isSelected,
-                selectedColor: Colors.red[300],
-                onSelected: (selected) {
-                  if (selected) {
-                    setState(() {
-                      _selectedSearchType = type;
-                    });
-                  }
-                },
+              return Theme(
+                data: Theme.of(context).copyWith(
+                  chipTheme: Theme.of(context).chipTheme.copyWith(
+                        selectedColor: AppColors.primary,
+                        secondarySelectedColor: AppColors.primary,
+                        labelStyle: TextStyle(
+                          color: isSelected ? Colors.white : Colors.black,
+                        ),
+                        secondaryLabelStyle: const TextStyle(
+                          color: Colors.white,
+                        ),
+                        checkmarkColor: Colors.white,
+                      ),
+                ),
+                child: ChoiceChip(
+                  label: Text(
+                    type,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : Colors.black,
+                    ),
+                  ),
+                  selected: isSelected,
+                  selectedColor: AppColors.primary,
+                  backgroundColor: Colors.grey[100],
+                  onSelected: (selected) {
+                    if (selected) {
+                      setState(() {
+                        _selectedSearchType = type;
+                      });
+                    }
+                  },
+                ),
               );
             }).toList(),
           ),
@@ -155,7 +180,7 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
           const SizedBox(height: 16.0),
           const Text(
-            'Start searching for tasks, projects, or descriptions!',
+            'Searching for Tasks, Projects, Descriptions',
             style: TextStyle(fontSize: 16, color: Colors.grey),
             textAlign: TextAlign.center,
           ),
@@ -233,7 +258,8 @@ class _SearchScreenState extends State<SearchScreen> {
           itemBuilder: (context, index) {
             final project = filteredProjects[index];
             return Card(
-              margin: const EdgeInsets.all(8.0),
+              color: Colors.grey[100],
+              margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
               child: ListTile(
                 title: Text(
                   project['name'],
@@ -242,7 +268,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
                 subtitle: Text(
                   'Owner: ${project['owner']}',
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[700]),
                 ),
                 trailing: Icon(Icons.arrow_forward, color: Colors.grey[700]),
                 onTap: () {
@@ -267,6 +293,7 @@ class _SearchScreenState extends State<SearchScreen> {
             projectId: project['id'],
             projectName: project['name'],
             isShare: true,
+            isEditProject: true,
             taskRepository: taskRepository,
             userRepository: userRepository),
       ),
@@ -275,14 +302,15 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget _buildItemCard(var item) {
     return Card(
-      margin: const EdgeInsets.all(8.0),
+      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+      color: Colors.grey[100],
       child: GestureDetector(
         onTap: () {
           _showTaskDetailsDialog(item['id'], item['type'], true,
               item['projectName'], item['completed']);
         },
         child: Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

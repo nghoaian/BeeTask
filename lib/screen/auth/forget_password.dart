@@ -123,11 +123,28 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 30.0),
                     child: GestureDetector(
-                      onTap: () {
+                      onTap: () async {
+                        // final email = emailController.text.trim();
+                        // context
+                        //     .read<AuthBloc>()
+                        //     .add(ForgetPasswordRequested(email: email));
                         final email = emailController.text.trim();
-                        context
-                            .read<AuthBloc>()
-                            .add(ForgetPasswordRequested(email: email));
+                        try {
+                          await FirebaseAuth.instance
+                              .sendPasswordResetEmail(email: email);
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Password reset email sent')),
+                          );
+
+                        } on FirebaseAuthException catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content: Text(e.message ??
+                                    "An unexpected error occurred.")),
+                          );
+                        }
                       },
                       child: Container(
                         height: 53,

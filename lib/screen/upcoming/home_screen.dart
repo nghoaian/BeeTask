@@ -1,4 +1,5 @@
 import 'package:bee_task/screen/TaskData.dart';
+import 'package:bee_task/util/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:flutter/cupertino.dart';
@@ -49,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-
+      backgroundColor: Colors.white,
       appBar: _buildAppBar(), // Gọi hàm để xây dựng AppBar
       body: Column(
         children: [
@@ -71,76 +72,84 @@ class _HomeScreenState extends State<HomeScreen> {
   // Widget xây dựng AppBar
   AppBar _buildAppBar() {
     return AppBar(
-      title: const Text('Upcoming', style: TextStyle(color: Colors.black)),
-      backgroundColor: Colors.grey[300],
+      title: const Text(
+        'Upcoming',
+        style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 24),
+      ),
+      backgroundColor: Colors.white,
       elevation: 0,
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.more_vert, color: Colors.black),
-          onPressed: () {},
-        ),
-      ],
+      centerTitle: true,
     );
   }
 
   // Widget xây dựng lịch với TableCalendar
   Widget _buildCalendar() {
-    return TableCalendar(
-      firstDay: DateTime.utc(2000, 1, 1),
-      lastDay: DateTime.utc(2100, 12, 31),
-      focusedDay: _focusedDay,
-      calendarFormat: _calendarFormat,
-      selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-      onDaySelected: (selectedDay, focusedDay) {
-        setState(() {
-          _selectedDay = selectedDay;
-          _focusedDay = focusedDay;
-          context.read<TaskBloc>().add(FetchTasksByDate(
-              (_selectedDay != null
-                  ? DateTime(
-                      _selectedDay.year,
-                      _selectedDay.month,
-                      _selectedDay.day,
-                    ).toIso8601String().substring(0, 10)
-                  : DateTime.now().toIso8601String().substring(0, 10)),
-              showCompletedTasks));
-        });
-      },
-      onFormatChanged: (format) {
-        setState(() {
-          _calendarFormat =
-              format; // Thay đổi định dạng của lịch (tháng hay tuần)
-        });
-      },
-      onPageChanged: (focusedDay) {
-        setState(() {
-          _focusedDay = focusedDay;
-        });
-      },
-      availableCalendarFormats: const {
-        CalendarFormat.month: 'Week',
-        CalendarFormat.week: 'Month',
-      },
-      headerStyle: const HeaderStyle(
-        formatButtonVisible: true,
-        titleCentered: true,
-        formatButtonTextStyle: TextStyle(color: Colors.black),
-        titleTextStyle:
-            TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        leftChevronIcon: Icon(Icons.chevron_left, color: Colors.black),
-        rightChevronIcon: Icon(Icons.chevron_right, color: Colors.black),
-      ),
-      calendarStyle: const CalendarStyle(
-        todayDecoration: BoxDecoration(
-          color: Colors.red,
-          shape: BoxShape.circle,
+    return Container(
+      color: Colors.white, // Đặt màu nền của toàn bộ Container là màu trắng
+      child: TableCalendar(
+        firstDay: DateTime.utc(2000, 1, 1),
+        lastDay: DateTime.utc(2100, 12, 31),
+        focusedDay: _focusedDay,
+        calendarFormat: _calendarFormat,
+        selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+        onDaySelected: (selectedDay, focusedDay) {
+          setState(() {
+            _selectedDay = selectedDay;
+            _focusedDay = focusedDay;
+            context.read<TaskBloc>().add(FetchTasksByDate(
+                (_selectedDay != null
+                    ? DateTime(
+                        _selectedDay.year,
+                        _selectedDay.month,
+                        _selectedDay.day,
+                      ).toIso8601String().substring(0, 10)
+                    : DateTime.now().toIso8601String().substring(0, 10)),
+                showCompletedTasks));
+          });
+        },
+        onFormatChanged: (format) {
+          setState(() {
+            _calendarFormat =
+                format; // Thay đổi định dạng của lịch (tháng hay tuần)
+          });
+        },
+        onPageChanged: (focusedDay) {
+          setState(() {
+            _focusedDay = focusedDay;
+          });
+        },
+        availableCalendarFormats: const {
+          CalendarFormat.month: 'Week',
+          CalendarFormat.week: 'Month',
+        },
+        headerStyle: const HeaderStyle(
+          formatButtonVisible: true,
+          titleCentered: true,
+          formatButtonTextStyle: TextStyle(color: Colors.black),
+          titleTextStyle:
+              TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          leftChevronIcon: Icon(Icons.chevron_left, color: Colors.black),
+          rightChevronIcon: Icon(Icons.chevron_right, color: Colors.black),
+          decoration: BoxDecoration(
+            color: Colors.white, // Đặt màu nền của header thành màu trắng
+          ),
         ),
-        selectedDecoration: BoxDecoration(
-          color: Colors.blue,
-          shape: BoxShape.circle,
+        calendarStyle: const CalendarStyle(
+          todayDecoration: BoxDecoration(
+            color: Colors.red,
+            shape: BoxShape.circle,
+          ),
+          selectedDecoration: BoxDecoration(
+            color: Colors.blue,
+            shape: BoxShape.circle,
+          ),
+          defaultTextStyle: TextStyle(color: Colors.black),
+          weekendTextStyle: TextStyle(color: Colors.black),
+          outsideTextStyle: TextStyle(color: Colors.black),
+          rowDecoration: BoxDecoration(
+            color: Colors.white, // Đặt màu nền của calendar thành màu trắng
+          ),
         ),
-        defaultTextStyle: TextStyle(color: Colors.black),
-        weekendTextStyle: TextStyle(color: Colors.black),
       ),
     );
   }
@@ -171,6 +180,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     showCompletedTasks));
               });
             },
+            activeColor: Colors.white,
+            activeTrackColor: AppColors.primary,
+            inactiveThumbColor: Colors.white,
+            inactiveTrackColor: Colors.grey[400],
           ),
         ],
       ),
@@ -212,14 +225,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildItemCard(Task item) {
     return Card(
-      margin: const EdgeInsets.all(8.0),
+      color: Colors.grey[100],
+      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
       child: GestureDetector(
         onTap: () {
           _showTaskDetailsDialog(item.id, item.type, showCompletedTasks,
               item.projectName, item.completed);
         },
         child: Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -407,7 +421,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Text(
               user['userName'][0].toUpperCase(),
               style: const TextStyle(
-                color: Colors.black,
+                color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -475,7 +489,7 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: TaskData().getPriorityColor(task.priority),
+                color: Colors.grey[800],
               ),
             ),
           ),
@@ -492,7 +506,7 @@ class _HomeScreenState extends State<HomeScreen> {
       overflow: TextOverflow.ellipsis,
       style: TextStyle(
         fontSize: 14,
-        color: Colors.grey[600],
+        color: Colors.grey[800],
       ),
     );
   }
@@ -549,7 +563,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _showAddTaskDialog(context);
       },
       child: Icon(Icons.add, color: Colors.white),
-      backgroundColor: Colors.red,
+      backgroundColor: AppColors.primary,
       shape: CircleBorder(),
     );
   }
@@ -598,31 +612,36 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showAddTaskDialog(BuildContext context) {
+    void _showAddTaskDialog(BuildContext context) {
     showModalBottomSheet(
+      backgroundColor: Colors.white,
       context: context,
+      isScrollControlled: true,
       builder: (context) {
-        return SingleChildScrollView(
-          child: AddTaskDialog(
-            taskId: '', // Add appropriate taskId
-            type: '', // Add appropriate type
-            selectDay: _selectedDay ?? DateTime.now(),
-            resetDialog: () => {},
-            resetScreen: () => setState(() {
-              context.read<TaskBloc>().add(
-                    FetchTasksByDate(
-                        (_selectedDay != null
-                            ? DateTime(
-                                _selectedDay.year,
-                                _selectedDay.month,
-                                _selectedDay.day,
-                              ).toIso8601String().substring(0, 10)
-                            : DateTime.now()
-                                .toIso8601String()
-                                .substring(0, 10)),
-                        showCompletedTasks),
-                  );
-            }),
+        return FractionallySizedBox(
+          heightFactor: 0.85, 
+          child: SingleChildScrollView(
+            child: AddTaskDialog(
+              taskId: '', // Add appropriate taskId
+              type: '', // Add appropriate type
+              selectDay: _selectedDay ?? DateTime.now(),
+              resetDialog: () => {},
+              resetScreen: () => setState(() {
+                context.read<TaskBloc>().add(
+                      FetchTasksByDate(
+                          (_selectedDay != null
+                              ? DateTime(
+                                  _selectedDay.year,
+                                  _selectedDay.month,
+                                  _selectedDay.day,
+                                ).toIso8601String().substring(0, 10)
+                              : DateTime.now()
+                                  .toIso8601String()
+                                  .substring(0, 10)),
+                          showCompletedTasks),
+                    );
+              }),
+            ),
           ),
         );
       },

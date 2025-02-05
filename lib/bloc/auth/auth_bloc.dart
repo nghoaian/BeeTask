@@ -162,11 +162,4 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           errorMessage: e.message ?? "An unexpected error occurred."));
     }
   }
-
-  @override
-  Future<void> close() {
-    // Hủy luồng khi Bloc bị đóng
-    _authSubscription.cancel();
-    return super.close();
-  }
 }

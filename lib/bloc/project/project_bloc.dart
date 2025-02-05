@@ -18,7 +18,16 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     on<LoadProjectMembers>(_onLoadProjectMembers);
     on<RemoveProjectMember>(_onRemoveProjectMember);
     on<LoadProjectPermissions>(_onLoadProjectPermissions);
+    on<UpdateProject>(_onUpdateProject);
+    on<DeleteProject>(_onDeleteProject);
+    // _listenToProjectChanges();
   }
+
+  // void _listenToProjectChanges() {
+  //   firestore.collection('projects').snapshots().listen((snapshot) {
+  //     add(LoadProjectsEvent());
+  //   });
+  // }
 
   Future<void> _onLoadProjects(
       LoadProjectsEvent event, Emitter<ProjectState> emit) async {
@@ -38,6 +47,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
           "name": doc["name"],
         };
       }).toList();
+      print("Projects loaded: $projects");
 
       emit(ProjectLoaded(projects));
     } catch (e) {
@@ -141,6 +151,31 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
       }
     } catch (e) {
       emit(ProjectError('Failed to load project permissions: $e'));
+    }
+  }
+
+  Future<void> _onUpdateProject(
+      UpdateProject event, Emitter<ProjectState> emit) async {
+    try {
+      await firestore
+          .collection('projects')
+          .doc(event.projectId)
+          .update({'name': event.projectName});
+      emit(ProjectUpdated(event.projectId, event.projectName));
+      add(LoadProjectsEvent());
+    } catch (e) {
+      emit(ProjectError("Failed to update project: $e"));
+    }
+  }
+
+  Future<void> _onDeleteProject(
+      DeleteProject event, Emitter<ProjectState> emit) async {
+    try {
+      await firestore.collection('projects').doc(event.projectId).delete();
+      emit(ProjectDeleted(event.projectId));
+      add(LoadProjectsEvent());
+    } catch (e) {
+      emit(ProjectError("Failed to delete project: $e"));
     }
   }
 }
