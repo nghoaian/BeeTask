@@ -74,7 +74,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return AppBar(
       title: const Text(
         'Upcoming',
-        style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 24),
+        style: TextStyle(
+            color: Colors.black, fontWeight: FontWeight.bold, fontSize: 24),
       ),
       backgroundColor: Colors.white,
       elevation: 0,
@@ -612,16 +613,17 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-    void _showAddTaskDialog(BuildContext context) {
+  void _showAddTaskDialog(BuildContext context) {
     showModalBottomSheet(
       backgroundColor: Colors.white,
       context: context,
       isScrollControlled: true,
       builder: (context) {
         return FractionallySizedBox(
-          heightFactor: 0.85, 
+          heightFactor: 0.85,
           child: SingleChildScrollView(
             child: AddTaskDialog(
+              projectId: '',
               taskId: '', // Add appropriate taskId
               type: '', // Add appropriate type
               selectDay: _selectedDay ?? DateTime.now(),

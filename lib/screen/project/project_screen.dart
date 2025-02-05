@@ -16,6 +16,7 @@ import 'package:bee_task/data/repository/TaskRepository.dart';
 import 'package:bee_task/data/repository/UserRepository.dart';
 import 'package:bee_task/screen/upcoming/taskdetail_dialog.dart';
 import 'package:intl/intl.dart';
+import 'package:bee_task/screen/upcoming/addtask_dialog.dart';
 
 class ProjectScreen extends StatefulWidget {
   final String projectId;
@@ -39,6 +40,12 @@ class ProjectScreen extends StatefulWidget {
 
 class _ProjectScreenState extends State<ProjectScreen> {
   late TaskBloc _taskBloc;
+  var tasks = TaskData().tasks;
+  var subtasks = TaskData().subtasks;
+  var subsubtasks = TaskData().subsubtasks;
+  late bool checkTask;
+  late bool checkSubtask;
+  late var task;
 
   @override
   void initState() {
@@ -164,7 +171,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
                 return ListView.builder(
                   itemCount: state.tasks.length,
                   itemBuilder: (context, index) {
-                    final task = state.tasks[index];
+                    task = state.tasks[index];
                     return _buildTaskItem(task);
                   },
                 );
@@ -175,8 +182,45 @@ class _ProjectScreenState extends State<ProjectScreen> {
               }
             },
           ),
+          floatingActionButton:
+              _buildFloatingActionButton(context, widget.projectId),
         ),
       ),
+    );
+  }
+
+  FloatingActionButton _buildFloatingActionButton(
+      BuildContext context, String projectId) {
+    return FloatingActionButton(
+      onPressed: () {
+        _showAddTaskDialog(context, projectId);
+      },
+      child: Icon(Icons.add, color: Colors.white),
+      backgroundColor: AppColors.primary,
+      shape: CircleBorder(),
+    );
+  }
+
+  void _showAddTaskDialog(BuildContext context, String projectId) {
+    showModalBottomSheet(
+      backgroundColor: Colors.white,
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return FractionallySizedBox(
+          heightFactor: 0.85,
+          child: SingleChildScrollView(
+            child: AddTaskDialog(
+              projectId: projectId,
+              taskId: '', // Add appropriate taskId
+              type: '', // Add appropriate type
+              selectDay: DateTime.now(),
+              resetDialog: () => {},
+              resetScreen: () => setState(() {}),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -208,9 +252,30 @@ class _ProjectScreenState extends State<ProjectScreen> {
               Checkbox(
                 value: task.completed,
                 onChanged: (value) {
-                  // setState(() {
-                  //   task.completed = value!;
-                  // });
+                  String status = 'complete';
+                  if (task.completed == true) {
+                    status = 'uncomplete';
+                  }
+                  setState(() {
+                    task.completed = !task.completed;
+                    if (task.completed == true) {
+                      if (task.subtasks.isNotEmpty) {
+                        for (var subtask in task.subtasks) {
+                          subtask.completed = true;
+                          if (subtask.subtasks.isNotEmpty) {
+                            for (var subsubtask in subtask.subtasks) {
+                              subsubtask.completed = true;
+                            }
+                          }
+                        }
+                      }
+                    }
+                  });
+                  context.read<TaskBloc>().add(logTaskActivity(
+                      widget.projectId, task.id, status, {}, 'task'));
+                  context
+                      .read<TaskBloc>()
+                      .add(UpdateTask(task.id, task, 'task'));
                 },
               ),
               Expanded(
@@ -241,18 +306,6 @@ class _ProjectScreenState extends State<ProjectScreen> {
                   ],
                 ),
               ),
-              // if (task.assignee.isNotEmpty)
-              //   CircleAvatar(
-              //     radius: 15, // Kích thước radius của avatar
-              //     backgroundColor: Colors.white,
-              //     child: Text(
-              //       task.assignee[0].toUpperCase(),
-              //       style: const TextStyle(
-              //         color: Colors.black,
-              //         fontWeight: FontWeight.bold,
-              //       ),
-              //     ),
-              //   ),
               FutureBuilder<String?>(
                 future: widget.userRepository.getUserNameByEmail(task.assignee),
                 builder: (context, snapshot) {
@@ -328,14 +381,14 @@ class _ProjectScreenState extends State<ProjectScreen> {
         children: task.subtasks.map<Widget>((subtask) {
           return Padding(
             padding: const EdgeInsets.only(left: 20.0),
-            child: _buildSubtaskItem(subtask),
+            child: _buildSubtaskItem(subtask, task),
           );
         }).toList(),
       ),
     );
   }
 
-  Widget _buildSubtaskItem(Task subtask) {
+  Widget _buildSubtaskItem(Task subtask, Task task) {
     return Card(
       margin: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
       color: Colors.white,
@@ -363,9 +416,27 @@ class _ProjectScreenState extends State<ProjectScreen> {
               Checkbox(
                 value: subtask.completed,
                 onChanged: (value) {
-                  // setState(() {
-                  //   subtask.completed = value!;
-                  // });
+                  String status = 'complete';
+                  if (subtask.completed == true) {
+                    status = 'uncomplete';
+                  }
+                  setState(() {
+                    subtask.completed = !subtask.completed;
+                    if (subtask.completed == true) {
+                      if (subtask.subtasks.isNotEmpty) {
+                        for (var subsubtask in subtask.subtasks) {
+                          subsubtask.completed = true;
+                        }
+                      }
+                    } else {
+                      task.completed = false;
+                    }
+                  });
+                  context.read<TaskBloc>().add(logTaskActivity(
+                      widget.projectId, subtask.id, status, {}, 'subtask'));
+                  context
+                      .read<TaskBloc>()
+                      .add(UpdateTask(subtask.id, subtask, 'subtask'));
                 },
               ),
               Expanded(
@@ -473,14 +544,14 @@ class _ProjectScreenState extends State<ProjectScreen> {
         children: subtask.subtasks.map<Widget>((subsubtask) {
           return Padding(
             padding: const EdgeInsets.only(left: 20.0),
-            child: _buildSubSubtaskItem(subsubtask),
+            child: _buildSubSubtaskItem(subsubtask, subtask, task),
           );
         }).toList(),
       ),
     );
   }
 
-  Widget _buildSubSubtaskItem(Task subsubtask) {
+  Widget _buildSubSubtaskItem(Task subsubtask, Task subtask, Task task) {
     return Card(
       margin: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
       color: Colors.white,
@@ -502,9 +573,22 @@ class _ProjectScreenState extends State<ProjectScreen> {
               Checkbox(
                 value: subsubtask.completed,
                 onChanged: (value) {
-                  // setState(() {
-                  //   subsubtask.completed = value!;
-                  // });
+                  String status = 'complete';
+                  if (subtask.completed == true) {
+                    status = 'uncomplete';
+                  }
+                  setState(() {
+                    subsubtask.completed = !subsubtask.completed;
+                    if (subsubtask.completed == false) {
+                      task.completed = false;
+                      subtask.completed = false;
+                    }
+                  });
+                  context.read<TaskBloc>().add(logTaskActivity(widget.projectId,
+                      subsubtask.id, status, {}, 'subsubtask'));
+                  context
+                      .read<TaskBloc>()
+                      .add(UpdateTask(subsubtask.id, subsubtask, 'subsubtask'));
                 },
               ),
               Expanded(
@@ -616,7 +700,9 @@ class _ProjectScreenState extends State<ProjectScreen> {
     );
   }
 
-  void _showTaskDetailsDialog(Task task) {
+  void _showTaskDetailsDialog(Task task) async {
+    bool permissions =
+        await TaskData().isUserInProjectPermissions('task', task.id);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -630,7 +716,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
             taskBloc: _taskBloc,
             resetDialog: () => {},
             resetScreen: () => setState(() {}),
-            permissions: true,
+            permissions: permissions,
             isCompleted: task.completed ?? false,
             openFirst: true,
             selectDay: DateTime.now(),
@@ -640,7 +726,9 @@ class _ProjectScreenState extends State<ProjectScreen> {
     );
   }
 
-  void _showSubTaskDetailsDialog(Task task) {
+  void _showSubTaskDetailsDialog(Task task) async {
+    bool permissions =
+        await TaskData().isUserInProjectPermissions('subtask', task.id);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -654,7 +742,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
             taskBloc: _taskBloc,
             resetDialog: () => {},
             resetScreen: () => setState(() {}),
-            permissions: true,
+            permissions: permissions,
             isCompleted: task.completed ?? false,
             openFirst: true,
             selectDay: DateTime.now(),
@@ -664,7 +752,9 @@ class _ProjectScreenState extends State<ProjectScreen> {
     );
   }
 
-  void _showSubSubTaskDetailsDialog(Task task) {
+  void _showSubSubTaskDetailsDialog(Task task) async {
+    bool permissions =
+        await TaskData().isUserInProjectPermissions('subsubtask', task.id);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

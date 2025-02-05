@@ -314,6 +314,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
           heightFactor: 0.85,
           child: SingleChildScrollView(
             child: AddTaskDialog(
+              projectId: '',
               taskId: '', // Add appropriate taskId
               type: '', // Add appropriate type
               selectDay: DateTime.now(),

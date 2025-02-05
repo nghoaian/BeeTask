@@ -28,6 +28,7 @@ class _CommentsDialogState extends State<CommentsDialog> {
   var tasks = TaskData().tasks;
   var subtasks = TaskData().subtasks;
   var subsubtasks = TaskData().subsubtasks;
+  var users = TaskData().users;
 
   @override
   void initState() {
@@ -444,14 +445,15 @@ class _CommentsDialogState extends State<CommentsDialog> {
   }
 
   Widget _buildAvatar(String author) {
+    var user = users.firstWhere((user) => user['userEmail'] == author);
     if (author != '') {
       return CircleAvatar(
-        radius: 15,
-        backgroundColor: Colors.white,
+        radius: 16,
+        backgroundColor: TaskData().getColorFromString(user['userColor']),
         child: Text(
-          author[0].toUpperCase(),
+          user['userName'][0].toUpperCase(),
           style: const TextStyle(
-            color: Colors.black,
+            color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),

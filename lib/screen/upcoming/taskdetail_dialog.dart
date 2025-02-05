@@ -609,6 +609,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
               builder: (context) {
                 return SingleChildScrollView(
                   child: AddTaskDialog(
+                    projectId: '',
                     taskId: widget.taskId, // Add appropriate taskId
                     type: widget.type, // Add appropriate type
                     selectDay: widget.selectDay ?? DateTime.now(),
@@ -692,18 +693,6 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   items: ['High', 'Medium', 'Low']
                       .map((priority) => DropdownMenuItem<String>(
                             value: priority,
-                            // child: Container(
-                            //   decoration: BoxDecoration(
-                            //     color: Colors
-                            //         .white, // Đặt màu nền của DropdownMenuItem thành màu trắng
-                            //     borderRadius:
-                            //         BorderRadius.circular(16), // Bo góc 16
-                            //   ),
-                            //   child: Padding(
-                            //     padding: const EdgeInsets.all(8.0),
-                            //     child: Text(priority),
-                            //   ),
-                            // ),
                             child: Text(priority),
                           ))
                       .toList(),
@@ -781,7 +770,10 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   onPressed: () {
                     Navigator.pop(context); // Đóng dialog mà không lưu
                   },
-                  child: const Text('Cancel', style: TextStyle(color: AppColors.primary,)),
+                  child: const Text('Cancel',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                      )),
                 ),
                 // Nút Save
                 TextButton(
@@ -815,7 +807,10 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                     });
                     Navigator.pop(context); // Đóng dialog sau khi lưu
                   },
-                  child: const Text('Save', style: TextStyle(color: AppColors.primary),),
+                  child: const Text(
+                    'Save',
+                    style: TextStyle(color: AppColors.primary),
+                  ),
                 ),
               ],
             );
@@ -1267,7 +1262,10 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
         });
         Navigator.pop(context);
       },
-      child: const Text('Close', style: TextStyle(color: Colors.red),),
+      child: const Text(
+        'Close',
+        style: TextStyle(color: Colors.red),
+      ),
     );
   }
 
