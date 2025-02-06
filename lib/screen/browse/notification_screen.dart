@@ -1,4 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class NotificationScreen extends StatefulWidget {
   @override
@@ -6,53 +8,42 @@ class NotificationScreen extends StatefulWidget {
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
-  final List<Map<String, dynamic>> notifications = [
-    {
-      "avatar": "T",
-      "username": "dangminhthongbt2003",
-      "action": "added a comment to",
-      "task": "Do homework",
-      "content": "\"Test\"",
-      "time": "16 days ago",
-      "status": "comment"
-    },
-    {
-      "avatar": "T",
-      "username": "dangminhthongbt2003",
-      "action": "completed a task in",
-      "task": "Testproject",
-      "content": "Workout",
-      "time": "28 days ago",
-      "status": "completed"
-    },
-    {
-      "avatar": "T",
-      "username": "dangminhthongbt2003",
-      "action": "uncompleted a task in",
-      "task": "Testproject",
-      "content": "Do homework",
-      "time": "31 days ago",
-      "status": "uncompleted"
-    },
-    {
-      "avatar": "T",
-      "username": "dangminhthongbt2003",
-      "action": "completed a task in",
-      "task": "Testproject",
-      "content": "Do homework",
-      "time": "31 days ago",
-      "status": "completed"
-    },
-    {
-      "avatar": "T",
-      "username": "dangminhthongbt2003",
-      "action": "joined",
-      "task": "Testproject",
-      "content": "",
-      "time": "34 days ago",
-      "status": "joined"
+  List<Map<String, dynamic>> notifications = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchTasksDueToday();
+  }
+
+  Future<void> _fetchTasksDueToday() async {
+    try {
+      DateTime now = DateTime.now();
+      DateTime startOfDay = DateTime(now.year, now.month, now.day);
+      DateTime endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
+
+      QuerySnapshot projectSnapshot = await FirebaseFirestore.instance.collection('projects').get();
+
+      for (var projectDoc in projectSnapshot.docs) {
+        QuerySnapshot taskSnapshot = await projectDoc.reference.collection('tasks')
+            .where('dueDate', isGreaterThanOrEqualTo: startOfDay)
+            .where('dueDate', isLessThanOrEqualTo: endOfDay)
+            .get();
+
+        for (var taskDoc in taskSnapshot.docs) {
+          Map<String, dynamic> taskData = taskDoc.data() as Map<String, dynamic>;
+          taskData['projectId'] = projectDoc.id;
+          taskData['taskId'] = taskDoc.id;
+          notifications.add(taskData);
+          print('Task Data: $taskData'); // In ra dữ liệu của từng task
+        }
+      }
+
+      setState(() {});
+    } catch (e) {
+      print('Error fetching tasks: $e');
     }
-  ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,56 +62,16 @@ class _NotificationScreenState extends State<NotificationScreen> {
         itemCount: notifications.length,
         itemBuilder: (context, index) {
           var notification = notifications[index];
-
           return ListTile(
             leading: CircleAvatar(
-              backgroundColor: Colors.orange,
-              child: Text(
-                notification["avatar"],
-                style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white),
-              ),
+              child: Text(notification['title'][0].toUpperCase()),
             ),
-            title: RichText(
-              text: TextSpan(
-                style: TextStyle(color: Colors.black, fontSize: 14),
-                children: [
-                  TextSpan(
-                    text: "${notification["username"]} ",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  TextSpan(text: "${notification["action"]} "),
-                  TextSpan(
-                    text: notification["task"],
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (notification["content"].isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 5.0),
-                    child: Text(notification["content"],
-                        style: TextStyle(fontSize: 12)),
-                  ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 5.0),
-                  child: Text(notification["time"],
-                      style: TextStyle(fontSize: 12, color: Colors.grey)),
-                ),
-              ],
-            ),
+            title: Text(notification['title']),
+            subtitle: Text(notification['description']),
+            trailing: Text(DateFormat('dd/MM/yyyy').format(notification['dueDate'].toDate())),
           );
         },
-        separatorBuilder: (context, index) => const Padding(
-          padding: EdgeInsets.only(left: 70),
-          child: Divider(),
-        ),
+        separatorBuilder: (context, index) => Divider(),
       ),
     );
   }
