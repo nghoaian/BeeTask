@@ -15,6 +15,7 @@ abstract class UserRepository {
   Future<void> updateUserEmail(String useremail);
   Future<String?> getUserNameByEmail(String email);
   Future<String?> getUserColorByEmail(String email);
+  Future<String> getCurrentUserPermission(String projectId);
 }
 
 class FirebaseUserRepository implements UserRepository {
@@ -159,13 +160,32 @@ class FirebaseUserRepository implements UserRepository {
           .get();
       if (querySnapshot.docs.isNotEmpty) {
         String? colorName = querySnapshot.docs.first.get('userColor') as String?;
-        debugPrint('Fetched userColor by email: $colorName'); // In giá trị userColor
         return colorName;
       }
     } catch (e) {
       debugPrint('Error fetching user color by email: $e');
     }
     return null;
+  }
+
+  @override
+  Future<String> getCurrentUserPermission(String projectId) async {
+    try {
+      User? user = firebaseAuth.currentUser;
+      if (user != null) {
+        final projectDoc = await firestore.collection('projects').doc(projectId).get();
+        final permissions = projectDoc.data()?['permissions'] as List<dynamic>? ?? [];
+
+        if (permissions.contains(user.email)) {
+          return 'Can Edit';
+        } else {
+          return 'Can View';
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching user permission: $e');
+    }
+    return 'Can View';
   }
 }
 

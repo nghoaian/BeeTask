@@ -13,6 +13,7 @@ class InviteBloc extends Bloc<InviteEvent, InviteState> {
     on<EmailInputChanged>(_onEmailInputChanged);
     on<UserSelected>(_onUserSelected);
     on<InviteUser>(_onInviteUser);
+    on<EditPermission>(_onEditPermission);
   }
 
   Future<void> _onEmailInputChanged(
@@ -23,9 +24,6 @@ class InviteBloc extends Bloc<InviteEvent, InviteState> {
     }
 
     emit(InviteLoading());
-
-    // Thêm độ trễ 1 giây trước khi xử lý
-    await Future.delayed(const Duration(seconds: 1));
 
     try {
       final querySnapshot = await firestore
@@ -52,7 +50,8 @@ class InviteBloc extends Bloc<InviteEvent, InviteState> {
     emit(InviteUserSelected(email: event.email));
   }
 
-  Future<void> _onInviteUser(InviteUser event, Emitter<InviteState> emit) async {
+  Future<void> _onInviteUser(
+      InviteUser event, Emitter<InviteState> emit) async {
     if (selectedUserEmail == null) {
       emit(InviteFailure("No user selected"));
       return;
@@ -61,11 +60,55 @@ class InviteBloc extends Bloc<InviteEvent, InviteState> {
     try {
       final projectRef = firestore.collection('projects').doc(event.projectId);
       await projectRef.update({
-        'members': FieldValue.arrayUnion([selectedUserEmail])
+        'members': FieldValue.arrayUnion([selectedUserEmail]),
+        'permissions': FieldValue.arrayUnion([selectedUserEmail])
       });
       emit(InviteSuccess());
     } catch (e) {
       emit(InviteFailure("Failed to invite user: $e"));
+    }
+  }
+
+  Future<String> getPermission(String projectId, String userEmail) async {
+    try {
+      final projectDoc =
+          await firestore.collection('projects').doc(projectId).get();
+      final permissions =
+          projectDoc.data()?['permissions'] as List<dynamic>? ?? [];
+
+      if (permissions.contains(userEmail)) {
+        return 'Can Edit';
+      } else {
+        return 'Can View';
+      }
+    } catch (e) {
+      return 'Can View';
+    }
+  }
+
+  Future<void> _onEditPermission(
+      EditPermission event, Emitter<InviteState> emit) async {
+    try {
+      final projectRef = firestore.collection('projects').doc(event.projectId);
+      final projectDoc = await projectRef.get();
+      final permissions =
+          List<String>.from(projectDoc.data()?['permissions'] ?? []);
+
+      if (event.canEdit) {
+        if (!permissions.contains(event.userEmail)) {
+          permissions.add(event.userEmail);
+          debugPrint('Added permission for ${event.userEmail}');
+        }
+      } else {
+        debugPrint('Removed permission for ${event.userEmail}');
+        permissions.remove(event.userEmail);
+      }
+
+      await projectRef.update({'permissions': permissions});
+
+      emit(InviteSuccess());
+    } catch (e) {
+      emit(InviteFailure("Failed to update permissions: $e"));
     }
   }
 }

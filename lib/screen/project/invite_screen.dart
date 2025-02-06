@@ -72,7 +72,7 @@ class _InvitePeopleScreenState extends State<InvitePeopleScreen> {
                     child: TextField(
                       onChanged: (value) {
                         setState(() {
-                          inputText = value; // Cập nhật giá trị nhập.
+                          inputText = value;
                         });
                         context.read<InviteBloc>().add(EmailInputChanged(value));
                       },

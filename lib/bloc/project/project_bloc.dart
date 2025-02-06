@@ -109,6 +109,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
           return {
             'userName': user['userName'],
             'userEmail': user['userEmail'],
+            'userColor': user['userColor'],
           };
         }
         return null;

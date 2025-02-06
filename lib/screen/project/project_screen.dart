@@ -99,7 +99,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (context) =>
-                            ShareScreen(projectId: widget.projectId),
+                            ShareScreen(projectId: widget.projectId, projectName: widget.projectName),
                       ),
                     );
                   },

@@ -105,10 +105,24 @@ class _BrowseScreenState extends State<BrowseScreen> {
                         .toList();
                     return buildSectionGroup(
                       projects.map((project) {
-                        return buildButton(
-                          project["name"],
-                          Icons.tag,
-                          projectId: project["id"],
+                        return FutureBuilder<String>(
+                          future: userRepository.getCurrentUserPermission(project["id"]),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return Center(child: CircularProgressIndicator());
+                            } else if (snapshot.hasError) {
+                              return Center(child: Text('Error: ${snapshot.error}'));
+                            } else {
+                              final permission = snapshot.data ?? 'Can View';
+                              final isEditProject = permission == 'Can Edit';
+                              return buildButton(
+                                project["name"],
+                                Icons.tag,
+                                projectId: project["id"],
+                                isEditProject: isEditProject,
+                              );
+                            }
+                          },
                         );
                       }).toList(),
                     );
@@ -141,7 +155,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
   }
 
   Widget buildButton(String title, IconData icon,
-      {int? count, String? projectId}) {
+      {int? count, String? projectId, bool? isEditProject}) {
     return TextButton(
       onPressed: () {
         if (title == 'Notifications') {
@@ -162,7 +176,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
                 projectId: projectId!,
                 projectName: title,
                 isShare: true,
-                isEditProject: true,
+                isEditProject: isEditProject!,
                 taskRepository: taskRepository,
                 userRepository: userRepository,
               ),
@@ -328,30 +342,4 @@ class _BrowseScreenState extends State<BrowseScreen> {
     );
   }
 
-  // // Phần "Browse Templates" với nền trắng và bo tròn
-  // Widget buildBrowseTemplates() {
-  //   return Container(
-  //     margin: const EdgeInsets.symmetric(vertical: 20),
-  //     decoration: BoxDecoration(
-  //       color: Colors.white,
-  //       borderRadius: BorderRadius.circular(10),
-  //     ),
-  //     child: TextButton(
-  //       onPressed: () {
-  //         // Xử lý sự kiện khi bấm vào Browse Templates
-  //         print("Browse Templates clicked!");
-  //       },
-  //       style: TextButton.styleFrom(
-  //         padding: EdgeInsets.zero,
-  //       ),
-  //       child: ListTile(
-  //         leading: Icon(Icons.palette, color: Colors.black),
-  //         title: Text(
-  //           "Browse Templates",
-  //           style: TextStyle(color: Colors.black),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
 }

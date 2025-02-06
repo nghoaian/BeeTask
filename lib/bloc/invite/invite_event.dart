@@ -31,3 +31,15 @@ class InviteUser extends InviteEvent {
   @override
   List<Object> get props => [projectId];
 }
+
+class EditPermission extends InviteEvent {
+  final String projectId;
+  final String userEmail;
+  final bool canEdit;
+
+  EditPermission({
+    required this.projectId,
+    required this.userEmail,
+    required this.canEdit,
+  });
+}
