@@ -1,4 +1,5 @@
 import 'package:bee_task/bloc/task/task_event.dart';
+import 'package:intl/intl.dart';
 import 'package:bee_task/util/colors.dart';
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -108,6 +109,8 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        _buildDueDatePicker(context, task),
+                        const SizedBox(height: 8.0),
                         _buildPriorityEditDialog(context, task),
                         const SizedBox(height: 8.0),
                         _buildProjectText(widget.projectName),
@@ -213,6 +216,76 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
 
             return const Center(child: Text('No data available'));
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDueDatePicker(BuildContext context, Map<String, dynamic> task) {
+    // Chuyển đổi chuỗi dueDate sang DateTime
+    DateTime dueDate = task['dueDate'] != null
+        ? DateTime.parse(task['dueDate']) // Chuyển đổi chuỗi "YYYY-MM-DD"
+        : DateTime.now(); // Nếu không có thì lấy ngày hiện tại
+
+    return GestureDetector(
+      onTap: () async {
+        DateTime? pickedDate = await showDatePicker(
+          context: context,
+          initialDate: dueDate,
+          firstDate: DateTime(2000),
+          lastDate: DateTime(2100),
+        );
+
+        if (pickedDate != null) {
+          String formattedDate =
+              "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}"; // Định dạng "YYYY-MM-DD"
+          context.read<TaskBloc>().add(logTaskActivity(
+              task['projectId'],
+              task['id'],
+              'update',
+              {
+                'dueDate': {
+                  'oldValue': task['dueDate'],
+                  'newValue': formattedDate,
+                },
+              },
+              widget.type));
+
+          setState(() {
+            task['dueDate'] = formattedDate; // Cập nhật vào UI
+          });
+          Task taskUpdate = Task(
+            id: task['id'],
+            title: task['title'],
+            description: task['description'],
+            dueDate: task['dueDate'],
+            priority: task['priority'],
+            assignee: task['assignee'],
+            type: widget.type,
+            projectName: widget.projectName,
+            completed: task['completed'],
+            subtasks: [],
+          );
+          _updateTask(taskUpdate.id, taskUpdate, taskUpdate.type);
+
+          // Cập nhật Firestore
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 12.0),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Due Date: ${DateFormat('yyyy-MM-dd').format(dueDate)}', // Hiển thị đúng định dạng
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const Icon(Icons.calendar_today, size: 20, color: Colors.grey),
+          ],
         ),
       ),
     );

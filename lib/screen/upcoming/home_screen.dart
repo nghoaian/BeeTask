@@ -251,7 +251,9 @@ class _HomeScreenState extends State<HomeScreen> {
   // Widget xây dựng hàng tiêu đề công việc
 
   Widget _buildTaskHeaderRow(Task task) {
-    var user = users.firstWhere((user) => user['userEmail'] == task.assignee);
+    var user = users.firstWhere((user) => user['userEmail'] == task.assignee,
+        orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
+        );
     var t;
     if (task.type == 'task') {
       t = TaskData().tasks.firstWhere((taskF) => taskF['id'] == task.id,
@@ -436,6 +438,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // Số lượng subtasks đã hoàn thành và tổng số subtasks
     int completedSubtasks = 0;
     int totalSubtasks = 0;
+    int commentCount = 0;
 
     if (task.type == 'task') {
       // Kiểm tra nếu 'subtasks' không null và không rỗng
@@ -444,6 +447,12 @@ class _HomeScreenState extends State<HomeScreen> {
           subtasks.where((subtask) => subtask['taskId'] == task.id).toList();
 
       totalSubtasks = relevantSubtasks.length;
+      var t = TaskData().tasks.firstWhere((taskF) => taskF['id'] == task.id,
+          orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
+          );
+      commentCount = (t['commentCount'] is int)
+          ? t['commentCount']
+          : int.tryParse(t['commentCount'].toString()) ?? 0;
 
       // Đếm số subtask có completed = true
       completedSubtasks = relevantSubtasks
@@ -456,6 +465,17 @@ class _HomeScreenState extends State<HomeScreen> {
       var relevantSubsubtasks = subsubtasks
           .where((subsubtask) => subsubtask['subtaskId'] == task.id)
           .toList();
+      var t = TaskData().subtasks.firstWhere((taskF) => taskF['id'] == task.id,
+          orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
+          );
+      commentCount = (t['commentCount'] is int)
+          ? t['commentCount']
+          : int.tryParse(t['commentCount'].toString()) ?? 0;
+
+      // Đếm số subtask có completed = true
+      completedSubtasks = relevantSubsubtasks
+          .where((subtask) => subtask['completed'] == true)
+          .length;
 
       totalSubtasks = relevantSubsubtasks.length;
       completedSubtasks = relevantSubsubtasks
@@ -464,29 +484,59 @@ class _HomeScreenState extends State<HomeScreen> {
     } else {
       totalSubtasks = 0;
       completedSubtasks = 0;
+      var t = TaskData().subsubtasks.firstWhere(
+          (taskF) => taskF['id'] == task.id,
+          orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
+          );
+      commentCount = (t['commentCount'] is int)
+          ? t['commentCount']
+          : int.tryParse(t['commentCount'].toString()) ?? 0;
     }
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Hiển thị số lượng subtasks nếu có subtasks
-        if (totalSubtasks > 0)
-          Text(
-            '$completedSubtasks / $totalSubtasks',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[600],
-            ),
-          ),
-        if (totalSubtasks == 0)
-          const SizedBox.shrink(), // Nếu không có subtasks, không hiển thị gì
+        Row(
+          children: [
+            // Hiển thị số lượng subtasks nếu có subtasks
+            if (totalSubtasks > 0)
+              Text(
+                '$completedSubtasks / $totalSubtasks',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[600],
+                ),
+              ),
+            if (commentCount > 0) ...[
+              const SizedBox(
+                  width: 16), // Thêm khoảng cách giữa subtasks và comment
+              Row(
+                children: [
+                  Icon(Icons.comment,
+                      size: 16, color: Colors.grey[600]), // Icon comment
+                  const SizedBox(
+                      width: 4), // Khoảng cách giữa icon và số lượng comment
+                  Text(
+                    '$commentCount',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
 
+        // Hiển thị projectName luôn căn phải
         Expanded(
           child: Align(
             alignment: Alignment.centerRight,
             child: Text(
-              task.projectName, // Luôn hiển thị projectName
+              task.projectName,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,

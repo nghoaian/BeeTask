@@ -186,7 +186,16 @@ class TaskData {
     taskData['projectId'] = projectId;
     taskData['type'] = 'task';
     taskData['projectName'] = projectName;
-
+    firestore
+        .collection('projects')
+        .doc(projectId)
+        .collection('tasks')
+        .doc(taskId)
+        .collection('comments')
+        .snapshots()
+        .listen((commentSnapshot) {
+      taskData['commentCount'] = commentSnapshot.size;
+    });
     if (taskChange.type == DocumentChangeType.added) {
       // Kiểm tra xem task đã tồn tại hay chưa
       if (!tasks.any((task) => task['id'] == taskId)) {
@@ -233,6 +242,18 @@ class TaskData {
     subtaskData['projectId'] = projectId;
     subtaskData['type'] = 'subtask';
     subtaskData['projectName'] = projectName;
+    firestore
+        .collection('projects')
+        .doc(projectId)
+        .collection('tasks')
+        .doc(taskId)
+        .collection('subtasks')
+        .doc(subtaskId)
+        .collection('comments')
+        .snapshots()
+        .listen((commentSnapshot) {
+      subtaskData['commentCount'] = commentSnapshot.size ?? 0;
+    });
 
     if (subtaskChange.type == DocumentChangeType.added) {
       // Kiểm tra xem subtask đã tồn tại hay chưa
@@ -282,6 +303,20 @@ class TaskData {
     subsubtaskData['projectName'] = projectName;
     subsubtaskData['projectId'] = projectId;
     subsubtaskData['taskId'] = taskId;
+    firestore
+        .collection('projects')
+        .doc(projectId)
+        .collection('tasks')
+        .doc(taskId)
+        .collection('subtasks')
+        .doc(subtaskId)
+        .collection('subsubtasks')
+        .doc(subsubtaskId)
+        .collection('comments')
+        .snapshots()
+        .listen((commentSnapshot) {
+      subsubtaskData['commentCount'] = commentSnapshot.size ?? 0;
+    });
 
     if (subsubtaskChange.type == DocumentChangeType.added) {
       // Kiểm tra xem subsubtask đã tồn tại hay chưa
@@ -492,6 +527,7 @@ class TaskData {
       return false; // Return false if an error occurs
     }
   }
+
   Future<bool> ProjectPermissions(String projectId) async {
     try {
       User? user = FirebaseAuth.instance.currentUser;
@@ -501,7 +537,6 @@ class TaskData {
         print('No current user');
         return false;
       }
-      
 
       // Fetch the project document from Firestore
       DocumentSnapshot projectSnapshot = await FirebaseFirestore.instance

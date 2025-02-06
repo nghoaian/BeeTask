@@ -308,7 +308,7 @@ class _SignupScreenState extends State<SignupScreen> {
         'color': 'Charcoal',
         'owner': email,
         'members': [email],
-        'permission': [email],
+        'permissions': [email],
       };
 
       await FirebaseFirestore.instance

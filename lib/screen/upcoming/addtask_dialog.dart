@@ -195,8 +195,10 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
           );
       if (userProject.isEmpty) {
         projectController.text = '';
+
         return _buildProjectDropdownWithChoices();
       }
+
       return _buildProjectDropdownWithChoices();
     }
 
@@ -207,13 +209,17 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
   Widget _buildProjectDropdownWithChoices() {
     // Filter the projects based on the user's email
 
-    final List<Map<String, dynamic>> projects = TaskData().projects;
+    var projects = TaskData().projects;
 
     // Filter the projects based on the user's email
     final filteredProjects = projects.where((project) {
       return project['permissions'] != null &&
           project['permissions'].contains(user?.email);
     }).toList();
+    print(user?.email);
+    print(filteredProjects);
+    print("----------------------------------------------------------------");
+    print(projects);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
