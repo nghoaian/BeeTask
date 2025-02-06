@@ -85,7 +85,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
             ),
             centerTitle: true,
             leading: IconButton(
-              icon: Icon(Icons.arrow_back_ios, color: Colors.black),
+              icon: Icon(Icons.arrow_back_ios, color: AppColors.primary),
               onPressed: () {
                 Navigator.pop(context);
               },
@@ -93,7 +93,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
             actions: [
               if (widget.isShare == true)
                 IconButton(
-                  icon: Icon(Icons.group, color: Colors.black),
+                  icon: Icon(Icons.group, color: AppColors.primary),
                   onPressed: () {
                     Navigator.push(
                       context,
@@ -106,7 +106,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
                 ),
               if (widget.isEditProject == true)
                 PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert, color: Colors.black),
+                  icon: const Icon(Icons.more_vert, color: AppColors.primary),
                   onSelected: (value) {
                     print('Selected value: $value');
                     if (value == 'edit') {

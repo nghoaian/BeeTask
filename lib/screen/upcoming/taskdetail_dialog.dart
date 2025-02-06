@@ -281,7 +281,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Due Date: ${DateFormat('yyyy-MM-dd').format(dueDate)}', // Hiển thị đúng định dạng
+              'Due Date: ${DateFormat('dd/MM/yyyy').format(dueDate)}', // Hiển thị đúng định dạng
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const Icon(Icons.calendar_today, size: 20, color: Colors.grey),

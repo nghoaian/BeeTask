@@ -85,7 +85,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
                 [
                   buildInboxButton(userRepository.getUserEmail(), Icons.inbox),
                   // buildDividerWithPadding(),
-                  buildButton("Statistics", Icons.show_chart),
+                  // buildButton("Statistics", Icons.show_chart),
                   // buildDividerWithPadding(),
                   buildButton('Notifications', Icons.notifications),
                 ],
