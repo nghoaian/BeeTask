@@ -11,11 +11,9 @@ class ProjectLoading extends ProjectState {}
 
 class ProjectLoaded extends ProjectState {
   final List<Map<String, dynamic>> projects;
+  final Map<String, bool> projectPermissions;
 
-  ProjectLoaded(this.projects);
-
-  @override
-  List<Object?> get props => [projects];
+  ProjectLoaded(this.projects, {this.projectPermissions = const {}});
 }
 
 class ProjectError extends ProjectState {

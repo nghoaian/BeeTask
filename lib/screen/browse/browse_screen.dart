@@ -3,6 +3,7 @@ import 'package:bee_task/bloc/project/project_event.dart';
 import 'package:bee_task/bloc/project/project_state.dart';
 import 'package:bee_task/data/repository/TaskRepository.dart';
 import 'package:bee_task/data/repository/UserRepository.dart';
+import 'package:bee_task/screen/TaskData.dart';
 import 'package:bee_task/screen/browse/notification_screen.dart';
 import 'package:bee_task/screen/project/add_project_screen.dart';
 import 'package:bee_task/screen/project/project_screen.dart';
@@ -23,6 +24,8 @@ class BrowseScreen extends StatefulWidget {
 class _BrowseScreenState extends State<BrowseScreen> {
   late FirebaseTaskRepository taskRepository;
   late FirebaseUserRepository userRepository;
+  var projects = TaskData().projects;
+  var users = TaskData().users;
 
   @override
   void initState() {
@@ -33,6 +36,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
       firestore: FirebaseFirestore.instance,
       firebaseAuth: FirebaseAuth.instance,
     );
+    BlocProvider.of<ProjectBloc>(context).add(LoadProjectsEvent());
   }
 
   @override
@@ -105,24 +109,13 @@ class _BrowseScreenState extends State<BrowseScreen> {
                         .toList();
                     return buildSectionGroup(
                       projects.map((project) {
-                        return FutureBuilder<String>(
-                          future: userRepository.getCurrentUserPermission(project["id"]),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
-                              return Center(child: CircularProgressIndicator());
-                            } else if (snapshot.hasError) {
-                              return Center(child: Text('Error: ${snapshot.error}'));
-                            } else {
-                              final permission = snapshot.data ?? 'Can View';
-                              final isEditProject = permission == 'Can Edit';
-                              return buildButton(
-                                project["name"],
-                                Icons.tag,
-                                projectId: project["id"],
-                                isEditProject: isEditProject,
-                              );
-                            }
-                          },
+                        final isEditProject =
+                            state.projectPermissions[project["id"]!] ?? false;
+                        return buildButton(
+                          project["name"],
+                          Icons.tag,
+                          projectId: project["id"],
+                          isEditProject: isEditProject,
                         );
                       }).toList(),
                     );
@@ -132,7 +125,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
                     return SizedBox.shrink();
                   }
                 },
-              ),
+              )
 
               // Dòng "Browse Templates" với nền trắng và bo tròn
               //buildBrowseTemplates(),
@@ -157,7 +150,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
   Widget buildButton(String title, IconData icon,
       {int? count, String? projectId, bool? isEditProject}) {
     return TextButton(
-      onPressed: () {
+      onPressed: () async {
         if (title == 'Notifications') {
           Navigator.push(
             context,
@@ -169,7 +162,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
             MaterialPageRoute(builder: (context) => StatisScreen()),
           );
         } else {
-          Navigator.push(
+          await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => ProjectScreen(
@@ -182,6 +175,8 @@ class _BrowseScreenState extends State<BrowseScreen> {
               ),
             ),
           );
+          // Gọi lại sự kiện LoadProjectsEvent khi quay trở lại
+          BlocProvider.of<ProjectBloc>(context).add(LoadProjectsEvent());
         }
       },
       style: TextButton.styleFrom(
@@ -326,7 +321,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
       isScrollControlled: true,
       builder: (context) {
         return FractionallySizedBox(
-          heightFactor: 0.85,
+          heightFactor: 0.9,
           child: SingleChildScrollView(
             child: AddTaskDialog(
               projectId: '',
@@ -341,5 +336,4 @@ class _BrowseScreenState extends State<BrowseScreen> {
       },
     );
   }
-
 }

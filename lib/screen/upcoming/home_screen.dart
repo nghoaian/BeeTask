@@ -20,7 +20,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  CalendarFormat _calendarFormat = CalendarFormat.month; // Mặc định là tháng
+  CalendarFormat _calendarFormat = CalendarFormat.week; // Mặc định là tháng
   DateTime _focusedDay = DateTime.now(); // Mặc định là ngày hiện tại
   DateTime _selectedDay = DateTime.now();
   bool showCompletedTasks =
@@ -80,6 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.white,
       elevation: 0,
       centerTitle: true,
+      automaticallyImplyLeading: false,
     );
   }
 
@@ -626,37 +627,40 @@ class _HomeScreenState extends State<HomeScreen> {
         await TaskData().isUserInProjectPermissions(type, taskId);
 
     showModalBottomSheet(
+      backgroundColor: Colors.white,
       context: context,
       isScrollControlled: true,
-      isDismissible: false,
       builder: (context) {
-        return SingleChildScrollView(
-          child: TaskDetailsDialog(
-            taskId: taskId,
-            permissions: permissions,
-            type: type,
-            isCompleted: isCompleted,
-            openFirst: true,
-            selectDay: _selectedDay ?? DateTime.now(),
-            projectName: projectName,
-            showCompletedTasks: showCompletedTask,
-            taskBloc: BlocProvider.of<TaskBloc>(context),
-            resetDialog: () => {},
-            resetScreen: () => setState(() {
-              context.read<TaskBloc>().add(
-                    FetchTasksByDate(
-                        (_selectedDay != null
-                            ? DateTime(
-                                _selectedDay.year,
-                                _selectedDay.month,
-                                _selectedDay.day,
-                              ).toIso8601String().substring(0, 10)
-                            : DateTime.now()
-                                .toIso8601String()
-                                .substring(0, 10)),
-                        showCompletedTasks),
-                  );
-            }),
+        return FractionallySizedBox(
+          heightFactor: 0.9,
+          child: SingleChildScrollView(
+            child: TaskDetailsDialog(
+              taskId: taskId,
+              permissions: permissions,
+              type: type,
+              isCompleted: isCompleted,
+              openFirst: true,
+              selectDay: _selectedDay ?? DateTime.now(),
+              projectName: projectName,
+              showCompletedTasks: showCompletedTask,
+              taskBloc: BlocProvider.of<TaskBloc>(context),
+              resetDialog: () => {},
+              resetScreen: () => setState(() {
+                context.read<TaskBloc>().add(
+                      FetchTasksByDate(
+                          (_selectedDay != null
+                              ? DateTime(
+                                  _selectedDay.year,
+                                  _selectedDay.month,
+                                  _selectedDay.day,
+                                ).toIso8601String().substring(0, 10)
+                              : DateTime.now()
+                                  .toIso8601String()
+                                  .substring(0, 10)),
+                          showCompletedTasks),
+                    );
+              }),
+            ),
           ),
         );
       },
@@ -670,7 +674,7 @@ class _HomeScreenState extends State<HomeScreen> {
       isScrollControlled: true,
       builder: (context) {
         return FractionallySizedBox(
-          heightFactor: 0.85,
+          heightFactor: 0.9,
           child: SingleChildScrollView(
             child: AddTaskDialog(
               projectId: '',

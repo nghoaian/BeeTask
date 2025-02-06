@@ -1,4 +1,5 @@
 import 'package:bee_task/bloc/task/task_event.dart';
+import 'package:bee_task/util/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:bee_task/screen/TaskData.dart';
@@ -125,11 +126,21 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
 
     return Scaffold(
         appBar: AppBar(
-          title: Text('Activity Log',
-              style: TextStyle(fontWeight: FontWeight.bold)),
+          backgroundColor: Colors.grey[200],
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+          title: const Text('Activity Log',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25)),
           actions: [
             IconButton(
-              icon: Icon(Icons.sort),
+              icon: const Icon(
+                Icons.sort,
+                color: AppColors.primary,
+              ),
               onPressed: () async {
                 // Pass the updated `selectedProject` to the dialog
                 String? selectedProjectResult = await showDialog<String>(
@@ -147,7 +158,10 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
               },
             ),
             IconButton(
-              icon: Icon(Icons.filter_list),
+              icon: const Icon(
+                Icons.filter_list,
+                color: AppColors.primary,
+              ),
               onPressed: () {
                 showMenu(
                   context: context,
@@ -162,6 +176,10 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                       child: Text('By collaborator'),
                     ),
                   ],
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ).then((selectedOption) {
                   if (selectedOption == 'By event task') {
                     // Show the dialog for event task filter
@@ -207,162 +225,120 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                   String date = groupedLogs.keys.elementAt(index);
                   List<Map<String, dynamic>> logsForDate = groupedLogs[date]!;
 
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Display the date header
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          date,
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16),
+                  return Container(
+                    color: Colors.grey[200],
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Display the date header
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            date,
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
                         ),
-                      ),
-                      // Display each activity log for the given date
-                      ...logsForDate.map((log) {
-                        var user = users.firstWhere(
-                            (user) => user['userEmail'] == log['userEmail']);
+                        // Display each activity log for the given date
+                        ...logsForDate.map((log) {
+                          var user = users.firstWhere(
+                              (user) => user['userEmail'] == log['userEmail']);
 
-                        var task;
-                        if (log['type'] == 'task') {
-                          task = TaskData().tasks.firstWhere(
-                                (taskF) => taskF['id'] == log['taskId'],
-                                orElse: () => {"id": "noTask"},
-                              );
-                        } else if (log['type'] == 'subtask') {
-                          task = TaskData().subtasks.firstWhere(
-                                (taskF) => taskF['id'] == log['taskId'],
-                                orElse: () => {"id": "noTask"},
-                              );
-                        } else {
-                          task = TaskData().subsubtasks.firstWhere(
-                                (taskF) => taskF['id'] == log['taskId'],
-                                orElse: () => {"id": "noTask"},
-                              );
-                        }
-
-                        var project = TaskData().projects.firstWhere(
-                            (project) => project['id'] == task['projectId'],
-                            orElse: () =>
-                                {} // Nếu không tìm thấy, trả về một Map trống
-                            );
-                        String action = log['action'] ?? "Unknown Action";
-                        String projectId =
-                            log['projectId'] ?? "Unknown Project";
-                        String taskId = log['taskId'] ?? "Unknown Task";
-                        String taskName = task['title'] ?? "Unknown Task";
-                        String userEmail = log['userEmail'] ?? "Unknown User";
-                        String timestamp = log['timestamp'] ?? "No Timestamp";
-                        String type = log['type'] ?? "task";
-                        Map<String, dynamic> changedFields =
-                            log['changedFields'] ?? {};
-                        String logText = '';
-                        if (action.contains('comment')) {
-                          if (action == "add_comment") {
-                            logText =
-                                "$userEmail add a comment in the $type $taskName";
-                          } else if (action == "edit_comment") {
-                            logText =
-                                "$userEmail edit a comment in the $type $taskName";
-                          } else if (action == "delete_comment") {
-                            logText =
-                                "$userEmail delete a comment in the $type $taskName";
+                          var task;
+                          if (log['type'] == 'task') {
+                            task = TaskData().tasks.firstWhere(
+                                  (taskF) => taskF['id'] == log['taskId'],
+                                  orElse: () => {"id": "noTask"},
+                                );
+                          } else if (log['type'] == 'subtask') {
+                            task = TaskData().subtasks.firstWhere(
+                                  (taskF) => taskF['id'] == log['taskId'],
+                                  orElse: () => {"id": "noTask"},
+                                );
+                          } else {
+                            task = TaskData().subsubtasks.firstWhere(
+                                  (taskF) => taskF['id'] == log['taskId'],
+                                  orElse: () => {"id": "noTask"},
+                                );
                           }
-                        } else {
-                          if (action == 'delete') {
-                            taskName = log['changedFields']['title'];
-                          }
-                          logText = "$userEmail $action a $type $taskName";
-                        }
 
-                        if ((action.toLowerCase() == "update" &&
-                                changedFields.isNotEmpty) ||
-                            (action.toLowerCase() == "edit_comment" &&
-                                changedFields.isNotEmpty)) {
-                          List<String> changeDetails =
-                              changedFields.entries.map((entry) {
-                            var key = entry.key;
-                            var fieldData = entry.value;
-                            if (fieldData is Map<String, dynamic>) {
-                              var oldValue = fieldData['oldValue'] ?? "N/A";
-                              var newValue = fieldData['newValue'] ?? "N/A";
-                              return "The $key changed from \"$oldValue\" to \"$newValue\"";
+                          var project = TaskData().projects.firstWhere(
+                              (project) => project['id'] == task['projectId'],
+                              orElse: () =>
+                                  {} // Nếu không tìm thấy, trả về một Map trống
+                              );
+                          String action = log['action'] ?? "Unknown Action";
+                          String projectId =
+                              log['projectId'] ?? "Unknown Project";
+                          String taskId = log['taskId'] ?? "Unknown Task";
+                          String taskName = task['title'] ?? "Unknown Task";
+                          String userEmail = log['userEmail'] ?? "Unknown User";
+                          String timestamp = log['timestamp'] ?? "No Timestamp";
+                          String type = log['type'] ?? "task";
+                          Map<String, dynamic> changedFields =
+                              log['changedFields'] ?? {};
+                          String logText = '';
+                          if (action.contains('comment')) {
+                            if (action == "add_comment") {
+                              logText =
+                                  "$userEmail add a comment in the $type $taskName";
+                            } else if (action == "edit_comment") {
+                              logText =
+                                  "$userEmail edit a comment in the $type $taskName";
+                            } else if (action == "delete_comment") {
+                              logText =
+                                  "$userEmail delete a comment in the $type $taskName";
                             }
-                            return "$key: $fieldData";
-                          }).toList();
+                          } else {
+                            if (action == 'delete') {
+                              taskName = log['changedFields']['title'];
+                            }
+                            logText = "$userEmail $action a $type $taskName";
+                          }
 
-                          logText += "\n${changeDetails.join(", ")}";
-                        }
+                          if ((action.toLowerCase() == "update" &&
+                                  changedFields.isNotEmpty) ||
+                              (action.toLowerCase() == "edit_comment" &&
+                                  changedFields.isNotEmpty)) {
+                            List<String> changeDetails =
+                                changedFields.entries.map((entry) {
+                              var key = entry.key;
+                              var fieldData = entry.value;
+                              if (fieldData is Map<String, dynamic>) {
+                                var oldValue = fieldData['oldValue'] ?? "N/A";
+                                var newValue = fieldData['newValue'] ?? "N/A";
+                                return "The $key changed from \"$oldValue\" to \"$newValue\"";
+                              }
+                              return "$key: $fieldData";
+                            }).toList();
 
-                        return InkWell(
-                          onTap: () async {
-                            bool permissions = await TaskData()
-                                .isUserInProjectPermissions(
-                                    type, log['taskId']);
+                            logText += "\n${changeDetails.join(", ")}";
+                          }
 
-                            if (log['action'].contains('comment')) {
-                              showModalBottomSheet(
-                                context: context,
-                                isScrollControlled: true,
-                                builder: (context) => CommentsDialog(
-                                  idTask:
-                                      log['taskId'], // Pass idTask to dialog
-                                  type: log['type'], // Pass type to dialog
-                                ),
-                              );
-                            } else if (log['action'] == 'delete') {
-                              showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    title: Text("Restore $type"),
-                                    content:
-                                        Text("This $type has been deleted."),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.of(context).pop();
-                                        },
-                                        child: Text("OK"),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
-                            } else {
-                              try {
+                          return InkWell(
+                            onTap: () async {
+                              bool permissions = await TaskData()
+                                  .isUserInProjectPermissions(
+                                      type, log['taskId']);
+
+                              if (log['action'].contains('comment')) {
                                 showModalBottomSheet(
                                   context: context,
                                   isScrollControlled: true,
-                                  isDismissible: false,
-                                  builder: (context) {
-                                    return SingleChildScrollView(
-                                      child: TaskDetailsDialog(
-                                        taskId: taskId,
-                                        permissions: permissions,
-                                        type: type,
-                                        isCompleted: task['completed'],
-                                        openFirst: true,
-                                        selectDay: DateTime.now(),
-                                        projectName: project['name'],
-                                        showCompletedTasks: true,
-                                        taskBloc:
-                                            BlocProvider.of<TaskBloc>(context),
-                                        resetDialog: () => {},
-                                        resetScreen: () => {},
-                                      ),
-                                    );
-                                  },
+                                  builder: (context) => CommentsDialog(
+                                    idTask:
+                                        log['taskId'], // Pass idTask to dialog
+                                    type: log['type'], // Pass type to dialog
+                                  ),
                                 );
-                              } catch (e) {
+                              } else if (log['action'] == 'delete') {
                                 showDialog(
                                   context: context,
                                   builder: (BuildContext context) {
                                     return AlertDialog(
-                                      title: Text("Task Already Deleted"),
-                                      content: Text(
-                                          "This task has already been deleted."),
+                                      title: Text("Restore $type"),
+                                      content:
+                                          Text("This $type has been deleted."),
                                       actions: [
                                         TextButton(
                                           onPressed: () {
@@ -374,83 +350,129 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                                     );
                                   },
                                 );
-                              }
-                            }
-                          },
-                          child: Card(
-                            margin: EdgeInsets.symmetric(
-                                vertical: 5, horizontal: 0),
-                            elevation: 4,
-                            child: Padding(
-                              padding: EdgeInsets.all(8),
-                              child: Row(
-                                children: [
-                                  // Stack to overlay the icon at the bottom-right of the avatar
-                                  Stack(
-                                    clipBehavior: Clip.none,
-                                    children: [
-                                      CircleAvatar(
-                                        radius: 16,
-                                        backgroundColor: TaskData()
-                                            .getColorFromString(
-                                                user['userColor']),
-                                        child: Text(
-                                          user['userName'][0].toUpperCase(),
-                                          style: const TextStyle(
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold,
+                              } else {
+                                try {
+                                  showModalBottomSheet(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    isDismissible: false,
+                                    builder: (context) {
+                                      return SingleChildScrollView(
+                                        child: TaskDetailsDialog(
+                                          taskId: taskId,
+                                          permissions: permissions,
+                                          type: type,
+                                          isCompleted: task['completed'],
+                                          openFirst: true,
+                                          selectDay: DateTime.now(),
+                                          projectName: project['name'],
+                                          showCompletedTasks: true,
+                                          taskBloc: BlocProvider.of<TaskBloc>(
+                                              context),
+                                          resetDialog: () => {},
+                                          resetScreen: () => {},
+                                        ),
+                                      );
+                                    },
+                                  );
+                                } catch (e) {
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: Text("Task Already Deleted"),
+                                        content: Text(
+                                            "This task has already been deleted."),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                            child: Text("OK"),
                                           ),
-                                        ), // Replace with actual user avatar
-                                      ),
-                                      Positioned(
-                                        bottom: -4,
-                                        right: -4,
-                                        child: Icon(
-                                          getActivityIcon(action),
-                                          color: Colors.blue,
-                                          size: 15,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                        ],
+                                      );
+                                    },
+                                  );
+                                }
+                              }
+                            },
+                            child: Card(
+                              color: Colors.white,
+                              margin: EdgeInsets.symmetric(
+                                  vertical: 6, horizontal: 16),
+                              elevation: 2,
+                              child: Padding(
+                                padding: EdgeInsets.all(8),
+                                child: Row(
+                                  children: [
+                                    // Stack to overlay the icon at the bottom-right of the avatar
+                                    Stack(
+                                      clipBehavior: Clip.none,
                                       children: [
-                                        Text(
-                                          logText,
+                                        CircleAvatar(
+                                          radius: 16,
+                                          backgroundColor: TaskData()
+                                              .getColorFromString(
+                                                  user['userColor']),
+                                          child: Text(
+                                            user['userName'][0].toUpperCase(),
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ), // Replace with actual user avatar
                                         ),
-                                        SizedBox(height: 8),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                              formatTimestamp(timestamp),
-                                              style: TextStyle(
-                                                  color: Colors.grey[600],
-                                                  fontSize: 12),
-                                            ),
-                                            Text(
-                                              "$projectId",
-                                              style: TextStyle(
-                                                  color: Colors.blueGrey,
-                                                  fontSize: 12),
-                                            ),
-                                          ],
+                                        Positioned(
+                                          bottom: -4,
+                                          right: -4,
+                                          child: Icon(
+                                            getActivityIcon(action),
+                                            color: Colors.blue,
+                                            size: 15,
+                                          ),
                                         ),
                                       ],
                                     ),
-                                  ),
-                                ],
+                                    SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            logText,
+                                          ),
+                                          SizedBox(height: 8),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                formatTimestamp(timestamp),
+                                                style: TextStyle(
+                                                    color: Colors.grey[600],
+                                                    fontSize: 12),
+                                              ),
+                                              Text(
+                                                "$projectId",
+                                                style: TextStyle(
+                                                    color: Colors.blueGrey,
+                                                    fontSize: 12),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      }).toList(),
-                    ],
+                          );
+                        }).toList(),
+                      ],
+                    ),
                   );
                 },
               ));
@@ -496,6 +518,7 @@ class _SelectProjectDialogState extends State<SelectProjectDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      backgroundColor: Colors.white,
       title: Text('Select Project'),
       content: SingleChildScrollView(
         child: Column(
@@ -576,8 +599,9 @@ class _FilterDialogState extends State<FilterDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15.0),
+        borderRadius: BorderRadius.circular(16.0),
       ),
       title: Text(
         'Filter Activity Log',
@@ -681,6 +705,7 @@ class _CollaboratorDialogState extends State<CollaboratorDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      backgroundColor: Colors.white,
       title: Text('Select Collaborator'),
       content: SingleChildScrollView(
         child: Column(

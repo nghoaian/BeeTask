@@ -173,7 +173,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             },
             child: Card(
               color: Colors.white,
-              margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              margin: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               elevation: 2,
               child: Padding(
                 padding: EdgeInsets.all(8),

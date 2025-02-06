@@ -678,18 +678,23 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
         child: TextButton(
           onPressed: () {
             showModalBottomSheet(
+              backgroundColor: Colors.white,
               context: context,
+              isScrollControlled: true,
               builder: (context) {
-                return SingleChildScrollView(
-                  child: AddTaskDialog(
-                    projectId: '',
-                    taskId: widget.taskId, // Add appropriate taskId
-                    type: widget.type, // Add appropriate type
-                    selectDay: widget.selectDay ?? DateTime.now(),
-                    resetDialog: () => setState(() {
-                      _fetchTask();
-                    }),
-                    resetScreen: () => widget.resetScreen,
+                return FractionallySizedBox(
+                  heightFactor: 0.9,
+                  child: SingleChildScrollView(
+                    child: AddTaskDialog(
+                      projectId: '',
+                      taskId: widget.taskId, // Add appropriate taskId
+                      type: widget.type, // Add appropriate type
+                      selectDay: widget.selectDay ?? DateTime.now(),
+                      resetDialog: () => setState(() {
+                        _fetchTask();
+                      }),
+                      resetScreen: () => widget.resetScreen,
+                    ),
                   ),
                 );
               },

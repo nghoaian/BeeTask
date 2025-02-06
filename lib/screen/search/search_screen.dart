@@ -65,7 +65,8 @@ class _SearchScreenState extends State<SearchScreen> {
               fontWeight: FontWeight.bold), // Chữ màu đen
         ),
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black), // Màu biểu tượng
+        iconTheme: const IconThemeData(color: Colors.black),
+        automaticallyImplyLeading: false,
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

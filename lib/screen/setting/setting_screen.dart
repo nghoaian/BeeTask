@@ -21,12 +21,13 @@ class _SettingScreenState extends State<SettingScreen> {
         backgroundColor: Colors.grey[200],
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: TextStyle(
+        titleTextStyle: const TextStyle(
           color: Colors.black,
           fontSize: 18,
           fontWeight: FontWeight.bold,
         ),
         iconTheme: IconThemeData(color: Colors.black),
+        automaticallyImplyLeading: false,
       ),
       body: Container(
         color: Colors.grey[200],

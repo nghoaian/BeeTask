@@ -47,11 +47,30 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
           "name": doc["name"],
         };
       }).toList();
-      print("Projects loaded: $projects");
 
-      emit(ProjectLoaded(projects));
+      // Lưu trữ quyền cho từng dự án
+      Map<String, bool> projectPermissions = {};
+      for (var project in projects) {
+        final permissions = await _getProjectPermissions(project["id"]);
+        projectPermissions[project["id"]] = permissions;
+      }
+
+      emit(ProjectLoaded(projects, projectPermissions: projectPermissions));
     } catch (e) {
       emit(ProjectError("Failed to load projects: $e"));
+    }
+  }
+
+  Future<bool> _getProjectPermissions(String projectId) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      final projectDoc =
+          await firestore.collection('projects').doc(projectId).get();
+      final permissions =
+          projectDoc.data()?['permissions'] as List<dynamic>? ?? [];
+      return permissions.contains(user?.email ?? '');
+    } catch (e) {
+      return false;
     }
   }
 
@@ -142,8 +161,10 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
   Future<void> _onLoadProjectPermissions(
       LoadProjectPermissions event, Emitter<ProjectState> emit) async {
     try {
-      final projectDoc = await firestore.collection('projects').doc(event.projectId).get();
-      final permissions = projectDoc.data()?['permissions'] as List<dynamic>? ?? [];
+      final projectDoc =
+          await firestore.collection('projects').doc(event.projectId).get();
+      final permissions =
+          projectDoc.data()?['permissions'] as List<dynamic>? ?? [];
 
       if (permissions.contains(event.userEmail)) {
         emit(ProjectPermissionLoaded(canEdit: true));

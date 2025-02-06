@@ -43,6 +43,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
   var tasks = TaskData().tasks;
   var subtasks = TaskData().subtasks;
   var subsubtasks = TaskData().subsubtasks;
+  var users = TaskData().users;
   late bool checkTask;
   late bool checkSubtask;
   late var task;
@@ -87,6 +88,9 @@ class _ProjectScreenState extends State<ProjectScreen> {
             leading: IconButton(
               icon: Icon(Icons.arrow_back_ios, color: AppColors.primary),
               onPressed: () {
+                context
+                    .read<ProjectBloc>()
+                    .add(LoadProjectsEvent()); // Load lại dữ liệu
                 Navigator.pop(context);
               },
             ),
@@ -98,8 +102,9 @@ class _ProjectScreenState extends State<ProjectScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            ShareScreen(projectId: widget.projectId, projectName: widget.projectName),
+                        builder: (context) => ShareScreen(
+                            projectId: widget.projectId,
+                            projectName: widget.projectName),
                       ),
                     );
                   },
@@ -225,8 +230,13 @@ class _ProjectScreenState extends State<ProjectScreen> {
   }
 
   Widget _buildTaskItem(Task task) {
+    var user = users.firstWhere(
+      (user) => user['userEmail'] == task.assignee,
+      orElse: () => {}, // Return an empty map if not found
+    );
+
     return Card(
-      margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      margin: EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       color: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
@@ -249,9 +259,8 @@ class _ProjectScreenState extends State<ProjectScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Checkbox(
-                value: task.completed,
-                onChanged: (value) {
+              GestureDetector(
+                onTap: () {
                   String status = 'complete';
                   if (task.completed == true) {
                     status = 'uncomplete';
@@ -277,7 +286,31 @@ class _ProjectScreenState extends State<ProjectScreen> {
                       .read<TaskBloc>()
                       .add(UpdateTask(task.id, task, 'task'));
                 },
+                child: Container(
+                  margin: const EdgeInsets.only(top: 7),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: task.completed ? Colors.green : Colors.transparent,
+                      border: Border.all(
+                        color: TaskData().getPriorityColor(task.priority),
+                        width: 2,
+                      ),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: task.completed
+                        ? const Icon(
+                            Icons.check,
+                            color: Colors.white,
+                            size: 10,
+                          )
+                        : null,
+                  ),
+                ),
               ),
+              SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -291,96 +324,58 @@ class _ProjectScreenState extends State<ProjectScreen> {
                             task.completed ? TextDecoration.lineThrough : null,
                       ),
                     ),
+                    SizedBox(height: 2),
                     if (task.description != null &&
                         task.description!.isNotEmpty)
                       Text(
                         task.description!,
-                        style: TextStyle(color: Colors.grey, fontSize: 14),
-                      ),
-                    if (task.dueDate != null && task.dueDate!.isNotEmpty)
-                      Text(
-                        formatDueDate(task.dueDate),
                         style:
-                            TextStyle(color: AppColors.primary, fontSize: 14),
+                            const TextStyle(color: Colors.grey, fontSize: 14),
+                      ),
+                    SizedBox(height: 2),
+                    if (task.dueDate != null && task.dueDate!.isNotEmpty)
+                      Row(
+                        children: [
+                          const Icon(Icons.calendar_today_outlined,
+                              color: AppColors.primary, size: 16),
+                          const SizedBox(width: 4),
+                          Text(
+                            formatDueDate(task.dueDate),
+                            style: const TextStyle(
+                                color: AppColors.primary, fontSize: 14),
+                          ),
+                          const SizedBox(width: 4),
+                        ],
                       ),
                   ],
                 ),
               ),
-              FutureBuilder<String?>(
-                future: widget.userRepository.getUserNameByEmail(task.assignee),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const CircleAvatar(
-                      radius: 15,
-                      backgroundColor: Colors.white,
-                      child: CircularProgressIndicator(),
-                    );
-                  } else if (snapshot.hasError ||
-                      !snapshot.hasData ||
-                      snapshot.data == null) {
-                    return const CircleAvatar(
-                      radius: 15,
-                      backgroundColor: Colors.white,
+              if (task.assignee != '' && user.isNotEmpty) ...[
+                Align(
+                  alignment: Alignment.center,
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 10),
+                    child: CircleAvatar(
+                      radius: 16,
+                      backgroundColor:
+                          TaskData().getColorFromString(user['userColor']),
                       child: Text(
-                        '?',
-                        style: TextStyle(
-                          color: Colors.black,
+                        user['userName'][0].toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                    );
-                  } else {
-                    final userName = snapshot.data!;
-                    return FutureBuilder<String?>(
-                      future: widget.userRepository
-                          .getUserColorByEmail(task.assignee),
-                      builder: (context, colorSnapshot) {
-                        if (colorSnapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return CircleAvatar(
-                            radius: 15,
-                            backgroundColor: Colors.white,
-                            child: CircularProgressIndicator(),
-                          );
-                        } else if (colorSnapshot.hasError ||
-                            !colorSnapshot.hasData ||
-                            colorSnapshot.data == null) {
-                          return CircleAvatar(
-                            radius: 15,
-                            backgroundColor: Colors.white,
-                            child: Text(
-                              userName[0].toUpperCase(),
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          );
-                        } else {
-                          final userColor = colorSnapshot.data!;
-                          return CircleAvatar(
-                            radius: 15,
-                            backgroundColor: _getColorFromString(userColor),
-                            child: Text(
-                              userName[0].toUpperCase(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          );
-                        }
-                      },
-                    );
-                  }
-                },
-              ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
         children: task.subtasks.map<Widget>((subtask) {
           return Padding(
-            padding: const EdgeInsets.only(left: 20.0),
+            padding: const EdgeInsets.only(left: 15.0),
             child: _buildSubtaskItem(subtask, task),
           );
         }).toList(),
@@ -389,8 +384,13 @@ class _ProjectScreenState extends State<ProjectScreen> {
   }
 
   Widget _buildSubtaskItem(Task subtask, Task task) {
+    var user = users.firstWhere(
+      (user) => user['userEmail'] == subtask.assignee,
+      orElse: () => {}, // Return an empty map if not found
+    );
+
     return Card(
-      margin: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+      margin: EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       color: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
@@ -413,9 +413,8 @@ class _ProjectScreenState extends State<ProjectScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Checkbox(
-                value: subtask.completed,
-                onChanged: (value) {
+              GestureDetector(
+                onTap: () {
                   String status = 'complete';
                   if (subtask.completed == true) {
                     status = 'uncomplete';
@@ -438,7 +437,32 @@ class _ProjectScreenState extends State<ProjectScreen> {
                       .read<TaskBloc>()
                       .add(UpdateTask(subtask.id, subtask, 'subtask'));
                 },
+                child: Container(
+                  margin: const EdgeInsets.only(top: 7),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color:
+                          subtask.completed ? Colors.green : Colors.transparent,
+                      border: Border.all(
+                        color: TaskData().getPriorityColor(subtask.priority),
+                        width: 2,
+                      ),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: subtask.completed
+                        ? const Icon(
+                            Icons.check,
+                            color: Colors.white,
+                            size: 10,
+                          )
+                        : null,
+                  ),
+                ),
               ),
+              SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -468,82 +492,33 @@ class _ProjectScreenState extends State<ProjectScreen> {
                   ],
                 ),
               ),
-              FutureBuilder<String?>(
-                future:
-                    widget.userRepository.getUserNameByEmail(subtask.assignee),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const CircleAvatar(
-                      radius: 15,
-                      backgroundColor: Colors.white,
-                      child: CircularProgressIndicator(),
-                    );
-                  } else if (snapshot.hasError ||
-                      !snapshot.hasData ||
-                      snapshot.data == null) {
-                    return const CircleAvatar(
-                      radius: 15,
-                      backgroundColor: Colors.white,
+              if (subtask.assignee != '' && user.isNotEmpty) ...[
+                // If there's an assignee, show their avatar
+                Align(
+                  alignment: Alignment.center,
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 10),
+                    child: CircleAvatar(
+                      radius: 16,
+                      backgroundColor:
+                          TaskData().getColorFromString(user['userColor']),
                       child: Text(
-                        '?',
-                        style: TextStyle(
-                          color: Colors.black,
+                        user['userName'][0].toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                    );
-                  } else {
-                    final userName = snapshot.data!;
-                    return FutureBuilder<String?>(
-                      future: widget.userRepository
-                          .getUserColorByEmail(subtask.assignee),
-                      builder: (context, colorSnapshot) {
-                        if (colorSnapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return CircleAvatar(
-                            radius: 15,
-                            backgroundColor: Colors.white,
-                            child: CircularProgressIndicator(),
-                          );
-                        } else if (colorSnapshot.hasError ||
-                            !colorSnapshot.hasData ||
-                            colorSnapshot.data == null) {
-                          return CircleAvatar(
-                            radius: 15,
-                            backgroundColor: Colors.white,
-                            child: Text(
-                              userName[0].toUpperCase(),
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          );
-                        } else {
-                          final userColor = colorSnapshot.data!;
-                          return CircleAvatar(
-                            radius: 15,
-                            backgroundColor: _getColorFromString(userColor),
-                            child: Text(
-                              userName[0].toUpperCase(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          );
-                        }
-                      },
-                    );
-                  }
-                },
-              ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
         children: subtask.subtasks.map<Widget>((subsubtask) {
           return Padding(
-            padding: const EdgeInsets.only(left: 20.0),
+            padding: const EdgeInsets.only(left: 25.0),
             child: _buildSubSubtaskItem(subsubtask, subtask, task),
           );
         }).toList(),
@@ -552,8 +527,13 @@ class _ProjectScreenState extends State<ProjectScreen> {
   }
 
   Widget _buildSubSubtaskItem(Task subsubtask, Task subtask, Task task) {
+    var user = users.firstWhere(
+      (user) => user['userEmail'] == subsubtask.assignee,
+      orElse: () => {}, // Return an empty map if not found
+    );
+
     return Card(
-      margin: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+      margin: EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       color: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
@@ -570,11 +550,10 @@ class _ProjectScreenState extends State<ProjectScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Checkbox(
-                value: subsubtask.completed,
-                onChanged: (value) {
+              GestureDetector(
+                onTap: () {
                   String status = 'complete';
-                  if (subtask.completed == true) {
+                  if (subsubtask.completed == true) {
                     status = 'uncomplete';
                   }
                   setState(() {
@@ -590,6 +569,31 @@ class _ProjectScreenState extends State<ProjectScreen> {
                       .read<TaskBloc>()
                       .add(UpdateTask(subsubtask.id, subsubtask, 'subsubtask'));
                 },
+                child: Container(
+                  margin: const EdgeInsets.only(top: 7, right: 8),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: subsubtask.completed
+                          ? Colors.green
+                          : Colors.transparent,
+                      border: Border.all(
+                        color: TaskData().getPriorityColor(subtask.priority),
+                        width: 2,
+                      ),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: subsubtask.completed
+                        ? const Icon(
+                            Icons.check,
+                            color: Colors.white,
+                            size: 10,
+                          )
+                        : null,
+                  ),
+                ),
               ),
               Expanded(
                 child: Column(
@@ -621,78 +625,27 @@ class _ProjectScreenState extends State<ProjectScreen> {
                   ],
                 ),
               ),
-              if (subsubtask.assignee != null &&
-                  subsubtask.assignee!.isNotEmpty)
-                FutureBuilder<String?>(
-                  future: widget.userRepository
-                      .getUserNameByEmail(subsubtask.assignee),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const CircleAvatar(
-                        radius: 15,
-                        backgroundColor: Colors.white,
-                        child: CircularProgressIndicator(),
-                      );
-                    } else if (snapshot.hasError ||
-                        !snapshot.hasData ||
-                        snapshot.data == null) {
-                      return const CircleAvatar(
-                        radius: 15,
-                        backgroundColor: Colors.white,
-                        child: Text(
-                          '?',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                          ),
+              if (subsubtask.assignee != '' && user.isNotEmpty) ...[
+                // If there's an assignee, show their avatar
+                Align(
+                  alignment: Alignment.center,
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 10),
+                    child: CircleAvatar(
+                      radius: 16,
+                      backgroundColor:
+                          TaskData().getColorFromString(user['userColor']),
+                      child: Text(
+                        user['userName'][0].toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
                         ),
-                      );
-                    } else {
-                      final userName = snapshot.data!;
-                      return FutureBuilder<String?>(
-                        future: widget.userRepository
-                            .getUserColorByEmail(subsubtask.assignee),
-                        builder: (context, colorSnapshot) {
-                          if (colorSnapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return CircleAvatar(
-                              radius: 15,
-                              backgroundColor: Colors.white,
-                              child: CircularProgressIndicator(),
-                            );
-                          } else if (colorSnapshot.hasError ||
-                              !colorSnapshot.hasData ||
-                              colorSnapshot.data == null) {
-                            return CircleAvatar(
-                              radius: 15,
-                              backgroundColor: Colors.white,
-                              child: Text(
-                                userName[0].toUpperCase(),
-                                style: const TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            );
-                          } else {
-                            final userColor = colorSnapshot.data!;
-                            return CircleAvatar(
-                              radius: 15,
-                              backgroundColor: _getColorFromString(userColor),
-                              child: Text(
-                                userName[0].toUpperCase(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            );
-                          }
-                        },
-                      );
-                    }
-                  },
+                      ),
+                    ),
+                  ),
                 ),
+              ],
             ],
           ),
         ),
@@ -815,5 +768,105 @@ class _ProjectScreenState extends State<ProjectScreen> {
       default:
         return AppColors.primary; // Default color if the string is unknown
     }
+  }
+
+  Widget _buildSubtaskAndTypeRow(Task task) {
+    // Số lượng subtasks đã hoàn thành và tổng số subtasks
+    int completedSubtasks = 0;
+    int totalSubtasks = 0;
+    int commentCount = 0;
+
+    if (task.type == 'task') {
+      // Kiểm tra nếu 'subtasks' không null và không rỗng
+      // Tìm các subtasks có taskId trùng với id của task
+      var relevantSubtasks =
+          subtasks.where((subtask) => subtask['taskId'] == task.id).toList();
+
+      totalSubtasks = relevantSubtasks.length;
+      var t = TaskData().tasks.firstWhere((taskF) => taskF['id'] == task.id,
+          orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
+          );
+      commentCount = (t['commentCount'] is int)
+          ? t['commentCount']
+          : int.tryParse(t['commentCount'].toString()) ?? 0;
+
+      // Đếm số subtask có completed = true
+      completedSubtasks = relevantSubtasks
+          .where((subtask) => subtask['completed'] == true)
+          .length;
+    } else if (task.type == 'subtask') {
+      // Kiểm tra nếu 'subsubtasks' không null và không rỗng
+
+      // Tương tự cho subsubtask
+      var relevantSubsubtasks = subsubtasks
+          .where((subsubtask) => subsubtask['subtaskId'] == task.id)
+          .toList();
+      var t = TaskData().subtasks.firstWhere((taskF) => taskF['id'] == task.id,
+          orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
+          );
+      commentCount = (t['commentCount'] is int)
+          ? t['commentCount']
+          : int.tryParse(t['commentCount'].toString()) ?? 0;
+
+      // Đếm số subtask có completed = true
+      completedSubtasks = relevantSubsubtasks
+          .where((subtask) => subtask['completed'] == true)
+          .length;
+
+      totalSubtasks = relevantSubsubtasks.length;
+      completedSubtasks = relevantSubsubtasks
+          .where((subsubtask) => subsubtask['completed'] == true)
+          .length;
+    } else {
+      totalSubtasks = 0;
+      completedSubtasks = 0;
+      var t = TaskData().subsubtasks.firstWhere(
+          (taskF) => taskF['id'] == task.id,
+          orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
+          );
+      commentCount = (t['commentCount'] is int)
+          ? t['commentCount']
+          : int.tryParse(t['commentCount'].toString()) ?? 0;
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            // Hiển thị số lượng subtasks nếu có subtasks
+            if (totalSubtasks > 0)
+              Text(
+                '$completedSubtasks / $totalSubtasks',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[600],
+                ),
+              ),
+            if (commentCount > 0) ...[
+              const SizedBox(
+                  width: 16), // Thêm khoảng cách giữa subtasks và comment
+              Row(
+                children: [
+                  Icon(Icons.comment,
+                      size: 16, color: Colors.grey[600]), // Icon comment
+                  const SizedBox(
+                      width: 4), // Khoảng cách giữa icon và số lượng comment
+                  Text(
+                    '$commentCount',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ],
+    );
   }
 }
