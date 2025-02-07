@@ -130,14 +130,40 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                         //     .add(ForgetPasswordRequested(email: email));
                         final email = emailController.text.trim();
                         try {
+                          // Kiểm tra email trong cơ sở dữ liệu
+                          final userSnapshot = await FirebaseFirestore.instance
+                              .collection('users')
+                              .where('userEmail', isEqualTo: email)
+                              .get();
+
+                          if (userSnapshot.docs.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Email not registered',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            return;
+                          }
+
+                          // Gửi email đặt lại mật khẩu
                           await FirebaseAuth.instance
                               .sendPasswordResetEmail(email: email);
 
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                                content: Text('Password reset email sent')),
+                              content: Text('Password reset email sent'),
+                              backgroundColor: Colors.green,
+                              duration: Duration(seconds: 2),
+                            ),
                           );
 
+                          Future.delayed(Duration(seconds: 2), () {
+                            Navigator.pop(context);
+                          });
                         } on FirebaseAuthException catch (e) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(

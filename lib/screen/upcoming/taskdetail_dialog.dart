@@ -940,7 +940,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
           isScrollControlled: true,
           builder: (context) {
             return FractionallySizedBox(
-              heightFactor: 0.9,
+              heightFactor: 0.8,
               child: TaskDetailsDialog(
                 taskId: subtask['id'],
                 type: subtask['type'],
@@ -1026,7 +1026,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                 isScrollControlled: true,
                 builder: (context) {
                   return FractionallySizedBox(
-                    heightFactor: 0.9,
+                    heightFactor: 0.8,
                     child: TaskDetailsDialog(
                       taskId: subsubtask['id'],
                       type: subsubtask['type'],
@@ -1123,7 +1123,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
               isScrollControlled: true,
               builder: (context) {
                 return FractionallySizedBox(
-                  heightFactor: 0.9,
+                  heightFactor: 0.8,
                   child: CommentsDialog(
                     idTask: widget.taskId,
                     type: widget.type,

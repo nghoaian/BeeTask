@@ -213,7 +213,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
       isScrollControlled: true,
       builder: (context) {
         return FractionallySizedBox(
-          heightFactor: 0.85,
+          heightFactor: 0.8,
           child: SingleChildScrollView(
             child: AddTaskDialog(
               projectId: projectId,
@@ -786,20 +786,23 @@ class _ProjectScreenState extends State<ProjectScreen> {
       context: context,
       isScrollControlled: true,
       builder: (context) {
-        return TaskDetailsDialog(
-          taskId: task.id.isNotEmpty ? task.id : 'unknown_id',
-          type: 'task',
-          projectName: widget.projectName,
-          showCompletedTasks: true,
-          taskBloc: _taskBloc,
-          resetDialog: () => {},
-          resetScreen: () => setState(() {
-            _taskBloc.add(LoadTasks(widget.projectId));
-          }),
-          permissions: permissions,
-          isCompleted: task.completed ?? false,
-          openFirst: true,
-          selectDay: DateTime.now(),
+        return FractionallySizedBox(
+          heightFactor: 0.8,
+          child: TaskDetailsDialog(
+            taskId: task.id.isNotEmpty ? task.id : 'unknown_id',
+            type: 'task',
+            projectName: widget.projectName,
+            showCompletedTasks: true,
+            taskBloc: _taskBloc,
+            resetDialog: () => {},
+            resetScreen: () => setState(() {
+              _taskBloc.add(LoadTasks(widget.projectId));
+            }),
+            permissions: permissions,
+            isCompleted: task.completed ?? false,
+            openFirst: true,
+            selectDay: DateTime.now(),
+          ),
         );
       },
     ).whenComplete(() {

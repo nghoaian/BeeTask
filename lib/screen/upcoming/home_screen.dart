@@ -632,7 +632,7 @@ class _HomeScreenState extends State<HomeScreen> {
       isScrollControlled: true,
       builder: (context) {
         return FractionallySizedBox(
-          heightFactor: 0.9,
+          heightFactor: 0.8,
           child: TaskDetailsDialog(
             taskId: taskId,
             permissions: permissions,
@@ -676,6 +676,75 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     });
   }
+
+  // void _showTaskDetailsDialog(String taskId, String type,
+  //     bool showCompletedTask, String projectName, bool isCompleted) async {
+  //   bool permissions =
+  //       await TaskData().isUserInProjectPermissions(type, taskId);
+
+  //   showModalBottomSheet(
+  //     backgroundColor: Colors.white,
+  //     context: context,
+  //     isScrollControlled: true,
+  //     builder: (context) {
+  //       return LayoutBuilder(
+  //         builder: (context, constraints) {
+  //           double heightFactor = 0.9; // Default height factor
+
+  //           // Adjust heightFactor based on the height of the AlertDialog
+  //           if (constraints.maxHeight < 600) {
+  //             heightFactor = 0.8;
+  //           } else if (constraints.maxHeight < 400) {
+  //             heightFactor = 0.7;
+  //           }
+
+  //           return FractionallySizedBox(
+  //             heightFactor: heightFactor,
+  //             child: TaskDetailsDialog(
+  //               taskId: taskId,
+  //               permissions: permissions,
+  //               type: type,
+  //               isCompleted: isCompleted,
+  //               openFirst: true,
+  //               selectDay: _selectedDay ?? DateTime.now(),
+  //               projectName: projectName,
+  //               showCompletedTasks: showCompletedTask,
+  //               taskBloc: BlocProvider.of<TaskBloc>(context),
+  //               resetDialog: () => {},
+  //               resetScreen: () => setState(() {
+  //                 context.read<TaskBloc>().add(
+  //                       FetchTasksByDate(
+  //                           (_selectedDay != null
+  //                               ? DateTime(
+  //                                   _selectedDay.year,
+  //                                   _selectedDay.month,
+  //                                   _selectedDay.day,
+  //                                 ).toIso8601String().substring(0, 10)
+  //                               : DateTime.now()
+  //                                   .toIso8601String()
+  //                                   .substring(0, 10)),
+  //                           showCompletedTasks),
+  //                     );
+  //               }),
+  //             ),
+  //           );
+  //         },
+  //       );
+  //     },
+  //   ).whenComplete(() {
+  //     setState(() {
+  //       context.read<TaskBloc>().add(FetchTasksByDate(
+  //           (_selectedDay != null
+  //               ? DateTime(
+  //                   _selectedDay.year,
+  //                   _selectedDay.month,
+  //                   _selectedDay.day,
+  //                 ).toIso8601String().substring(0, 10)
+  //               : DateTime.now().toIso8601String().substring(0, 10)),
+  //           showCompletedTasks));
+  //     });
+  //   });
+  // }
 
   void _showAddTaskDialog(BuildContext context) {
     showModalBottomSheet(

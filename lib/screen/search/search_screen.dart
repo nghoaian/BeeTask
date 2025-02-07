@@ -531,7 +531,7 @@ class _SearchScreenState extends State<SearchScreen> {
       isScrollControlled: true,
       builder: (context) {
         return FractionallySizedBox(
-          heightFactor: 0.9,
+          heightFactor: 0.8,
           child: TaskDetailsDialog(
             taskId: taskId,
             permissions: permissions,
