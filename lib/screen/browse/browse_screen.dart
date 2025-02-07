@@ -173,8 +173,6 @@ class _BrowseScreenState extends State<BrowseScreen> {
                 userRepository: userRepository,
                 resetScreen: () {
                   setState(() {
-                    print("Reloading projects...");
-
                     BlocProvider.of<ProjectBloc>(context)
                         .add(LoadProjectsEvent());
                   });
