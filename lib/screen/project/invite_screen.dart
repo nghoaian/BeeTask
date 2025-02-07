@@ -22,7 +22,7 @@ class _InvitePeopleScreenState extends State<InvitePeopleScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-       backgroundColor: Colors.white,
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -32,7 +32,8 @@ class _InvitePeopleScreenState extends State<InvitePeopleScreen> {
         ),
         title: Text(
           "Invite People",
-          style: TextStyle(color: Colors.black, fontSize: 22, fontWeight: FontWeight.bold),
+          style: TextStyle(
+              color: Colors.black, fontSize: 22, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         actions: [
@@ -40,17 +41,20 @@ class _InvitePeopleScreenState extends State<InvitePeopleScreen> {
             builder: (context, state) {
               return TextButton(
                 onPressed: selectedEmail != null
-                    ? () {
+                    ? () async {
                         context
                             .read<InviteBloc>()
                             .add(InviteUser(widget.projectId));
-                            Navigator.pop(context);
+                        await Future.delayed(
+                            Duration(milliseconds: 300));
+                        Navigator.pop(context, true);
                       }
                     : null,
                 child: Text(
                   "Invite",
                   style: TextStyle(
-                    color: selectedEmail != null ? AppColors.primary : Colors.grey,
+                    color:
+                        selectedEmail != null ? AppColors.primary : Colors.grey,
                     fontSize: 18,
                   ),
                 ),
@@ -62,7 +66,7 @@ class _InvitePeopleScreenState extends State<InvitePeopleScreen> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Container(
-          child: Column(          
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Input field
@@ -74,11 +78,14 @@ class _InvitePeopleScreenState extends State<InvitePeopleScreen> {
                         setState(() {
                           inputText = value;
                         });
-                        context.read<InviteBloc>().add(EmailInputChanged(value));
+                        context
+                            .read<InviteBloc>()
+                            .add(EmailInputChanged(value));
                       },
                       decoration: InputDecoration(
                         labelText: "To:",
-                        labelStyle: TextStyle(color: Colors.black, fontSize: 16),
+                        labelStyle:
+                            TextStyle(color: Colors.black, fontSize: 16),
                         border: InputBorder.none,
                         hintText: "Enter email",
                         hintStyle: TextStyle(color: Colors.grey),
@@ -105,7 +112,7 @@ class _InvitePeopleScreenState extends State<InvitePeopleScreen> {
                         ListTile(
                           contentPadding: EdgeInsets.zero,
                           leading: CircleAvatar(
-                            backgroundColor: AppColors.primary,
+                            backgroundColor: _getColorFromString(state.color),
                             child: Text(
                               state.name[0].toUpperCase(),
                               style: TextStyle(
@@ -148,5 +155,27 @@ class _InvitePeopleScreenState extends State<InvitePeopleScreen> {
         ),
       ),
     );
+  }
+
+  Color _getColorFromString(String? colorString) {
+    final color = colorString?.toLowerCase() ?? 'default';
+    switch (color) {
+      case 'orange':
+        return Colors.orange;
+      case 'blue':
+        return const Color.fromARGB(255, 0, 140, 255);
+      case 'red':
+        return Colors.red;
+      case 'green':
+        return Colors.green;
+      case 'yellow':
+        return const Color.fromARGB(255, 238, 211, 0);
+      case 'purple':
+        return Colors.deepPurpleAccent;
+      case 'pink':
+        return const Color.fromARGB(255, 248, 43, 211);
+      default:
+        return AppColors.primary; // Default color if the string is unknown
+    }
   }
 }

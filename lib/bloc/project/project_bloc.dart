@@ -145,14 +145,41 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     }
   }
 
-  Future<void> _onRemoveProjectMember(
+    Future<void> _onRemoveProjectMember(
       RemoveProjectMember event, Emitter<ProjectState> emit) async {
     try {
       final projectRef = firestore.collection('projects').doc(event.projectId);
+  
       await projectRef.update({
-        'members': FieldValue.arrayRemove([event.userEmail])
+        'members': FieldValue.arrayRemove([event.userEmail]),
+        'permissions': FieldValue.arrayRemove([event.userEmail]),
       });
-      add(LoadProjectMembers(event.projectId)); // Tải lại danh sách members
+  
+      final tasksSnapshot = await projectRef.collection('tasks').get();
+      for (var taskDoc in tasksSnapshot.docs) {
+        final taskData = taskDoc.data();
+        if (taskData['assignee'] == event.userEmail) {
+          await taskDoc.reference.update({'assignee': ""});
+        }
+  
+        final subtasksSnapshot = await taskDoc.reference.collection('subtasks').get();
+        for (var subtaskDoc in subtasksSnapshot.docs) {
+          final subtaskData = subtaskDoc.data();
+          if (subtaskData['assignee'] == event.userEmail) {
+            await subtaskDoc.reference.update({'assignee': ""});
+          }
+  
+          final subsubtasksSnapshot = await subtaskDoc.reference.collection('subsubtasks').get();
+          for (var subsubtaskDoc in subsubtasksSnapshot.docs) {
+            final subsubtaskData = subsubtaskDoc.data();
+            if (subsubtaskData['assignee'] == event.userEmail) {
+              await subsubtaskDoc.reference.update({'assignee': ""});
+            }
+          }
+        }
+      }
+  
+      add(LoadProjectMembers(event.projectId));
     } catch (e) {
       emit(ProjectError("Failed to remove project member: $e"));
     }

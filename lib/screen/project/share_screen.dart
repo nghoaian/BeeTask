@@ -70,21 +70,28 @@ class _ShareScreenState extends State<ShareScreen> {
               margin: EdgeInsets.all(8), // Thêm margin 8 cho Text
               child: Text(
                 widget.projectName,
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
             ),
             SizedBox(height: 10),
             GestureDetector(
               onTap: currentUserPermission == 'Can View'
                   ? null
-                  : () {
-                      Navigator.push(
+                  : () async {
+                      final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
                               InvitePeopleScreen(projectId: widget.projectId),
                         ),
                       );
+
+                      if (result == true) {
+                        context
+                            .read<ProjectBloc>()
+                            .add(LoadProjectMembers(widget.projectId));
+                      }
                     },
               child: Container(
                 margin: EdgeInsets.symmetric(

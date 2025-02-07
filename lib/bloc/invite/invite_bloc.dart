@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'package:bee_task/bloc/project/project_bloc.dart';
+import 'package:bee_task/bloc/project/project_event.dart';
 import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'invite_event.dart';
 import 'invite_state.dart';
 
@@ -36,6 +39,7 @@ class InviteBloc extends Bloc<InviteEvent, InviteState> {
         emit(InviteUserFound(
           name: user['userName'],
           email: user['userEmail'],
+          color: user['userColor'],
         ));
       } else {
         emit(InviteUserNotFound());

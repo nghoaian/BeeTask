@@ -12,11 +12,12 @@ class InviteLoading extends InviteState {}
 class InviteUserFound extends InviteState {
   final String name;
   final String email;
+  final String color;
 
-  InviteUserFound({required this.name, required this.email});
+  InviteUserFound({required this.name, required this.email, required this.color});
 
   @override
-  List<Object> get props => [name, email];
+  List<Object> get props => [name, email, color];
 }
 
 class InviteUserNotFound extends InviteState {}
