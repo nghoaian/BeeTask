@@ -296,7 +296,9 @@ class _SearchScreenState extends State<SearchScreen> {
             isShare: true,
             isEditProject: true,
             taskRepository: taskRepository,
-            userRepository: userRepository),
+            userRepository: userRepository,
+            resetScreen: () {}),
+            
       ),
     );
   }

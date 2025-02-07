@@ -41,9 +41,8 @@ class _BrowseScreenState extends State<BrowseScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) =>
-          ProjectBloc(FirebaseFirestore.instance)..add(LoadProjectsEvent()),
+    return BlocProvider.value(
+      value: BlocProvider.of<ProjectBloc>(context),
       child: BlocListener<ProjectBloc, ProjectState>(
         listener: (context, state) {
           if (state is ProjectError) {
@@ -172,11 +171,17 @@ class _BrowseScreenState extends State<BrowseScreen> {
                 isEditProject: isEditProject!,
                 taskRepository: taskRepository,
                 userRepository: userRepository,
+                resetScreen: () {
+                  setState(() {
+                    print("Reloading projects...");
+
+                    BlocProvider.of<ProjectBloc>(context)
+                        .add(LoadProjectsEvent());
+                  });
+                },
               ),
             ),
           );
-          // Gọi lại sự kiện LoadProjectsEvent khi quay trở lại
-          BlocProvider.of<ProjectBloc>(context).add(LoadProjectsEvent());
         }
       },
       style: TextButton.styleFrom(
@@ -295,6 +300,10 @@ class _BrowseScreenState extends State<BrowseScreen> {
                   isEditProject: false,
                   taskRepository: taskRepository,
                   userRepository: userRepository,
+                  resetScreen: () => setState(() {
+                    BlocProvider.of<ProjectBloc>(context)
+                        .add(LoadProjectsEvent());
+                  }),
                 ),
               ),
             );

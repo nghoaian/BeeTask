@@ -109,7 +109,8 @@ class _StatisScreenState extends State<StatisScreen> {
                   isShare: project['name'] == 'Inbox' ? false : true,
                   isEditProject: project['name'] == 'Inbox' ? false : true,
                   taskRepository: taskRepository,
-                  userRepository: userRepository),
+                  userRepository: userRepository,
+                  resetScreen: () {},),
             ),
           );
         },

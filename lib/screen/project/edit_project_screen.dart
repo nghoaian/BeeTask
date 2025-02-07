@@ -9,9 +9,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class EditProjectScreen extends StatefulWidget {
   final String projectId;
   final String projectName;
+  final Function resetScreen;
 
   const EditProjectScreen(
-      {Key? key, required this.projectId, required this.projectName})
+      {Key? key,
+      required this.projectId,
+      required this.projectName,
+      required this.resetScreen})
       : super(key: key);
 
   @override
@@ -70,10 +74,9 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
               ElevatedButton(
                 onPressed: () async {
                   if (projectNameController.text.isNotEmpty) {
-
-                    context
-                        .read<ProjectBloc>()
-                        .add(UpdateProject(widget.projectId, projectNameController.text));
+                    context.read<ProjectBloc>().add(UpdateProject(
+                        widget.projectId, projectNameController.text));
+                    widget.resetScreen();
                     Navigator.pop(context);
                   }
                 },

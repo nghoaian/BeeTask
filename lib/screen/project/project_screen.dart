@@ -25,6 +25,7 @@ class ProjectScreen extends StatefulWidget {
   final bool isEditProject;
   FirebaseTaskRepository taskRepository;
   FirebaseUserRepository userRepository;
+  final Function resetScreen;
 
   ProjectScreen(
       {required this.projectId,
@@ -32,6 +33,7 @@ class ProjectScreen extends StatefulWidget {
       required this.isShare,
       required this.isEditProject,
       required this.taskRepository,
+      required this.resetScreen,
       required this.userRepository});
 
   @override
@@ -44,8 +46,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
   var subtasks = TaskData().subtasks;
   var subsubtasks = TaskData().subsubtasks;
   var users = TaskData().users;
-  late bool checkTask;
-  late bool checkSubtask;
+
   late var task;
 
   @override
@@ -88,9 +89,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
             leading: IconButton(
               icon: Icon(Icons.arrow_back_ios, color: AppColors.primary),
               onPressed: () {
-                context
-                    .read<ProjectBloc>()
-                    .add(LoadProjectsEvent()); // Load lại dữ liệu
+                widget.resetScreen();
                 Navigator.pop(context);
               },
             ),
@@ -126,6 +125,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
                             content: EditProjectScreen(
                               projectId: widget.projectId,
                               projectName: widget.projectName,
+                              resetScreen: widget.resetScreen,
                             ),
                           );
                         },
@@ -234,6 +234,24 @@ class _ProjectScreenState extends State<ProjectScreen> {
       (user) => user['userEmail'] == task.assignee,
       orElse: () => {}, // Return an empty map if not found
     );
+    int completedSubtasks = 0;
+    int totalSubtasks = 0;
+    int commentCount = 0;
+    var relevantSubtasks =
+        subtasks.where((subtask) => subtask['taskId'] == task.id).toList();
+
+    totalSubtasks = relevantSubtasks.length;
+    var t = TaskData().tasks.firstWhere((taskF) => taskF['id'] == task.id,
+        orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
+        );
+    commentCount = (t['commentCount'] is int)
+        ? t['commentCount']
+        : int.tryParse(t['commentCount'].toString()) ?? 0;
+
+    // Đếm số subtask có completed = true
+    completedSubtasks = relevantSubtasks
+        .where((subtask) => subtask['completed'] == true)
+        .length;
 
     return Card(
       margin: EdgeInsets.symmetric(horizontal: 10, vertical: 2),
@@ -335,16 +353,45 @@ class _ProjectScreenState extends State<ProjectScreen> {
                     SizedBox(height: 2),
                     if (task.dueDate != null && task.dueDate!.isNotEmpty)
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Icon(Icons.calendar_today_outlined,
-                              color: AppColors.primary, size: 16),
-                          const SizedBox(width: 4),
                           Text(
                             formatDueDate(task.dueDate),
-                            style: const TextStyle(
+                            style: TextStyle(
                                 color: AppColors.primary, fontSize: 14),
                           ),
-                          const SizedBox(width: 4),
+                          Row(
+                            children: [
+                              if (totalSubtasks > 0)
+                                Text(
+                                  '$completedSubtasks / $totalSubtasks',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              if (commentCount > 0) ...[
+                                const SizedBox(width: 16),
+                                Row(
+                                  children: [
+                                    Icon(Icons.comment,
+                                        size: 16, color: Colors.grey[600]),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '$commentCount',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                              SizedBox(width: 50),
+                            ],
+                          ),
                         ],
                       ),
                   ],
@@ -388,6 +435,28 @@ class _ProjectScreenState extends State<ProjectScreen> {
       (user) => user['userEmail'] == subtask.assignee,
       orElse: () => {}, // Return an empty map if not found
     );
+    int completedSubtasks = 0;
+    int totalSubtasks = 0;
+    int commentCount = 0;
+    var relevantSubsubtasks = subsubtasks
+        .where((subsubtask) => subsubtask['subtaskId'] == subtask.id)
+        .toList();
+    var t = TaskData().subtasks.firstWhere((taskF) => taskF['id'] == subtask.id,
+        orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
+        );
+    commentCount = (t['commentCount'] is int)
+        ? t['commentCount']
+        : int.tryParse(t['commentCount'].toString()) ?? 0;
+
+    // Đếm số subtask có completed = true
+    completedSubtasks = relevantSubsubtasks
+        .where((subtask) => subtask['completed'] == true)
+        .length;
+
+    totalSubtasks = relevantSubsubtasks.length;
+    completedSubtasks = relevantSubsubtasks
+        .where((subsubtask) => subsubtask['completed'] == true)
+        .length;
 
     return Card(
       margin: EdgeInsets.symmetric(horizontal: 5, vertical: 2),
@@ -484,10 +553,47 @@ class _ProjectScreenState extends State<ProjectScreen> {
                         style: TextStyle(color: Colors.grey, fontSize: 14),
                       ),
                     if (subtask.dueDate != null && subtask.dueDate!.isNotEmpty)
-                      Text(
-                        formatDueDate(subtask.dueDate),
-                        style:
-                            TextStyle(color: AppColors.primary, fontSize: 14),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            formatDueDate(subtask.dueDate),
+                            style: TextStyle(
+                                color: AppColors.primary, fontSize: 14),
+                          ),
+                          Row(
+                            children: [
+                              if (totalSubtasks > 0)
+                                Text(
+                                  '$completedSubtasks / $totalSubtasks',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              if (commentCount > 0) ...[
+                                const SizedBox(width: 16),
+                                Row(
+                                  children: [
+                                    Icon(Icons.comment,
+                                        size: 16, color: Colors.grey[600]),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '$commentCount',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                              SizedBox(width: 50),
+                            ],
+                          ),
+                        ],
                       ),
                   ],
                 ),
@@ -531,7 +637,14 @@ class _ProjectScreenState extends State<ProjectScreen> {
       (user) => user['userEmail'] == subsubtask.assignee,
       orElse: () => {}, // Return an empty map if not found
     );
-
+    int commentCount = 0;
+    var t = TaskData().subsubtasks.firstWhere(
+        (taskF) => taskF['id'] == subsubtask.id,
+        orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
+        );
+    commentCount = (t['commentCount'] is int)
+        ? t['commentCount']
+        : int.tryParse(t['commentCount'].toString()) ?? 0;
     return Card(
       margin: EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       color: Colors.white,
@@ -615,12 +728,39 @@ class _ProjectScreenState extends State<ProjectScreen> {
                         subsubtask.description!,
                         style: TextStyle(color: Colors.grey, fontSize: 14),
                       ),
-                    if (subsubtask.dueDate != null &&
-                        subsubtask.dueDate!.isNotEmpty)
-                      Text(
-                        formatDueDate(subsubtask.dueDate),
-                        style: const TextStyle(
-                            color: AppColors.primary, fontSize: 14),
+                    if (subtask.dueDate != null && subtask.dueDate!.isNotEmpty)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            formatDueDate(subtask.dueDate),
+                            style: TextStyle(
+                                color: AppColors.primary, fontSize: 14),
+                          ),
+                          Row(
+                            children: [
+                              if (commentCount > 0) ...[
+                                const SizedBox(width: 16),
+                                Row(
+                                  children: [
+                                    Icon(Icons.comment,
+                                        size: 16, color: Colors.grey[600]),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '$commentCount',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                              SizedBox(width: 50),
+                            ],
+                          ),
+                        ],
                       ),
                   ],
                 ),
