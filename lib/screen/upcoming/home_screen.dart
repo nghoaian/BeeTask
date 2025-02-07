@@ -633,38 +633,48 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context) {
         return FractionallySizedBox(
           heightFactor: 0.9,
-          child: SingleChildScrollView(
-            child: TaskDetailsDialog(
-              taskId: taskId,
-              permissions: permissions,
-              type: type,
-              isCompleted: isCompleted,
-              openFirst: true,
-              selectDay: _selectedDay ?? DateTime.now(),
-              projectName: projectName,
-              showCompletedTasks: showCompletedTask,
-              taskBloc: BlocProvider.of<TaskBloc>(context),
-              resetDialog: () => {},
-              resetScreen: () => setState(() {
-                context.read<TaskBloc>().add(
-                      FetchTasksByDate(
-                          (_selectedDay != null
-                              ? DateTime(
-                                  _selectedDay.year,
-                                  _selectedDay.month,
-                                  _selectedDay.day,
-                                ).toIso8601String().substring(0, 10)
-                              : DateTime.now()
-                                  .toIso8601String()
-                                  .substring(0, 10)),
-                          showCompletedTasks),
-                    );
-              }),
-            ),
+          child: TaskDetailsDialog(
+            taskId: taskId,
+            permissions: permissions,
+            type: type,
+            isCompleted: isCompleted,
+            openFirst: true,
+            selectDay: _selectedDay ?? DateTime.now(),
+            projectName: projectName,
+            showCompletedTasks: showCompletedTask,
+            taskBloc: BlocProvider.of<TaskBloc>(context),
+            resetDialog: () => {},
+            resetScreen: () => setState(() {
+              context.read<TaskBloc>().add(
+                    FetchTasksByDate(
+                        (_selectedDay != null
+                            ? DateTime(
+                                _selectedDay.year,
+                                _selectedDay.month,
+                                _selectedDay.day,
+                              ).toIso8601String().substring(0, 10)
+                            : DateTime.now()
+                                .toIso8601String()
+                                .substring(0, 10)),
+                        showCompletedTasks),
+                  );
+            }),
           ),
         );
       },
-    );
+    ).whenComplete(() {
+      setState(() {
+        context.read<TaskBloc>().add(FetchTasksByDate(
+            (_selectedDay != null
+                ? DateTime(
+                    _selectedDay.year,
+                    _selectedDay.month,
+                    _selectedDay.day,
+                  ).toIso8601String().substring(0, 10)
+                : DateTime.now().toIso8601String().substring(0, 10)),
+            showCompletedTasks));
+      });
+    });
   }
 
   void _showAddTaskDialog(BuildContext context) {
@@ -675,29 +685,27 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context) {
         return FractionallySizedBox(
           heightFactor: 0.9,
-          child: SingleChildScrollView(
-            child: AddTaskDialog(
-              projectId: '',
-              taskId: '', // Add appropriate taskId
-              type: '', // Add appropriate type
-              selectDay: _selectedDay ?? DateTime.now(),
-              resetDialog: () => {},
-              resetScreen: () => setState(() {
-                context.read<TaskBloc>().add(
-                      FetchTasksByDate(
-                          (_selectedDay != null
-                              ? DateTime(
-                                  _selectedDay.year,
-                                  _selectedDay.month,
-                                  _selectedDay.day,
-                                ).toIso8601String().substring(0, 10)
-                              : DateTime.now()
-                                  .toIso8601String()
-                                  .substring(0, 10)),
-                          showCompletedTasks),
-                    );
-              }),
-            ),
+          child: AddTaskDialog(
+            projectId: '',
+            taskId: '', // Add appropriate taskId
+            type: '', // Add appropriate type
+            selectDay: _selectedDay ?? DateTime.now(),
+            resetDialog: () => {},
+            resetScreen: () => setState(() {
+              context.read<TaskBloc>().add(
+                    FetchTasksByDate(
+                        (_selectedDay != null
+                            ? DateTime(
+                                _selectedDay.year,
+                                _selectedDay.month,
+                                _selectedDay.day,
+                              ).toIso8601String().substring(0, 10)
+                            : DateTime.now()
+                                .toIso8601String()
+                                .substring(0, 10)),
+                        showCompletedTasks),
+                  );
+            }),
           ),
         );
       },

@@ -674,6 +674,7 @@ class FirebaseTaskRepository implements TaskRepository {
     taskData['id'] = taskDoc.id; // Lưu lại id của task
     taskData['projectId'] = projectId;
     taskData['subtasks'] = [];
+    taskData['type'] = 'task';
 
     // Lấy danh sách subtasks
     var subtasksSnapshot = await FirebaseFirestore.instance
@@ -688,6 +689,7 @@ class FirebaseTaskRepository implements TaskRepository {
       Map<String, dynamic> subtaskData = subtaskDoc.data();
       subtaskData['id'] = subtaskDoc.id; // Lưu lại id của subtask
       subtaskData['subsubtasks'] = [];
+      subtaskData['type'] = 'subtask';
 
       // Lấy danh sách subsubtasks
       var subsubtasksSnapshot = await FirebaseFirestore.instance
@@ -703,6 +705,7 @@ class FirebaseTaskRepository implements TaskRepository {
       subtaskData['subsubtasks'] = subsubtasksSnapshot.docs.map((doc) {
         Map<String, dynamic> subsubtaskData = doc.data();
         subsubtaskData['id'] = doc.id; // Lưu lại id của subsubtask
+        subsubtaskData['type'] = 'subsubtask';
         return subsubtaskData;
       }).toList();
 
@@ -737,6 +740,7 @@ class FirebaseTaskRepository implements TaskRepository {
     subtaskData['id'] = subtaskDoc.id; // Lưu id của subtask
     subtaskData['projectId'] = projectId;
     subtaskData['subsubtasks'] = [];
+    subtaskData['type'] = 'subtask';
 
     // Lấy danh sách subsubtasks
     var subsubtasksSnapshot = await FirebaseFirestore.instance
@@ -753,6 +757,7 @@ class FirebaseTaskRepository implements TaskRepository {
     subtaskData['subsubtasks'] = subsubtasksSnapshot.docs.map((doc) {
       Map<String, dynamic> subsubtaskData = doc.data();
       subsubtaskData['id'] = doc.id; // Lưu id của subsubtask
+      subsubtaskData['type'] = 'subsubtask';
       return subsubtaskData;
     }).toList();
 
@@ -785,6 +790,7 @@ class FirebaseTaskRepository implements TaskRepository {
     Map<String, dynamic> subsubtaskData = subsubtaskDoc.data()!;
     subsubtaskData['id'] = subsubtaskId;
     subsubtaskData['projectId'] = projectId;
+    subsubtaskData['type'] = 'subsubtask';
 
     return subsubtaskData;
   }

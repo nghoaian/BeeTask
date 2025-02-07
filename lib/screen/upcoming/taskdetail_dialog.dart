@@ -48,8 +48,7 @@ class TaskDetailsDialog extends StatefulWidget {
 class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
   bool isNotOneMem = false;
-  bool checkSubtask = false;
-  bool checkTask = false;
+
   var users = TaskData().users;
   var project = TaskData().projects;
   var tasks = TaskData().tasks;
@@ -116,9 +115,9 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                         _buildProjectText(widget.projectName),
                         const SizedBox(height: 8.0),
                         _buildDescriptionEdit(context, task),
-                        const SizedBox(height: 16.0),
-                        buildCompletedSubtasksRow(),
-                        const SizedBox(height: 12.0),
+                        const SizedBox(height: 8.0),
+                        buildCompletedSubtasksRow(task),
+                        const SizedBox(height: 8.0),
 
                         // Dynamically display subtasks and subsubtasks
                         if ((task['subtasks'] != null &&
@@ -127,36 +126,36 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                             child: ConstrainedBox(
                               constraints: BoxConstraints(
                                 maxHeight:
-                                    MediaQuery.of(context).size.height * 0.4,
+                                    MediaQuery.of(context).size.height * 0.8,
                               ),
                               child: SingleChildScrollView(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Subtasks:',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold)),
-                                    const SizedBox(height: 8.0),
                                     for (var subtask
                                         in task['subtasks'] ?? []) ...[
                                       if (!widget.showCompletedTasks &&
                                           !subtask['completed']) ...[
-                                        buildSubtaskRow(subtask, 'subtask'),
+                                        buildSubtaskRow(task, subtask),
+                                        const SizedBox(height: 2.0),
                                         if (subtask['subsubtasks'] != null &&
                                             subtask['subsubtasks'].isNotEmpty)
                                           for (var subsubtask
                                               in subtask['subsubtasks'] ?? [])
                                             if (!subsubtask['completed'])
-                                              buildSubsubtasks(subsubtask,
-                                                  'subsubtask', subtask['id']),
+                                              buildSubsubtasks(
+                                                  task, subtask, subsubtask),
+                                        const SizedBox(height: 2.0),
                                       ] else if (widget.showCompletedTasks) ...[
-                                        buildSubtaskRow(subtask, 'subtask'),
+                                        buildSubtaskRow(task, subtask),
+                                        const SizedBox(height: 2.0),
                                         if (subtask['subsubtasks'] != null &&
                                             subtask['subsubtasks'].isNotEmpty)
                                           for (var subsubtask
                                               in subtask['subsubtasks'] ?? [])
-                                            buildSubsubtasks(subsubtask,
-                                                'subsubtask', subtask['id']),
+                                            buildSubsubtasks(
+                                                task, subtask, subsubtask),
+                                        const SizedBox(height: 2.0),
                                       ],
                                     ],
                                   ],
@@ -170,7 +169,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                             child: ConstrainedBox(
                               constraints: BoxConstraints(
                                 maxHeight:
-                                    MediaQuery.of(context).size.height * 0.4,
+                                    MediaQuery.of(context).size.height * 0.8,
                               ),
                               child: SingleChildScrollView(
                                 child: Column(
@@ -185,11 +184,9 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                                       if (widget.showCompletedTasks ==
                                           false) ...[
                                         if (subsubtask['completed'] == false)
-                                          buildSubtaskRow(
-                                              subsubtask, 'subsubtask'),
+                                          buildSubtaskRow(task, subsubtask),
                                       ] else ...[
-                                        buildSubtaskRow(
-                                            subsubtask, 'subsubtask'),
+                                        buildSubtaskRow(task, subsubtask),
                                       ]
                                     ]
                                   ],
@@ -202,11 +199,23 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                     ),
                   ),
                   actions: [
-                    if (widget.type != 'subsubtask' &&
-                        widget.permissions == true)
-                      buildAddSubtaskButton(),
-                    buildAddCommentAndUploadButton(),
-                    buildCloseButton(context),
+                    Row(
+                      mainAxisAlignment:
+                          MainAxisAlignment.center, // Căn giữa theo chiều ngang
+                      children: [
+                        if (widget.type != 'subsubtask' &&
+                            widget.permissions == true) ...[
+                          Expanded(
+                            child: buildAddSubtaskButton(),
+                          ),
+                          const SizedBox(
+                              width: 10), // Tạo khoảng cách giữa 2 nút
+                        ],
+                        Expanded(
+                          child: buildAddCommentAndUploadButton(),
+                        ),
+                      ],
+                    )
                   ],
                 );
               } else if (state is TaskError) {
@@ -252,7 +261,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
               widget.type));
 
           setState(() {
-            task['dueDate'] = formattedDate; // Cập nhật vào UI
+            task['dueDate'] = formattedDate;
           });
           Task taskUpdate = Task(
             id: task['id'],
@@ -292,8 +301,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
   }
 
   // Widget để hiển thị tên task và dialog chỉnh sửa
-  Widget _buildTaskNameEditDialog(
-      BuildContext context, Map<String, dynamic> taskData) {
+  Widget _buildTaskNameEditDialog(BuildContext context, var taskData) {
     return GestureDetector(
       onTap: () async {
         // Hiển thị dialog chỉnh sửa tên task
@@ -377,10 +385,8 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
       },
       child: Row(
         children: [
-          if (taskData['assignee'] != '') ...[
-            _buildAssigneeAvatar(taskData['assignee']),
-            const SizedBox(width: 8), // Khoảng cách giữa avatar và tiêu đề
-          ],
+          _buildAssigneeAvatar(taskData['assignee']),
+          const SizedBox(width: 16), // Khoảng cách giữa avatar và tiêu đề
           Expanded(
             child: Text(
               taskData['title'] ?? '',
@@ -534,13 +540,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   setState(() {
                     widget.isCompleted = !widget.isCompleted;
                     taskData['completed'] = !taskData['completed'];
-                    if (taskData['completed'] == true) {
-                      checkTask = true;
-                      checkSubtask = true;
-                    } else {
-                      checkTask = false;
-                      checkSubtask = false;
-                    }
+
                     if (taskData['completed'] == true) {
                       if (taskData['type'] == 'task') {
                         var relevantTask = tasks.firstWhere(
@@ -668,12 +668,13 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
 // Widget để hiển thị nút thêm subtask
   Widget buildAddSubtaskButton() {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10.0),
+      padding: const EdgeInsets.only(bottom: 6.0),
       child: Container(
+        width: 140, // Giảm chiều rộng
+        height: 36, // Giảm chiều cao
         decoration: BoxDecoration(
           color: Colors.grey[200],
-          borderRadius: BorderRadius.circular(12),
-          //boxShadow: [BoxShadow(color: Colors.grey.shade300, blurRadius: 5)],
+          borderRadius: BorderRadius.circular(8),
         ),
         child: TextButton(
           onPressed: () {
@@ -683,35 +684,28 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
               isScrollControlled: true,
               builder: (context) {
                 return FractionallySizedBox(
-                  heightFactor: 0.9,
-                  child: SingleChildScrollView(
-                    child: AddTaskDialog(
-                      projectId: '',
-                      taskId: widget.taskId, // Add appropriate taskId
-                      type: widget.type, // Add appropriate type
-                      selectDay: widget.selectDay ?? DateTime.now(),
-                      resetDialog: () => setState(() {
-                        _fetchTask();
-                      }),
-                      resetScreen: () => widget.resetScreen,
-                    ),
+                  heightFactor: 0.8,
+                  child: AddTaskDialog(
+                    projectId: '',
+                    taskId: widget.taskId,
+                    type: widget.type,
+                    selectDay: widget.selectDay ?? DateTime.now(),
+                    resetDialog: () => setState(() {
+                      _fetchTask();
+                    }),
+                    resetScreen: () => widget.resetScreen,
                   ),
                 );
               },
             );
           },
           style: TextButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            minimumSize: Size(double.infinity, 40),
+            padding: const EdgeInsets.symmetric(vertical: 4.0),
+            minimumSize: Size(140, 36),
           ),
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Add Subtask',
-                style: TextStyle(color: AppColors.primary, fontSize: 14),
-              ),
-            ],
+          child: const Text(
+            'Add Subtask',
+            style: TextStyle(color: AppColors.primary, fontSize: 12),
           ),
         ),
       ),
@@ -903,32 +897,21 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
   }
 
 // Widget để hiển thị số lượng subtask đã hoàn thành
-  Widget buildCompletedSubtasksRow() {
+  Widget buildCompletedSubtasksRow(var task) {
     int totalSubtasks = 0;
     int completedSubtasks = 0;
-    if (widget.type == 'task') {
-      if (task['subtasks'] != null) {
-        totalSubtasks = task['subtasks'].length;
-        if (checkTask == false) {
-          completedSubtasks = task['subtasks']
-              .where((subtask) => subtask['completed'] == true)
-              .length;
-        } else {
-          completedSubtasks = task['subtasks'].length;
-        }
-      }
-    } else if (widget.type == 'subtask') {
-      if (task['subsubtasks'] != null) {
-        totalSubtasks = task['subsubtasks'].length;
-        if (checkSubtask == false) {
-          completedSubtasks = task['subsubtasks']
-              .where((subtask) => subtask['completed'] == true)
-              .length;
-        } else {
-          completedSubtasks = task['subsubtasks'].length;
-        }
-      }
+    if (task['type'] == 'task' && task['subtasks'] != null) {
+      totalSubtasks = task['subtasks'].length;
+      completedSubtasks = task['subtasks']
+          .where((subtask) => subtask['completed'] == true)
+          .length;
+    } else if (task['type'] == 'subtask' && task['subsubtasks'] != null) {
+      totalSubtasks = task['subsubtasks'].length;
+      completedSubtasks = task['subsubtasks']
+          .where((subsubtask) => subsubtask['completed'] == true)
+          .length;
     }
+
     return Row(
       children: [
         if (totalSubtasks > 0)
@@ -940,47 +923,27 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
     );
   }
 
-//Widget để hiển thị subtask
-  bool isUpdating = false;
-
-  Widget buildSubtaskRow(var subtask, String type) {
-    // Cập nhật trạng thái của subtask nếu cần
-    if (checkTask == true) {
-      subtask['completed'] = true;
-      checkSubtask = true;
-    }
-
-    // Biến để lưu trữ số lượng subtasks đã hoàn thành và tổng số subtasks
+  Widget buildSubtaskRow(var task, var subtask) {
     int completedSubtasks = 0;
     int totalSubtasks = 0;
-
-    // Lấy tổng số subtasks và số subtasks đã hoàn thành
-    if (widget.type == 'task') {
-      if (checkSubtask == false) {
-        if (subtask['subsubtasks'] != null) {
-          totalSubtasks = subtask['subsubtasks']?.length ?? 0;
-          completedSubtasks = subtask['subsubtasks']
-                  ?.where((s) => s['completed'] == true)
-                  .length ??
-              0;
-        } else {
-          totalSubtasks = subtask['subsubtasks']?.length ?? 0;
-          completedSubtasks = subtask['subsubtasks']?.length ?? 0;
-        }
-      }
+    if (subtask['type'] == 'subtask' && subtask['subsubtasks'] != null) {
+      totalSubtasks = subtask['subsubtasks'].length;
+      completedSubtasks = subtask['subsubtasks']
+          .where((subsubtask) => subsubtask['completed'] == true)
+          .length;
     }
 
     return GestureDetector(
       onTap: () async {
         showModalBottomSheet(
           context: context,
-          isDismissible: false,
           isScrollControlled: true,
           builder: (context) {
-            return SingleChildScrollView(
+            return FractionallySizedBox(
+              heightFactor: 0.9,
               child: TaskDetailsDialog(
                 taskId: subtask['id'],
-                type: type,
+                type: subtask['type'],
                 openFirst: false,
                 isCompleted: subtask['completed'],
                 selectDay: widget.selectDay,
@@ -995,83 +958,15 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
               ),
             );
           },
-        );
+        ).whenComplete(() {
+          _fetchTask();
+        });
       },
       child: Row(
         children: [
           GestureDetector(
-            onTap: () async {
-              if (isUpdating) return;
-              setState(() {
-                isUpdating = true;
-                checkTask = false;
-                checkSubtask = false;
-              });
-              String status = 'complete';
-              if (subtask['completed'] == true) {
-                status = 'uncomplete';
-              }
-              var taskF;
-              if (type == 'subtask') {
-                taskF = TaskData().subtasks.firstWhere(
-                    (taskF) => taskF['id'] == subtask['id'],
-                    orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
-                    );
-              } else {
-                taskF = TaskData().subsubtasks.firstWhere(
-                    (taskF) => taskF['id'] == subtask['id'],
-                    orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
-                    );
-              }
-              context.read<TaskBloc>().add(logTaskActivity(
-                  taskF['projectId'], subtask['id'], status, {}, type));
-
-              subtask['completed'] = !subtask['completed'];
-              Task task = Task(
-                id: subtask['id'],
-                title: subtask['title'],
-                description: subtask['description'],
-                dueDate: subtask['dueDate'],
-                priority: subtask['priority'],
-                assignee: subtask['assignee'],
-                type: type,
-                projectName: widget.projectName,
-                completed: subtask['completed'],
-                subtasks: [],
-              );
-
-              _updateTask(task.id, task, task.type);
-
-              if (subtask['completed'] == true) {
-                if (subtask['subsubtasks'] != null &&
-                    subtask['subsubtasks'].isNotEmpty) {
-                  for (var subsubtask in subtask['subsubtasks']) {
-                    if (subsubtask['completed'] == false) {
-                      Task task = Task(
-                        id: subsubtask['id'],
-                        title: subsubtask['title'],
-                        description: subsubtask['description'],
-                        dueDate: subsubtask['dueDate'],
-                        priority: subsubtask['priority'],
-                        assignee: subsubtask['assignee'],
-                        type: 'subsubtask',
-                        projectName: widget.projectName,
-                        completed: true,
-                        subtasks: [],
-                      );
-                      _updateTask(task.id, task, task.type);
-                    }
-                  }
-                }
-              }
-              await Future.delayed(const Duration(milliseconds: 300));
-
-              setState(() {
-                if (subtask['completed'] == false) {
-                  widget.isCompleted = false;
-                }
-                isUpdating = false;
-              });
+            onTap: () {
+              CompleteTask(subtask, task, subtask);
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
@@ -1112,19 +1007,14 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
             ),
           ),
           // Hiển thị avatar hoặc khoảng trống
-          if (subtask['assignee'] != '') ...[
-            _buildAssigneeAvatar(subtask['assignee']),
-            const SizedBox(width: 8), // Khoảng cách giữa avatar và tiêu đề
-          ],
+          _buildAssigneeAvatar(subtask['assignee']),
+          const SizedBox(width: 16), // Khoảng cách giữa avatar và tiêu đề
         ],
       ),
     );
   }
 
-  Widget buildSubsubtasks(var subsubtask, String type, String subtaskId) {
-    if (checkSubtask == true) {
-      subsubtask['completed'] = true;
-    }
+  Widget buildSubsubtasks(var task, var subtask, var subsubtask) {
     return Column(
       children: [
         Padding(
@@ -1133,14 +1023,13 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
             onTap: () {
               showModalBottomSheet(
                 context: context,
-                isDismissible: false,
-                isScrollControlled:
-                    true, // Allow the bottom sheet to adjust its height based on content
+                isScrollControlled: true,
                 builder: (context) {
-                  return SingleChildScrollView(
+                  return FractionallySizedBox(
+                    heightFactor: 0.9,
                     child: TaskDetailsDialog(
                       taskId: subsubtask['id'],
-                      type: type,
+                      type: subsubtask['type'],
                       openFirst: false,
                       isCompleted: subsubtask['completed'],
                       permissions: widget.permissions,
@@ -1155,83 +1044,15 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                     ),
                   );
                 },
-              );
+              ).whenComplete(() {
+                _fetchTask();
+              });
             },
             child: Row(
               children: [
                 GestureDetector(
                   onTap: () async {
-                    if (isUpdating) return; // Ngăn thao tác khi đang cập nhật
-                    setState(() {
-                      isUpdating = true; // Bắt đầu cập nhật
-                      checkTask = false;
-                      checkSubtask = false;
-                    });
-                    String status = 'complete';
-                    if (subsubtask['completed'] == true) {
-                      status = 'uncomplete';
-                    }
-                    var taskF;
-
-                    taskF = TaskData().subsubtasks.firstWhere(
-                        (taskF) => taskF['id'] == subsubtask['id'],
-                        orElse: () =>
-                            {} // Nếu không tìm thấy, trả về một Map trống
-                        );
-
-                    context.read<TaskBloc>().add(logTaskActivity(
-                        taskF['projectId'],
-                        subsubtask['id'],
-                        status,
-                        {},
-                        'subsubtask'));
-
-                    // Cập nhật trạng thái `completed` cho subsubtask
-                    subsubtask['completed'] = !subsubtask['completed'];
-                    Task task = Task(
-                      id: subsubtask['id'],
-                      title: subsubtask['title'],
-                      description: subsubtask['description'],
-                      dueDate: subsubtask['dueDate'],
-                      priority: subsubtask['priority'],
-                      assignee: subsubtask['assignee'],
-                      type: type,
-                      projectName: widget.projectName,
-                      completed: subsubtask['completed'],
-                      subtasks: [],
-                    );
-
-                    // Gửi cập nhật lên Firestore
-                    _updateTask(task.id, task, task.type);
-                    if (subsubtask['completed'] == false) {
-                      var taskData = TaskData().subtasks.firstWhere(
-                          (subtask) => subtask['id'] == subtaskId,
-                          orElse: () =>
-                              {} // Nếu không tìm thấy, trả về một Map trống
-                          );
-                      if (taskData['completed'] == true) {
-                        Task task = Task(
-                          id: taskData['id'],
-                          title: taskData['title'],
-                          description: taskData['description'],
-                          dueDate: taskData['dueDate'],
-                          priority: taskData['priority'],
-                          assignee: taskData['assignee'],
-                          type: 'subtask',
-                          projectName: widget.projectName,
-                          completed: false,
-                          subtasks: [],
-                        );
-                        _updateTask(task.id, task, task.type);
-                      }
-                    }
-
-                    setState(() {
-                      isUpdating = false; // Hoàn tất cập nhật
-                      if (subsubtask['completed'] == false) {
-                        widget.isCompleted = false;
-                      }
-                    });
+                    CompleteTask(subsubtask, task, subtask);
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
@@ -1274,11 +1095,8 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   ),
                 ),
                 // Hiển thị avatar người được giao hoặc khoảng trống
-                if (subsubtask['assignee'] != '') ...[
-                  _buildAssigneeAvatar(subsubtask['assignee']),
-                  const SizedBox(
-                      width: 8), // Khoảng cách giữa avatar và tiêu đề
-                ],
+                _buildAssigneeAvatar(subsubtask['assignee']),
+                const SizedBox(width: 16), // Khoảng cách giữa avatar và tiêu đề
               ],
             ),
           ),
@@ -1290,59 +1108,39 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
 // Widget để hiển thị nút thêm comment và upload file
   Widget buildAddCommentAndUploadButton() {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10.0),
+      padding: const EdgeInsets.only(bottom: 6.0),
       child: Container(
+        width: 140, // Giảm chiều rộng tổng thể của button
+        height: 36, // Giảm chiều cao
         decoration: BoxDecoration(
           color: Colors.grey[200],
-          borderRadius: BorderRadius.circular(12),
-          //boxShadow: [BoxShadow(color: Colors.grey.shade300, blurRadius: 5)],
+          borderRadius: BorderRadius.circular(8),
         ),
-        child: Row(
-          children: [
-            Expanded(
-              child: TextButton(
-                onPressed: () async {
-                  // Open CommentsDialog in a modal bottom sheet and pass idTask
-                  List<Map<String, dynamic>>? updatedComments =
-                      await showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    builder: (context) => CommentsDialog(
-                      idTask: widget.taskId, // Pass idTask to dialog
-                      type: widget.type, // Pass type to dialog
-                    ),
-                  );
-                },
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  minimumSize: Size(double.infinity, 40),
-                ),
-                child: const Text(
-                  'Add Comment',
-                  style: TextStyle(fontSize: 14, color: AppColors.secondary),
-                ),
-              ),
-            ),
-          ],
+        child: TextButton(
+          onPressed: () async {
+            await showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              builder: (context) {
+                return FractionallySizedBox(
+                  heightFactor: 0.9,
+                  child: CommentsDialog(
+                    idTask: widget.taskId,
+                    type: widget.type,
+                  ),
+                );
+              },
+            );
+          },
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 4.0),
+            minimumSize: Size(140, 36), // Giảm kích thước nhỏ hơn nữa
+          ),
+          child: const Text(
+            'Add Comment',
+            style: TextStyle(fontSize: 12, color: AppColors.secondary),
+          ),
         ),
-      ),
-    );
-  }
-
-// Widget để hiển thị nút đóng dialog
-  Widget buildCloseButton(BuildContext context) {
-    return TextButton(
-      onPressed: () {
-        setState(() {
-          if (widget.openFirst == true) widget.resetScreen();
-
-          widget.resetDialog();
-        });
-        Navigator.pop(context);
-      },
-      child: const Text(
-        'Close',
-        style: TextStyle(color: Colors.red),
       ),
     );
   }
@@ -1496,12 +1294,11 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
           ),
         ),
       );
-    } else {
-      return const SizedBox(
-        width: 30,
-        height: 30,
-      );
     }
+    return const SizedBox(
+      width: 30,
+      height: 30,
+    );
   }
 
   Future<void> _fetchTask() async {
@@ -1566,5 +1363,73 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
     }
 
     return false;
+  }
+
+  void CompleteTask(var taskData, var taskF, var subtaskF) {
+    print("click");
+    Task task = Task(
+      id: taskData['id'],
+      title: taskData['title'],
+      description: taskData['description'],
+      dueDate: taskData['dueDate'],
+      priority: taskData['priority'],
+      assignee: taskData['assignee'],
+      type: taskData['type'],
+      projectName: widget.projectName,
+      completed: taskData['completed'],
+      subtasks: [],
+    );
+    var user = users.firstWhere((user) => user['userEmail'] == task.assignee,
+        orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
+        );
+    var t;
+    if (task.type == 'task') {
+      t = TaskData().tasks.firstWhere((taskF) => taskF['id'] == task.id,
+          orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
+          );
+    } else if (task.type == 'subtask') {
+      t = TaskData().subtasks.firstWhere((taskF) => taskF['id'] == task.id,
+          orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
+          );
+    } else {
+      t = TaskData().subsubtasks.firstWhere((taskF) => taskF['id'] == task.id,
+          orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
+          );
+    }
+
+    String status = 'complete';
+    if (task.completed == true) {
+      status = 'uncomplete';
+    }
+    context
+        .read<TaskBloc>()
+        .add(logTaskActivity(t['projectId'], task.id, status, {}, task.type));
+    context.read<TaskBloc>().add(UpdateTask(task.id, task, task.type));
+
+    setState(() {
+      taskData['completed'] = !taskData['completed'];
+      task.completed = !task.completed;
+      if (task.completed == true) {
+        if (task.type == 'task') {
+          for (var subtask in taskData['subtasks']) {
+            subtask['completed'] = true;
+            for (var subsubtask in subtask['subsubtasks']) {
+              subsubtask['completed'] = true;
+            }
+          }
+        } else if (task.type == 'subtask') {
+          for (var subsubtask in taskData['subsubtasks']) {
+            subsubtask['completed'] = true;
+          }
+        }
+      } else {
+        if (task.type == 'subsubtask') {
+          subtaskF['completed'] = false;
+          taskF['completed'] = false;
+        } else if (task.type == 'subtask') {
+          taskF['completed'] = false;
+        }
+      }
+    });
   }
 }

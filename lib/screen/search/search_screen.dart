@@ -260,7 +260,8 @@ class _SearchScreenState extends State<SearchScreen> {
             final project = filteredProjects[index];
             return Card(
               color: Colors.grey[100],
-              margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+              margin:
+                  const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
               child: ListTile(
                 title: Text(
                   project['name'],
@@ -298,7 +299,6 @@ class _SearchScreenState extends State<SearchScreen> {
             taskRepository: taskRepository,
             userRepository: userRepository,
             resetScreen: () {}),
-            
       ),
     );
   }
@@ -525,13 +525,13 @@ class _SearchScreenState extends State<SearchScreen> {
       bool showCompletedTask, String projectName, bool isCompleted) async {
     bool permissions =
         await TaskData().isUserInProjectPermissions(type, taskId);
-
     showModalBottomSheet(
+      backgroundColor: Colors.white,
       context: context,
       isScrollControlled: true,
-      isDismissible: false,
       builder: (context) {
-        return SingleChildScrollView(
+        return FractionallySizedBox(
+          heightFactor: 0.9,
           child: TaskDetailsDialog(
             taskId: taskId,
             permissions: permissions,
@@ -547,6 +547,6 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
         );
       },
-    );
+    ).whenComplete(() {});
   }
 }

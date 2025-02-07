@@ -718,7 +718,8 @@ class _ProjectScreenState extends State<ProjectScreen> {
                         subsubtask.description!,
                         style: TextStyle(color: Colors.grey, fontSize: 14),
                       ),
-                    if (subsubtask.dueDate != null && subsubtask.dueDate!.isNotEmpty)
+                    if (subsubtask.dueDate != null &&
+                        subsubtask.dueDate!.isNotEmpty)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -785,22 +786,20 @@ class _ProjectScreenState extends State<ProjectScreen> {
       context: context,
       isScrollControlled: true,
       builder: (context) {
-        return SingleChildScrollView(
-          child: TaskDetailsDialog(
-            taskId: task.id.isNotEmpty ? task.id : 'unknown_id',
-            type: 'task',
-            projectName: widget.projectName,
-            showCompletedTasks: true,
-            taskBloc: _taskBloc,
-            resetDialog: () => {},
-            resetScreen: () => setState(() {
-              _taskBloc.add(LoadTasks(widget.projectId));
-            }),
-            permissions: permissions,
-            isCompleted: task.completed ?? false,
-            openFirst: true,
-            selectDay: DateTime.now(),
-          ),
+        return TaskDetailsDialog(
+          taskId: task.id.isNotEmpty ? task.id : 'unknown_id',
+          type: 'task',
+          projectName: widget.projectName,
+          showCompletedTasks: true,
+          taskBloc: _taskBloc,
+          resetDialog: () => {},
+          resetScreen: () => setState(() {
+            _taskBloc.add(LoadTasks(widget.projectId));
+          }),
+          permissions: permissions,
+          isCompleted: task.completed ?? false,
+          openFirst: true,
+          selectDay: DateTime.now(),
         );
       },
     ).whenComplete(() {
