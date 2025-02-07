@@ -237,21 +237,17 @@ class _ProjectScreenState extends State<ProjectScreen> {
     int completedSubtasks = 0;
     int totalSubtasks = 0;
     int commentCount = 0;
-    var relevantSubtasks =
-        subtasks.where((subtask) => subtask['taskId'] == task.id).toList();
-
-    totalSubtasks = relevantSubtasks.length;
     var t = TaskData().tasks.firstWhere((taskF) => taskF['id'] == task.id,
         orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
         );
     commentCount = (t['commentCount'] is int)
         ? t['commentCount']
         : int.tryParse(t['commentCount'].toString()) ?? 0;
+    totalSubtasks = task.subtasks.length;
 
-    // Đếm số subtask có completed = true
-    completedSubtasks = relevantSubtasks
-        .where((subtask) => subtask['completed'] == true)
-        .length;
+// Đếm số subtask có completed = true
+    completedSubtasks =
+        task.subtasks.where((subtask) => subtask.completed == true).length;
 
     return Card(
       margin: EdgeInsets.symmetric(horizontal: 10, vertical: 2),
@@ -438,24 +434,18 @@ class _ProjectScreenState extends State<ProjectScreen> {
     int completedSubtasks = 0;
     int totalSubtasks = 0;
     int commentCount = 0;
-    var relevantSubsubtasks = subsubtasks
-        .where((subsubtask) => subsubtask['subtaskId'] == subtask.id)
-        .toList();
+
     var t = TaskData().subtasks.firstWhere((taskF) => taskF['id'] == subtask.id,
         orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
         );
     commentCount = (t['commentCount'] is int)
         ? t['commentCount']
         : int.tryParse(t['commentCount'].toString()) ?? 0;
+    totalSubtasks = subtask.subtasks.length;
 
-    // Đếm số subtask có completed = true
-    completedSubtasks = relevantSubsubtasks
-        .where((subtask) => subtask['completed'] == true)
-        .length;
-
-    totalSubtasks = relevantSubsubtasks.length;
-    completedSubtasks = relevantSubsubtasks
-        .where((subsubtask) => subsubtask['completed'] == true)
+// Đếm số subtask có completed = true
+    completedSubtasks = subtask.subtasks
+        .where((subsubtask) => subsubtask.completed == true)
         .length;
 
     return Card(
