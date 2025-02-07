@@ -803,7 +803,11 @@ class _ProjectScreenState extends State<ProjectScreen> {
           ),
         );
       },
-    );
+    ).whenComplete(() {
+      setState(() {
+        _taskBloc.add(LoadTasks(widget.projectId));
+      });
+    });
   }
 
   void _showSubTaskDetailsDialog(Task task) async {
