@@ -35,23 +35,16 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       ),
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state is AuthLoading) {
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (context) => Center(
-                child: CircularProgressIndicator(),
-              ),
-            );
-          } else if (state is ChangePasswordSuccess ||
+          if (state is ChangePasswordSuccess ||
               state is ChangePasswordFailure) {
-            if (Navigator.of(context).canPop())
-              Navigator.of(context).pop(); // Đóng loading dialog nếu đang mở
             if (state is ChangePasswordSuccess) {
               _showMessage(context, 'Password changed successfully.', true);
             } else if (state is ChangePasswordFailure) {
-              _showMessage(context, state.errorMessage, false);
+              _showErrorMessage(context, state.errorMessage, false);
             }
+
+            // if (Navigator.of(context).canPop())
+            //   Navigator.of(context).pop(); // Đóng loading dialog nếu đang mở
           }
         },
         child: Padding(
@@ -106,7 +99,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
                 ),
                 child: Text(
-                  'Đổi mật khẩu',
+                  'Change Password',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -156,22 +149,33 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   }
 
   void _showMessage(BuildContext context, String message, bool isSuccess) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
           message,
-          style: TextStyle(color: isSuccess ? Color(0xFF00C853) : Colors.red),
+          style: TextStyle(color: Colors.white),
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              //if (isSuccess) Navigator.popUntil(context, ModalRoute.withName('/setting'));
-            },
-            child: Text('OK'),
-          ),
-        ],
+        backgroundColor: isSuccess ? Colors.green : Colors.red,
+        duration: Duration(seconds: 2),
+      ),
+    );
+
+    Future.delayed(Duration(seconds: 2), () {
+      if (context.mounted) {
+        Navigator.pop(context);
+      }
+    });
+  }
+
+  void _showErrorMessage(BuildContext context, String message, bool isSuccess) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: isSuccess ? Colors.green : Colors.red,
+        duration: Duration(seconds: 2),
       ),
     );
   }

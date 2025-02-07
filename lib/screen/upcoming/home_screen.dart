@@ -587,7 +587,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           SizedBox(height: 10),
           Text(
-            'Bạn có một ngày rảnh rỗi',
+            'You have a free day',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -596,7 +596,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           SizedBox(height: 10),
           Text(
-            'Hãy thư giãn',
+            'Let\'s relax',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.normal,
@@ -631,8 +631,7 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       isScrollControlled: true,
       builder: (context) {
-        return FractionallySizedBox(
-          heightFactor: 0.8,
+        return SingleChildScrollView(
           child: TaskDetailsDialog(
             taskId: taskId,
             permissions: permissions,

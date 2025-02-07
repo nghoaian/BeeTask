@@ -398,8 +398,10 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildTaskHeaderRow(var task) {
-    var user =
-        users.firstWhere((user) => user['userEmail'] == task['assignee']);
+    var user = users.firstWhere(
+      (user) => user['userEmail'] == task['assignee'],
+      orElse: () => {},
+    );
 
     return Row(
       children: [
@@ -530,8 +532,7 @@ class _SearchScreenState extends State<SearchScreen> {
       context: context,
       isScrollControlled: true,
       builder: (context) {
-        return FractionallySizedBox(
-          heightFactor: 0.8,
+        return SingleChildScrollView(
           child: TaskDetailsDialog(
             taskId: taskId,
             permissions: permissions,

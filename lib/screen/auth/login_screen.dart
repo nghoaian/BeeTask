@@ -1,3 +1,5 @@
+import 'package:bee_task/bloc/account/account_bloc.dart';
+import 'package:bee_task/bloc/account/account_event.dart';
 import 'package:bee_task/bloc/auth/auth_bloc.dart';
 import 'package:bee_task/bloc/auth/auth_event.dart';
 import 'package:bee_task/bloc/auth/auth_state.dart';
@@ -232,7 +234,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _showErrorMsg(context, "Please fill in all fields!");
       return;
     }
-    
+
     // Kiểm tra định dạng email
     if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
       _showErrorMsg(context, "Email is not valid!");
@@ -255,6 +257,7 @@ class _LoginScreenState extends State<LoginScreen> {
         email: email,
         password: password,
       );
+      context.read<AccountBloc>().add(FetchUserNameRequested());
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => NavUIScreen()),
@@ -265,7 +268,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildSignUp() {
-        return Align(
+    return Align(
       alignment: Alignment.bottomRight,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,

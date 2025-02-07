@@ -3,6 +3,8 @@ import 'package:bee_task/bloc/invite/invite_event.dart';
 import 'package:bee_task/bloc/project/project_bloc.dart';
 import 'package:bee_task/bloc/project/project_event.dart';
 import 'package:bee_task/bloc/project/project_state.dart';
+import 'package:bee_task/bloc/task/task_bloc.dart';
+import 'package:bee_task/bloc/task/task_event.dart';
 import 'package:bee_task/data/repository/UserRepository.dart';
 import 'package:bee_task/screen/project/invite_screen.dart';
 import 'package:bee_task/util/colors.dart';
@@ -283,6 +285,9 @@ class _ProjectMembersCardState extends State<ProjectMembersCard> {
                           if (value == 'Remove') {
                             context.read<ProjectBloc>().add(RemoveProjectMember(
                                 widget.projectId, widget.userEmail));
+                            context
+                                .read<TaskBloc>()
+                                .add(LoadTasks(widget.projectId));
                           }
                           if (value == 'Can View' || value == 'Can Edit') {
                             context.read<InviteBloc>().add(

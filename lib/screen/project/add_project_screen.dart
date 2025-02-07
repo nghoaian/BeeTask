@@ -58,17 +58,15 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
               const Spacer(),
               ElevatedButton(
                 onPressed: () async {
-                  if (projectNameController.text.isNotEmpty) {
+                  if (projectNameController.text.trim().isNotEmpty) {
                     String? userEmail = FirebaseAuth.instance.currentUser?.email;
                     final project = {
                       'name': projectNameController.text,
-                      'color': selectedColor,
                       'isFavorite': isFavorite,
                       'owner': userEmail,
                       'members': [userEmail],
+                      'permissions': [userEmail],
                     };
-
-                    print('Project to be added: $project'); // Debug: In ra thông tin project
 
                     try {
                       widget.onProjectAdded(project); // Gửi dữ liệu project

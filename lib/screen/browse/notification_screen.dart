@@ -1,4 +1,6 @@
+import 'package:bee_task/bloc/project/project_bloc.dart';
 import 'package:bee_task/bloc/task/task_bloc.dart';
+import 'package:bee_task/bloc/task/task_event.dart';
 import 'package:bee_task/screen/TaskData.dart';
 import 'package:bee_task/screen/upcoming/taskdetail_dialog.dart';
 import 'package:bee_task/util/colors.dart';
@@ -155,18 +157,20 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
           return GestureDetector(
             onTap: () {
-              String type = notification['type'] ?? 'task'; // Get task type
-              String taskId = notification['id'] ?? ''; // Get task ID
+              String type = notification['type'] ?? 'task';
+              String taskId = notification['id'] ?? '';
+              String projectId = notification['projectId'] ?? '';
               String projectName =
-                  notification['projectName'] ?? ''; // Get project name
+                  notification['projectName'] ?? '';
               bool isCompleted =
-                  notification['completed'] ?? false; // Get completion status
-              bool showCompletedTask = true; // Adjust this value as needed
+                  notification['completed'] ?? false;
+              bool showCompletedTask = true; 
 
               _showTaskDetailsDialog(
                 taskId,
                 type,
                 showCompletedTask,
+                projectId,
                 projectName,
                 isCompleted,
               );
@@ -268,14 +272,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 
   void _showTaskDetailsDialog(String taskId, String type,
-      bool showCompletedTask, String projectName, bool isCompleted) async {
+      bool showCompletedTask, String projectId, String projectName, bool isCompleted) async {
     bool permissions =
         await TaskData().isUserInProjectPermissions(type, taskId);
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      isDismissible: false,
       builder: (context) {
         return SingleChildScrollView(
           child: TaskDetailsDialog(
@@ -293,6 +296,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
           ),
         );
       },
-    );
+    ).whenComplete(() {
+      setState(() {
+        context.read<TaskBloc>().add(LoadTasks(projectName));
+      });
+    });
   }
 }

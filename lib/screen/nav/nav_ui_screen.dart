@@ -53,7 +53,7 @@ class _NavUIScreen extends State<NavUIScreen> {
               BottomNavigationBarItem(
                 icon: Icon(Icons.search),
                 backgroundColor: Color(0xFF4254FE),
-                label: 'Tìm kiếm',
+                label: 'Search',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.list_alt_rounded),
@@ -61,9 +61,9 @@ class _NavUIScreen extends State<NavUIScreen> {
                 label: 'Browse',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.settings),
+                icon: Icon(Icons.person_2_outlined),
                 backgroundColor: Color(0xFF4254FE),
-                label: 'Cài Đặt',
+                label: 'Profile',
               ),
             ],
             currentIndex: _selectedIndex,

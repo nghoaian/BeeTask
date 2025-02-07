@@ -73,7 +73,7 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
               const Spacer(),
               ElevatedButton(
                 onPressed: () async {
-                  if (projectNameController.text.isNotEmpty) {
+                  if (projectNameController.text.trim().isNotEmpty) {
                     context.read<ProjectBloc>().add(UpdateProject(
                         widget.projectId, projectNameController.text));
                     widget.resetScreen();

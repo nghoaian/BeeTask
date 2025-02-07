@@ -84,8 +84,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       bool useremailExists =
           await userRepository.checkIfUserEmailExist(event.email);
       if (useremailExists) {
-        debugPrint("Email đã tồn tại!");
-        emit(AuthFailure(errorMessage: "Email đã tồn tại!"));
+        emit(AuthFailure(errorMessage: "Email already exists!"));
         return;
       }
 
@@ -101,7 +100,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       await userRepository.addUser(userId, event.username, event.email, 'blue');
 
       emit(AuthAuthenticated(user: userCredential.user!));
-      debugPrint("Đã phát trạng thái AuthAuthenticated");
     } on FirebaseAuthException catch (e) {
       emit(AuthFailure(errorMessage: e.message ?? "Unknown error"));
     }
@@ -115,7 +113,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       User? user = firebaseAuth.currentUser;
       if (user == null) {
-        emit(ChangePasswordFailure(errorMessage: "Không tìm thấy user."));
+        emit(ChangePasswordFailure(errorMessage: "User not found."));
         return;
       }
 
@@ -130,7 +128,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         await user.reauthenticateWithCredential(credential);
       } on FirebaseAuthException catch (_) {
         emit(ChangePasswordFailure(
-            errorMessage: "Mật khẩu hiện tại không đúng. Vui lòng thử lại."));
+            errorMessage: "Current password is incorrect!"));
         return;
       }
 

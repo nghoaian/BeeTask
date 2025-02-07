@@ -1,3 +1,5 @@
+import 'package:bee_task/bloc/task/task_bloc.dart';
+import 'package:bee_task/bloc/task/task_event.dart';
 import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';

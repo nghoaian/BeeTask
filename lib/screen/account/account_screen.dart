@@ -105,8 +105,8 @@ class _AccountScreenState extends State<AccountScreen> {
                   InfoSection(state.userName, state.userEmail),
                   const SizedBox(height: 20),
                   PasswordSection(),
-                  const SizedBox(height: 20),
-                  DeleteAccountButton(),
+                  // const SizedBox(height: 20),
+                  // DeleteAccountButton(),
                 ],
               );
             } else if (state is AccountLoading) {

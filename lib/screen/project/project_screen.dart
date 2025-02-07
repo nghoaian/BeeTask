@@ -213,7 +213,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
       isScrollControlled: true,
       builder: (context) {
         return FractionallySizedBox(
-          heightFactor: 0.8,
+          heightFactor: 0.9,
           child: SingleChildScrollView(
             child: AddTaskDialog(
               projectId: projectId,
@@ -786,8 +786,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
       context: context,
       isScrollControlled: true,
       builder: (context) {
-        return FractionallySizedBox(
-          heightFactor: 0.8,
+        return SingleChildScrollView(
           child: TaskDetailsDialog(
             taskId: task.id.isNotEmpty ? task.id : 'unknown_id',
             type: 'task',

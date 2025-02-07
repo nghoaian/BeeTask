@@ -684,7 +684,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
               isScrollControlled: true,
               builder: (context) {
                 return FractionallySizedBox(
-                  heightFactor: 0.8,
+                  heightFactor: 0.9,
                   child: AddTaskDialog(
                     projectId: '',
                     taskId: widget.taskId,
@@ -939,8 +939,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
           context: context,
           isScrollControlled: true,
           builder: (context) {
-            return FractionallySizedBox(
-              heightFactor: 0.8,
+            return SingleChildScrollView(
               child: TaskDetailsDialog(
                 taskId: subtask['id'],
                 type: subtask['type'],
@@ -1025,8 +1024,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                 context: context,
                 isScrollControlled: true,
                 builder: (context) {
-                  return FractionallySizedBox(
-                    heightFactor: 0.8,
+                  return SingleChildScrollView(
                     child: TaskDetailsDialog(
                       taskId: subsubtask['id'],
                       type: subsubtask['type'],
@@ -1119,6 +1117,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
         child: TextButton(
           onPressed: () async {
             await showModalBottomSheet(
+              backgroundColor: Colors.white,
               context: context,
               isScrollControlled: true,
               builder: (context) {

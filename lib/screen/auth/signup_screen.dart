@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:bee_task/bloc/account/account_bloc.dart';
+import 'package:bee_task/bloc/account/account_event.dart';
 import 'package:bee_task/bloc/auth/auth_bloc.dart';
 import 'package:bee_task/bloc/auth/auth_event.dart';
 import 'package:bee_task/bloc/auth/auth_state.dart';
@@ -41,17 +43,17 @@ class _SignupScreenState extends State<SignupScreen> {
           if (state is AuthAuthenticated) {
             debugPrint('AuthAuthenticated state emitted');
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
+              const SnackBar(
                 content: Text('Signup successful!'),
                 backgroundColor: Colors.green,
-                duration: const Duration(seconds: 2),
+                duration: Duration(seconds: 2),
               ),
             );
 
             Future.delayed(Duration(seconds: 2), () {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => NavUIScreen()),
+                MaterialPageRoute(builder: (_) => LoginScreen()),
               );
             });
           } else if (state is AuthFailure) {
@@ -180,7 +182,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           // Sign Up Button
                           GestureDetector(
                             onTap: () async {
-                              await _handleSignup(context);
+                              await _handleSignup();
                             },
                             // {
                             //   if (passwordController.text ==
@@ -260,7 +262,7 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-  Future<void> _handleSignup(BuildContext context) async {
+  Future<void> _handleSignup() async {
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
     final confirmPassword = confirmPasswordController.text.trim();
@@ -316,12 +318,20 @@ class _SignupScreenState extends State<SignupScreen> {
           .doc(email)
           .set(project);
 
-      Future.delayed(Duration(seconds: 2), () {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => NavUIScreen()),
-        );
-      });
+      await FirebaseAuth.instance.signOut();
+
+      // Future.delayed(Duration(seconds: 2), () {
+      //   // Navigator.pushReplacement(
+      //   //   context,
+      //   //   MaterialPageRoute(builder: (_) => NavUIScreen()),
+      //   // );
+      //   // Navigator.pushReplacement(
+      //   //   context,
+      //   //   MaterialPageRoute(builder: (_) => LoginScreen()),
+      //   // );
+
+      // });
+      // context.read<AuthBloc>().add(AuthAuthenticated());
     } on FirebaseAuthException catch (e) {
       _showErrorMsg(context, e.message ?? "Unknown error");
     }

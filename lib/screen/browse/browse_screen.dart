@@ -328,7 +328,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
       isScrollControlled: true,
       builder: (context) {
         return FractionallySizedBox(
-          heightFactor: 0.8,
+          heightFactor: 0.9,
           child: SingleChildScrollView(
             child: AddTaskDialog(
               projectId: '',

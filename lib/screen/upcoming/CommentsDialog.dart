@@ -161,6 +161,7 @@ class _CommentsDialogState extends State<CommentsDialog> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: Colors.white,
           title: const Text('Enter Comment'),
           content: TextField(
             controller: inputController,
@@ -265,6 +266,7 @@ class _CommentsDialogState extends State<CommentsDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      backgroundColor: Colors.white,
       title:
           const Text('Comments', style: TextStyle(fontWeight: FontWeight.bold)),
       content: SizedBox(
