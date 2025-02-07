@@ -718,12 +718,12 @@ class _ProjectScreenState extends State<ProjectScreen> {
                         subsubtask.description!,
                         style: TextStyle(color: Colors.grey, fontSize: 14),
                       ),
-                    if (subtask.dueDate != null && subtask.dueDate!.isNotEmpty)
+                    if (subsubtask.dueDate != null && subsubtask.dueDate!.isNotEmpty)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            formatDueDate(subtask.dueDate),
+                            formatDueDate(subsubtask.dueDate),
                             style: TextStyle(
                                 color: AppColors.primary, fontSize: 14),
                           ),
@@ -835,7 +835,11 @@ class _ProjectScreenState extends State<ProjectScreen> {
           ),
         );
       },
-    );
+    ).whenComplete(() {
+      setState(() {
+        _taskBloc.add(LoadTasks(widget.projectId));
+      });
+    });
   }
 
   void _showSubSubTaskDetailsDialog(Task task) async {
@@ -863,7 +867,11 @@ class _ProjectScreenState extends State<ProjectScreen> {
           ),
         );
       },
-    );
+    ).whenComplete(() {
+      setState(() {
+        _taskBloc.add(LoadTasks(widget.projectId));
+      });
+    });
   }
 
   String formatDueDate(String? dueDate) {
