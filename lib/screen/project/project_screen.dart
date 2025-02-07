@@ -727,29 +727,24 @@ class _ProjectScreenState extends State<ProjectScreen> {
                             style: TextStyle(
                                 color: AppColors.primary, fontSize: 14),
                           ),
-                          Row(
-                            children: [
-                              if (commentCount > 0) ...[
-                                const SizedBox(width: 16),
-                                Row(
-                                  children: [
-                                    Icon(Icons.comment,
-                                        size: 16, color: Colors.grey[600]),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '$commentCount',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.grey[600],
-                                      ),
-                                    ),
-                                  ],
+                          if (commentCount > 0) ...[
+                            Row(
+                              children: [
+                                Icon(Icons.comment,
+                                    size: 16, color: Colors.grey[600]),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '$commentCount',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey[600],
+                                  ),
                                 ),
                               ],
-                              SizedBox(width: 50),
-                            ],
-                          ),
+                            ),
+                          ],
+                          SizedBox(width: 50),
                         ],
                       ),
                   ],
