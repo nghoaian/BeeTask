@@ -77,7 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   // Phần trên (chỉ giữ khoảng trống, bỏ text)
                   Container(
                     height:
-                        screenHeight * 0.35, // Giữ chiều cao để không bị lệch
+                        screenHeight * 0.25, // Giữ chiều cao để không bị lệch
                     width: double.infinity,
                   ),
 
@@ -132,30 +132,35 @@ class _LoginScreenState extends State<LoginScreen> {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(40),
-          topRight: Radius.circular(40),
+    return SingleChildScrollView(
+      padding:
+          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(40),
+            topRight: Radius.circular(40),
+          ),
         ),
-      ),
-      padding: EdgeInsets.symmetric(
-        horizontal: screenWidth * 0.05,
-        vertical: screenHeight * 0.02,
-      ),
-      child: Column(
-        children: [
-          _buildEmailField(),
-          const SizedBox(height: 10),
-          _buildPasswordField(),
-          const SizedBox(height: 10),
-          _buildForgotPassword(),
-          const Spacer(), // Đẩy nút Sign In xuống đáy
-          _buildSignInButton(context),
-          const SizedBox(height: 10),
-          _buildSignUp(),
-        ],
+        padding: EdgeInsets.symmetric(
+          horizontal: screenWidth * 0.05,
+          vertical: screenHeight * 0.02,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min, // Quan trọng để tránh lỗi
+          children: [
+            _buildEmailField(),
+            const SizedBox(height: 10),
+            _buildPasswordField(),
+            const SizedBox(height: 10),
+            _buildForgotPassword(),
+            const SizedBox(height: 20),
+            _buildSignInButton(context),
+            const SizedBox(height: 10),
+            _buildSignUp(),
+          ],
+        ),
       ),
     );
   }
