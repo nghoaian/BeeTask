@@ -90,6 +90,22 @@ class InviteBloc extends Bloc<InviteEvent, InviteState> {
     }
   }
 
+  Future<String> getOwner(String projectId) async {
+    try {
+      final projectDoc =
+          await firestore.collection('projects').doc(projectId).get();
+      final ownerUserEmail = projectDoc.data()?['owner'] as String?;
+
+      if (ownerUserEmail != null) {
+        return ownerUserEmail;
+      } else {
+        throw Exception('Owner not found');
+      }
+    } catch (e) {
+      throw Exception('Failed to fetch owner: $e');
+    }
+  }
+
   Future<void> _onEditPermission(
       EditPermission event, Emitter<InviteState> emit) async {
     try {

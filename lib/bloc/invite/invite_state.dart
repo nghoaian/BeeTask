@@ -41,3 +41,12 @@ class InviteFailure extends InviteState {
   @override
   List<Object> get props => [errorMessage];
 }
+
+class OwnerLoaded extends InviteState {
+  final String ownerUserEmail;
+
+  OwnerLoaded(this.ownerUserEmail);
+
+  @override
+  List<Object> get props => [ownerUserEmail];
+}

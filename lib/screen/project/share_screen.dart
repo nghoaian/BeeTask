@@ -202,11 +202,13 @@ class ProjectMembersCard extends StatefulWidget {
 
 class _ProjectMembersCardState extends State<ProjectMembersCard> {
   String _status = 'Can Edit';
+  String _ownerEmail = '';
 
   @override
   void initState() {
     super.initState();
     _fetchPermission();
+    _fetchOwner();
   }
 
   Future<void> _fetchPermission() async {
@@ -216,6 +218,16 @@ class _ProjectMembersCardState extends State<ProjectMembersCard> {
     if (mounted) {
       setState(() {
         _status = permission;
+      });
+    }
+  }
+
+  Future<void> _fetchOwner() async {
+    final inviteBloc = context.read<InviteBloc>();
+    final ownerEmail = await inviteBloc.getOwner(widget.projectId);
+    if (mounted) {
+      setState(() {
+        _ownerEmail = ownerEmail;
       });
     }
   }
@@ -282,7 +294,7 @@ class _ProjectMembersCardState extends State<ProjectMembersCard> {
                         style:
                             const TextStyle(color: Colors.grey, fontSize: 14)),
                     if (widget.currentUserPermission != 'Can View' &&
-                        currentUserEmail != widget.userEmail)
+                        currentUserEmail != widget.userEmail && _ownerEmail != widget.userEmail)
                       PopupMenuButton<String>(
                         icon: const Icon(Icons.arrow_drop_down,
                             color: Colors.grey, size: 16),

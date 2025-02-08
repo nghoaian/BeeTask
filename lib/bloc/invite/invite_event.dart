@@ -43,3 +43,12 @@ class EditPermission extends InviteEvent {
     required this.canEdit,
   });
 }
+
+class GetOwner extends InviteEvent {
+  final String projectId;
+
+  GetOwner(this.projectId);
+
+  @override
+  List<Object> get props => [projectId];
+}
