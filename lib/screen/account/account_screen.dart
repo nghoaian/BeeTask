@@ -36,52 +36,6 @@ class _AccountScreenState extends State<AccountScreen> {
     super.dispose();
   }
 
-  // Future<void> _showEditOptions() async {
-  //   final ImagePicker _picker = ImagePicker();
-  //   final pickedFile = await showModalBottomSheet<XFile?>(
-  //     context: context,
-  //     builder: (context) {
-  //       return Container(
-  //         height: 200,
-  //         child: Column(
-  //           children: [
-  //             ListTile(
-  //               leading: Icon(Icons.camera),
-  //               title: Text('Take Photo'),
-  //               onTap: () async {
-  //                 Navigator.pop(context, await _picker.pickImage(source: ImageSource.camera));
-  //               },
-  //             ),
-  //             ListTile(
-  //               leading: Icon(Icons.photo),
-  //               title: Text('Choose from Photos'),
-  //               onTap: () async {
-  //                 Navigator.pop(context, await _picker.pickImage(source: ImageSource.gallery));
-  //               },
-  //             ),
-  //             ListTile(
-  //               leading: Icon(Icons.delete),
-  //               title: Text('Remove Current Photo'),
-  //               onTap: () {
-  //                 setState(() {
-  //                   _avatarPath = ''; // Xóa ảnh
-  //                 });
-  //                 Navigator.pop(context);
-  //               },
-  //             ),
-  //           ],
-  //         ),
-  //       );
-  //     },
-  //   );
-
-  //   if (pickedFile != null) {
-  //     setState(() {
-  //       _avatarPath = pickedFile.path; // Cập nhật đường dẫn avatar
-  //     });
-  //   }
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

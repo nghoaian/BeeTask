@@ -27,6 +27,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return BlocProvider(
       create: (context) => AuthBloc(
         firebaseAuth: FirebaseAuth.instance,
@@ -37,25 +39,30 @@ class _LoginScreenState extends State<LoginScreen> {
           if (state is AuthLoading) {
             showDialog(
               context: context,
+              barrierDismissible: false,
               builder: (context) => const Center(
                 child: CircularProgressIndicator(),
               ),
             );
           } else if (state is AuthAuthenticated) {
-            // Xoa dialog loading
-            Navigator.of(context).pop();
-            // Navigate to homepage
+            Navigator.of(context).pop(); // Xóa dialog loading
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (_) => NavUIScreen()),
             );
           } else if (state is AuthFailure) {
-            Navigator.of(context).pop();
+            Navigator.of(context).pop(); // Xóa dialog loading nếu có lỗi
             showDialog(
               context: context,
               builder: (context) => AlertDialog(
                 title: const Text('Error'),
                 content: Text(state.errorMessage),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('OK'),
+                  ),
+                ],
               ),
             );
           }
@@ -63,10 +70,32 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Scaffold(
           body: Stack(
             children: [
-              _buildBackground(),
-              Padding(
-                padding: const EdgeInsets.only(top: 200.0),
-                child: _buildLoginForm(context),
+              _buildBackground(), // Nền gradient phía sau
+
+              Column(
+                children: [
+                  // Phần trên (chỉ giữ khoảng trống, bỏ text)
+                  Container(
+                    height:
+                        screenHeight * 0.35, // Giữ chiều cao để không bị lệch
+                    width: double.infinity,
+                  ),
+
+                  // Form đăng nhập bo góc, nằm trên nền gradient
+                  Expanded(
+                    child: Container(
+                      width: double.infinity,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(40),
+                          topRight: Radius.circular(40),
+                        ),
+                      ),
+                      child: _buildLoginForm(context),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -100,31 +129,33 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildLoginForm(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Container(
       decoration: const BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(40),
           topRight: Radius.circular(40),
         ),
-        color: Colors.white,
       ),
-      height: double.infinity,
-      width: double.infinity,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 18),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _buildEmailField(),
-            _buildPasswordField(),
-            const SizedBox(height: 20),
-            _buildForgotPassword(),
-            const SizedBox(height: 70),
-            _buildSignInButton(context),
-            const SizedBox(height: 150),
-            _buildSignUp(),
-          ],
-        ),
+      padding: EdgeInsets.symmetric(
+        horizontal: screenWidth * 0.05,
+        vertical: screenHeight * 0.02,
+      ),
+      child: Column(
+        children: [
+          _buildEmailField(),
+          const SizedBox(height: 10),
+          _buildPasswordField(),
+          const SizedBox(height: 10),
+          _buildForgotPassword(),
+          const Spacer(), // Đẩy nút Sign In xuống đáy
+          _buildSignInButton(context),
+          const SizedBox(height: 10),
+          _buildSignUp(),
+        ],
       ),
     );
   }

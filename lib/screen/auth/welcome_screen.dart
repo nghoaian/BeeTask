@@ -38,108 +38,109 @@ class WelcomeScreen extends StatelessWidget {
   }
 
   Widget _buildWelcomeScreen(BuildContext context) {
-    return Container(
-      height: double.infinity,
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.primary,
-            AppColors.secondary,
+    double screenHeight = MediaQuery.of(context).size.height;
+    double screenWidth = MediaQuery.of(context).size.width;
+
+    return Scaffold(
+      body: Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppColors.primary,
+              AppColors.secondary,
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const Spacer(), // Đẩy nội dung xuống giữa màn hình
+
+            // Logo hoặc hình ảnh ứng dụng
+            SizedBox(
+              height: screenHeight * 0.25, // Chiếm khoảng 25% màn hình
+              child: Image.asset(
+                'lib/util/images/beetasklogo.png',
+                width: screenWidth * 0.6, // 60% chiều rộng màn hình
+                fit: BoxFit.contain,
+              ),
+            ),
+
+            SizedBox(height: screenHeight * 0.05), // Khoảng cách linh hoạt
+
+            // Chữ Welcome
+            const Text(
+              'Welcome To BeeTask',
+              style: TextStyle(
+                fontSize: 32, // Giữ cố định hoặc điều chỉnh theo tỷ lệ
+                fontFamily: 'Times New Roman',
+                color: Colors.yellow,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+
+            SizedBox(height: screenHeight * 0.04), // Khoảng cách linh hoạt
+
+            // Nút SIGN IN
+            SizedBox(
+              width: screenWidth * 0.8, // 80% chiều rộng màn hình
+              height: 50,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  side: const BorderSide(color: AppColors.white),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const LoginScreen()),
+                  );
+                },
+                child: const Text(
+                  'SIGN IN',
+                  style: TextStyle(fontSize: 18, color: AppColors.white),
+                ),
+              ),
+            ),
+
+            SizedBox(height: screenHeight * 0.02), // Khoảng cách linh hoạt
+
+            // Nút SIGN UP
+            SizedBox(
+              width: screenWidth * 0.8, // 80% chiều rộng màn hình
+              height: 50,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const SignupScreen()),
+                  );
+                },
+                child: const Text(
+                  'SIGN UP',
+                  style: TextStyle(fontSize: 18, color: AppColors.black),
+                ),
+              ),
+            ),
+
+            const Spacer(), // Đẩy nội dung lên trên một chút
           ],
         ),
-      ),
-      child: Column(
-        children: [
-          Padding(
-            padding: EdgeInsets.only(top: 120.0),
-            // child: Text(
-            //   'BeeTask',
-            //   style: TextStyle(
-            //     fontFamily: 'Times New Roman',
-            //     fontSize: 40,
-            //     color: AppColors.white,
-            //     fontWeight: FontWeight.bold,
-            //   ),
-            // ),
-            child: Image.asset(
-              'lib/util/images/beetasklogo.png',
-              width: 250,
-              height: 250,
-              fit: BoxFit.contain,
-            ),
-          ),
-          const SizedBox(
-            height: 50,
-          ),
-          const Text(
-            'Welcome To BeeTask',
-            style: TextStyle(
-              fontSize: 35,
-              fontFamily: 'Times New Roman',
-              color: Colors.yellow,
-            ),
-          ),
-          const SizedBox(
-            height: 30,
-          ),
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-              );
-            },
-            child: Container(
-              height: 53,
-              width: 320,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: AppColors.white),
-              ),
-              child: const Center(
-                child: Text(
-                  'SIGN IN',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.white,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(
-            height: 30,
-          ),
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SignupScreen()),
-              );
-            },
-            child: Container(
-              height: 53,
-              width: 320,
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: AppColors.white),
-              ),
-              child: const Center(
-                child: Text(
-                  'SIGN UP',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.black,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

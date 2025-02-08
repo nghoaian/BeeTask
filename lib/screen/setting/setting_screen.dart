@@ -22,7 +22,6 @@ class SettingScreen extends StatefulWidget {
 class _SettingScreenState extends State<SettingScreen> {
   late TextEditingController _nameController;
   String _avatarPath = '';
-  
 
   @override
   void initState() {
@@ -330,15 +329,6 @@ class _SettingScreenState extends State<SettingScreen> {
     );
   }
 
-  // Widget buildDividerWithPadding() {
-  //   return Row(
-  //     children: [
-  //       SizedBox(width: 55), // adjust the width as needed
-  //       Expanded(child: Divider()),
-  //     ],
-  //   );
-  // }
-
   Widget _buildLogoutButton() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -365,11 +355,14 @@ class _SettingScreenState extends State<SettingScreen> {
   void signOut() {
     TaskData().resetData();
     FirebaseAuth.instance.signOut();
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => WelcomeScreen()),
-      (route) => false,
-    );
+
+    Future.delayed(Duration(milliseconds: 300), () {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => WelcomeScreen()),
+        (route) => false,
+      );
+    });
   }
 
   Widget buildDividerWithPadding() {

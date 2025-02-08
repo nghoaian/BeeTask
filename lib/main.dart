@@ -1,5 +1,7 @@
 import 'package:bee_task/bloc/account/account_bloc.dart';
+import 'package:bee_task/bloc/account/account_event.dart'; // Add this line
 import 'package:bee_task/bloc/auth/auth_bloc.dart';
+import 'package:bee_task/bloc/auth/auth_state.dart'; // Add this line
 import 'package:bee_task/bloc/invite/invite_bloc.dart';
 import 'package:bee_task/bloc/project/project_bloc.dart';
 import 'package:bee_task/bloc/task/task_bloc.dart';
@@ -70,14 +72,21 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ],
-      child: MaterialApp(
-        title: 'Quizlet App',
-        debugShowCheckedModeBanner: false,
-        routes: {
-          '/': (context) => WelcomeScreen(),
-          '/setting': (context) => SettingScreen(),
-          '/forgot_password': (context) => ForgetPasswordScreen(),
+      child: BlocListener<AuthBloc, AuthState>(
+        listener: (context, state) {
+          if (state is AuthAuthenticated) {
+            context.read<AccountBloc>().add(FetchUserNameRequested());
+          }
         },
+        child: MaterialApp(
+          title: 'Quizlet App',
+          debugShowCheckedModeBanner: false,
+          routes: {
+            '/': (context) => WelcomeScreen(),
+            '/setting': (context) => SettingScreen(),
+            '/forgot_password': (context) => ForgetPasswordScreen(),
+          },
+        ),
       ),
     );
   }
