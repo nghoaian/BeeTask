@@ -29,12 +29,35 @@ class _CommentsDialogState extends State<CommentsDialog> {
   var subtasks = TaskData().subtasks;
   var subsubtasks = TaskData().subsubtasks;
   var users = TaskData().users;
+  var projects = TaskData().projects;
+  bool owner = false;
 
   @override
   void initState() {
     super.initState();
     user = firebaseAuth.currentUser;
     _fetchComments();
+    var taskF;
+    if (widget.type == 'task') {
+      taskF = tasks.firstWhere((task) => task['id'] == widget.idTask,
+          orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
+          );
+    } else if (widget.type == 'subtask') {
+      taskF = subtasks.firstWhere((task) => task['id'] == widget.idTask,
+          orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
+          );
+    } else {
+      taskF = tasks.firstWhere((task) => task['id'] == widget.idTask,
+          orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
+          );
+    }
+
+    var project = projects.firstWhere((pro) => pro['id'] == taskF['projectId'],
+        orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
+        );
+    if (project['owner'] == user?.email) {
+      owner = true;
+    }
   }
 
   Future<void> _fetchComments() async {
@@ -360,7 +383,7 @@ class _CommentsDialogState extends State<CommentsDialog> {
           comment['date'],
           style: const TextStyle(fontSize: 10),
         ),
-        trailing: comment['author'] == user?.email
+        trailing: (comment['author'] == user?.email || owner == true)
             ? PopupMenuButton<String>(
                 icon: const Icon(Icons.more_vert),
                 onSelected: (value) {
