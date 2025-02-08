@@ -238,44 +238,46 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
 
     return GestureDetector(
       onTap: () async {
-        DateTime? pickedDate = await showDatePicker(
-          context: context,
-          initialDate: dueDate,
-          firstDate: DateTime(2000),
-          lastDate: DateTime(2100),
-        );
-
-        if (pickedDate != null) {
-          String formattedDate =
-              "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}"; // Định dạng "YYYY-MM-DD"
-          context.read<TaskBloc>().add(logTaskActivity(
-              task['projectId'],
-              task['id'],
-              'update',
-              {
-                'dueDate': {
-                  'oldValue': task['dueDate'],
-                  'newValue': formattedDate,
-                },
-              },
-              widget.type));
-
-          setState(() {
-            task['dueDate'] = formattedDate;
-          });
-          Task taskUpdate = Task(
-            id: task['id'],
-            title: task['title'],
-            description: task['description'],
-            dueDate: task['dueDate'],
-            priority: task['priority'],
-            assignee: task['assignee'],
-            type: widget.type,
-            projectName: widget.projectName,
-            completed: task['completed'],
-            subtasks: [],
+        if (widget.permissions == true) {
+          DateTime? pickedDate = await showDatePicker(
+            context: context,
+            initialDate: dueDate,
+            firstDate: DateTime(2000),
+            lastDate: DateTime(2100),
           );
-          _updateTask(taskUpdate.id, taskUpdate, taskUpdate.type);
+
+          if (pickedDate != null) {
+            String formattedDate =
+                "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}"; // Định dạng "YYYY-MM-DD"
+            context.read<TaskBloc>().add(logTaskActivity(
+                task['projectId'],
+                task['id'],
+                'update',
+                {
+                  'dueDate': {
+                    'oldValue': task['dueDate'],
+                    'newValue': formattedDate,
+                  },
+                },
+                widget.type));
+
+            setState(() {
+              task['dueDate'] = formattedDate;
+            });
+            Task taskUpdate = Task(
+              id: task['id'],
+              title: task['title'],
+              description: task['description'],
+              dueDate: task['dueDate'],
+              priority: task['priority'],
+              assignee: task['assignee'],
+              type: widget.type,
+              projectName: widget.projectName,
+              completed: task['completed'],
+              subtasks: [],
+            );
+            _updateTask(taskUpdate.id, taskUpdate, taskUpdate.type);
+          }
 
           // Cập nhật Firestore
         }
@@ -306,14 +308,12 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
       onTap: () async {
         // Hiển thị dialog chỉnh sửa tên task
         if (widget.permissions == true) {
-          if (widget.permissions == true) {
-            String? newTitle = await _returnTaskName(context, taskData);
+          String? newTitle = await _returnTaskName(context, taskData);
 
-            if (newTitle != null && newTitle.trim().isNotEmpty) {
-              setState(() {
-                taskData['title'] = newTitle; // Cập nhật UI ở đây
-              });
-            }
+          if (newTitle != null && newTitle.trim().isNotEmpty) {
+            setState(() {
+              taskData['title'] = newTitle; // Cập nhật UI ở đây
+            });
           }
         }
       },
@@ -818,100 +818,103 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
       BuildContext context, Map<String, dynamic> taskData) {
     return GestureDetector(
       onTap: () {
-        showDialog(
-          context: context,
-          builder: (_) {
-            // Tạo FocusNode để quản lý focus của TextField
-            final FocusNode _focusNode = FocusNode();
-            // Tạo TextEditingController
-            final TextEditingController _controller =
-                TextEditingController(text: taskData['description']);
-            // Lưu trữ giá trị mô tả tạm thời để so sánh khi nhấn Save hoặc Cancel
-            String temporaryDescription = taskData['description'];
+        if (widget.permissions == true) {
+          showDialog(
+            context: context,
+            builder: (_) {
+              // Tạo FocusNode để quản lý focus của TextField
+              final FocusNode _focusNode = FocusNode();
+              // Tạo TextEditingController
+              final TextEditingController _controller =
+                  TextEditingController(text: taskData['description']);
+              // Lưu trữ giá trị mô tả tạm thời để so sánh khi nhấn Save hoặc Cancel
+              String temporaryDescription = taskData['description'];
 
-            // Kích hoạt bàn phím khi dialog hiển thị
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _focusNode.requestFocus();
-            });
+              // Kích hoạt bàn phím khi dialog hiển thị
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _focusNode.requestFocus();
+              });
 
-            return AlertDialog(
-              backgroundColor: Colors.white,
-              title: const Text('Edit Description'),
-              content: SingleChildScrollView(
-                child: ConstrainedBox(
-                  constraints:
-                      BoxConstraints(maxHeight: 300), // Giới hạn chiều cao
-                  child: TextField(
-                    controller: _controller,
-                    focusNode: _focusNode, // Gán FocusNode vào TextField
-                    onChanged: (value) {
-                      temporaryDescription = value; // Lưu giá trị vào biến tạm
-                    },
-                    maxLines: null, // Cho phép nhập nhiều dòng
-                    decoration: const InputDecoration(
-                      labelText: 'Description',
-                      border: OutlineInputBorder(),
+              return AlertDialog(
+                backgroundColor: Colors.white,
+                title: const Text('Edit Description'),
+                content: SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints:
+                        BoxConstraints(maxHeight: 300), // Giới hạn chiều cao
+                    child: TextField(
+                      controller: _controller,
+                      focusNode: _focusNode, // Gán FocusNode vào TextField
+                      onChanged: (value) {
+                        temporaryDescription =
+                            value; // Lưu giá trị vào biến tạm
+                      },
+                      maxLines: null, // Cho phép nhập nhiều dòng
+                      decoration: const InputDecoration(
+                        labelText: 'Description',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType:
+                          TextInputType.multiline, // Hỗ trợ nhập nhiều dòng
+                      textInputAction:
+                          TextInputAction.newline, // Cho phép nhập nhiều dòng
+                      style: TextStyle(fontSize: 14),
                     ),
-                    keyboardType:
-                        TextInputType.multiline, // Hỗ trợ nhập nhiều dòng
-                    textInputAction:
-                        TextInputAction.newline, // Cho phép nhập nhiều dòng
-                    style: TextStyle(fontSize: 14),
                   ),
                 ),
-              ),
-              actions: [
-                // Nút Cancel
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context); // Đóng dialog mà không lưu
-                  },
-                  child: const Text('Cancel',
-                      style: TextStyle(
-                        color: AppColors.primary,
-                      )),
-                ),
-                // Nút Save
-                TextButton(
-                  onPressed: () {
-                    context.read<TaskBloc>().add(logTaskActivity(
-                        taskData['projectId'],
-                        taskData['id'],
-                        'update',
-                        {
-                          'description': {
-                            'oldValue': taskData['description'],
-                            'newValue': temporaryDescription,
+                actions: [
+                  // Nút Cancel
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context); // Đóng dialog mà không lưu
+                    },
+                    child: const Text('Cancel',
+                        style: TextStyle(
+                          color: AppColors.primary,
+                        )),
+                  ),
+                  // Nút Save
+                  TextButton(
+                    onPressed: () {
+                      context.read<TaskBloc>().add(logTaskActivity(
+                          taskData['projectId'],
+                          taskData['id'],
+                          'update',
+                          {
+                            'description': {
+                              'oldValue': taskData['description'],
+                              'newValue': temporaryDescription,
+                            },
                           },
-                        },
-                        widget.type));
-                    setState(() {
-                      taskData['description'] = temporaryDescription;
-                      Task task = Task(
-                        id: taskData['id'],
-                        title: taskData['title'],
-                        description: taskData['description'],
-                        dueDate: taskData['dueDate'],
-                        priority: taskData['priority'],
-                        assignee: taskData['assignee'],
-                        type: widget.type,
-                        projectName: widget.projectName,
-                        completed: taskData['completed'],
-                        subtasks: [],
-                      );
-                      _updateTask(task.id, task, task.type);
-                    });
-                    Navigator.pop(context); // Đóng dialog sau khi lưu
-                  },
-                  child: const Text(
-                    'Save',
-                    style: TextStyle(color: AppColors.primary),
+                          widget.type));
+                      setState(() {
+                        taskData['description'] = temporaryDescription;
+                        Task task = Task(
+                          id: taskData['id'],
+                          title: taskData['title'],
+                          description: taskData['description'],
+                          dueDate: taskData['dueDate'],
+                          priority: taskData['priority'],
+                          assignee: taskData['assignee'],
+                          type: widget.type,
+                          projectName: widget.projectName,
+                          completed: taskData['completed'],
+                          subtasks: [],
+                        );
+                        _updateTask(task.id, task, task.type);
+                      });
+                      Navigator.pop(context); // Đóng dialog sau khi lưu
+                    },
+                    child: const Text(
+                      'Save',
+                      style: TextStyle(color: AppColors.primary),
+                    ),
                   ),
-                ),
-              ],
-            );
-          },
-        );
+                ],
+              );
+            },
+          );
+        }
       },
       child: Text(
         'Description: ${taskData['description']}',
