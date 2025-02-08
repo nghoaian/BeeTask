@@ -108,15 +108,80 @@ class _SignupScreenState extends State<SignupScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         SizedBox(height: screenHeight * 0.03),
-                        _buildTextField(
-                            usernameController, "Username", Icons.person),
+                        // _buildTextField(
+                        //     usernameController, "Username", Icons.person),
+                        TextField(
+                          controller: usernameController,
+                          decoration: const InputDecoration(
+                            suffixIcon: Icon(Icons.check, color: Colors.grey),
+                            label: Text(
+                              'Username',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF4254FE),
+                              ),
+                            ),
+                          ),
+                        ),
                         SizedBox(height: screenHeight * 0.02),
-                        _buildTextField(emailController, "Email", Icons.email),
+                        // _buildTextField(emailController, "Email", Icons.email),
+                        TextField(
+                          controller: emailController,
+                          decoration: const InputDecoration(
+                            suffixIcon: Icon(Icons.check, color: Colors.grey),
+                            label: Text(
+                              'Email',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF4254FE),
+                              ),
+                            ),
+                          ),
+                        ),
                         SizedBox(height: screenHeight * 0.02),
-                        _buildPasswordField(),
+                        // _buildPasswordField(),
+                        TextField(
+                          controller: passwordController,
+                          obscureText: !_passwordVisible,
+                          decoration: InputDecoration(
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _passwordVisible
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                                color: Colors.grey,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _passwordVisible = !_passwordVisible;
+                                });
+                              },
+                            ),
+                            label: const Text(
+                              'Password',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF4254FE),
+                              ),
+                            ),
+                          ),
+                        ),
                         SizedBox(height: screenHeight * 0.02),
-                        _buildTextField(confirmPasswordController,
-                            "Confirm Password", Icons.lock),
+                        // _buildTextField(confirmPasswordController,
+                        //     "Confirm Password", Icons.lock),
+                        TextField(
+                          controller: confirmPasswordController,
+                          obscureText: !_passwordVisible,
+                          decoration: const InputDecoration(
+                            label: Text(
+                              'Confirm Password',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF4254FE),
+                              ),
+                            ),
+                          ),
+                        ),
                         SizedBox(height: screenHeight * 0.05),
 
                         // Sign Up Button
