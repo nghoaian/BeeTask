@@ -1,6 +1,7 @@
 import 'package:bee_task/bloc/project/project_bloc.dart';
 import 'package:bee_task/bloc/task/task_bloc.dart';
 import 'package:bee_task/bloc/task/task_event.dart';
+import 'package:bee_task/bloc/task/task_state.dart';
 import 'package:bee_task/screen/TaskData.dart';
 import 'package:bee_task/screen/upcoming/taskdetail_dialog.dart';
 import 'package:bee_task/util/colors.dart';
@@ -54,7 +55,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
       case 'Overdue':
         filteredTasks = allTasks.where((task) {
           DateTime dueDate = DateTime.parse(task['dueDate']);
-          return dueDate.isBefore(currentDate);
+          DateTime todayStart =
+              DateTime(currentDate.year, currentDate.month, currentDate.day);
+          return dueDate.isBefore(todayStart);
         }).toList();
         break;
 
@@ -116,125 +119,135 @@ class _NotificationScreenState extends State<NotificationScreen> {
           ),
         ],
       ),
-      body: ListView.builder(
-        itemCount: notifications.length,
-        itemBuilder: (context, index) {
-          var notification = notifications[index];
-          DateTime dueDate = DateTime.parse(notification['dueDate']);
-          DateTime currentDate = DateTime.now();
-          String dueText = "";
-
-          switch (_selectedStatus) {
-            case 'Today':
-              if (dueDate.year == DateTime.now().year &&
-                  dueDate.month == DateTime.now().month &&
-                  dueDate.day == DateTime.now().day) {
-                dueText = "is due today!";
-              }
-              break;
-            case 'Tomorrow':
-              if (dueDate.year == DateTime.now().add(Duration(days: 1)).year &&
-                  dueDate.month ==
-                      DateTime.now().add(Duration(days: 1)).month &&
-                  dueDate.day == DateTime.now().add(Duration(days: 1)).day) {
-                dueText = "is due tomorrow!";
-              }
-              break;
-            case 'Overdue':
-              if (dueDate.isBefore(currentDate)) {
-                dueText =
-                    "was due on ${DateFormat('dd/MM/yyyy').format(dueDate)}!";
-              }
-              break;
-
-            default:
-              dueText = "is due on ${DateFormat('dd/MM/yyyy').format(dueDate)}";
-              break;
+      body: BlocListener<TaskBloc, TaskState>(
+        listener: (context, state) {
+          if (state is TaskLoaded) {
+            _fetchTasks();
           }
+        },
+        child: ListView.builder(
+          itemCount: notifications.length,
+          itemBuilder: (context, index) {
+            var notification = notifications[index];
+            DateTime dueDate = DateTime.parse(notification['dueDate']);
+            DateTime currentDate = DateTime.now();
+            String dueText = "";
 
-          return GestureDetector(
-            onTap: () {
-              String type = notification['type'] ?? 'task';
-              String taskId = notification['id'] ?? '';
-              String projectId = notification['projectId'] ?? '';
-              String projectName = notification['projectName'] ?? '';
-              bool isCompleted = notification['completed'] ?? false;
-              bool showCompletedTask = true;
+            switch (_selectedStatus) {
+              case 'Today':
+                if (dueDate.year == DateTime.now().year &&
+                    dueDate.month == DateTime.now().month &&
+                    dueDate.day == DateTime.now().day) {
+                  dueText = "is due today!";
+                }
+                break;
+              case 'Tomorrow':
+                if (dueDate.year ==
+                        DateTime.now().add(Duration(days: 1)).year &&
+                    dueDate.month ==
+                        DateTime.now().add(Duration(days: 1)).month &&
+                    dueDate.day == DateTime.now().add(Duration(days: 1)).day) {
+                  dueText = "is due tomorrow!";
+                }
+                break;
+              case 'Overdue':
+                DateTime todayStart = DateTime(
+                    currentDate.year, currentDate.month, currentDate.day);
+                if (dueDate.isBefore(todayStart)) {
+                  dueText =
+                      "was due on ${DateFormat('dd/MM/yyyy').format(dueDate)}!";
+                }
+                break;
+              default:
+                dueText =
+                    "is due on ${DateFormat('dd/MM/yyyy').format(dueDate)}";
+                break;
+            }
 
-              _showTaskDetailsDialog(
-                taskId,
-                type,
-                showCompletedTask,
-                projectId,
-                projectName,
-                isCompleted,
-              );
-            },
-            child: Card(
-              color: Colors.white,
-              margin: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              elevation: 2,
-              child: Padding(
-                padding: EdgeInsets.all(8),
-                child: Row(
-                  children: [
-                    const CircleAvatar(
-                      radius: 16,
-                      backgroundColor: Colors.white,
-                      child: Icon(
-                        Icons.toc_rounded,
-                        color: AppColors.primary,
-                        size: 30,
+            return GestureDetector(
+              onTap: () {
+                String type = notification['type'] ?? 'task';
+                String taskId = notification['id'] ?? '';
+                String projectId = notification['projectId'] ?? '';
+                String projectName = notification['projectName'] ?? '';
+                bool isCompleted = notification['completed'] ?? false;
+                bool showCompletedTask = true;
+
+                _showTaskDetailsDialog(
+                  taskId,
+                  type,
+                  showCompletedTask,
+                  projectId,
+                  projectName,
+                  isCompleted,
+                );
+              },
+              child: Card(
+                color: Colors.white,
+                margin: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                elevation: 2,
+                child: Padding(
+                  padding: EdgeInsets.all(8),
+                  child: Row(
+                    children: [
+                      const CircleAvatar(
+                        radius: 16,
+                        backgroundColor: Colors.white,
+                        child: Icon(
+                          Icons.toc_rounded,
+                          color: AppColors.primary,
+                          size: 30,
+                        ),
                       ),
-                    ),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          RichText(
-                            text: TextSpan(
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            RichText(
+                              text: TextSpan(
+                                children: [
+                                  TextSpan(
+                                    text: "📌 ${notification['title']} ",
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.primary),
+                                  ),
+                                  TextSpan(
+                                    text: dueText,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              notification['description'],
+                              style: TextStyle(color: Colors.black87),
+                            ),
+                            SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                TextSpan(
-                                  text: "📌 ${notification['title']} ",
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.primary),
-                                ),
-                                TextSpan(
-                                  text: dueText,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black),
+                                Text(
+                                  DateFormat('dd/MM/yyyy').format(dueDate),
+                                  style: TextStyle(
+                                      color: Colors.grey[600], fontSize: 12),
                                 ),
                               ],
                             ),
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            notification['description'],
-                            style: TextStyle(color: Colors.black87),
-                          ),
-                          SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                DateFormat('dd/MM/yyyy').format(dueDate),
-                                style: TextStyle(
-                                    color: Colors.grey[600], fontSize: 12),
-                              ),
-                            ],
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
