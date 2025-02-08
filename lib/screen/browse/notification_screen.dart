@@ -51,14 +51,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
               dueDate.day == tomorrowDate.day;
         }).toList();
         break;
-      case 'Yesterday':
+      case 'Overdue':
         filteredTasks = allTasks.where((task) {
           DateTime dueDate = DateTime.parse(task['dueDate']);
-          return dueDate.year == yesterdayDate.year &&
-              dueDate.month == yesterdayDate.month &&
-              dueDate.day == yesterdayDate.day;
+          return dueDate.isBefore(currentDate);
         }).toList();
         break;
+
       case 'All':
       default:
         filteredTasks = allTasks;
@@ -106,7 +105,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
               return [
                 _buildPopupMenuItem('Today', Icons.today),
                 _buildPopupMenuItem('Tomorrow', Icons.calendar_today),
-                _buildPopupMenuItem('Yesterday', Icons.history),
+                _buildPopupMenuItem('Overdue', Icons.warning_amber_rounded),
                 _buildPopupMenuItem('All', Icons.all_inbox),
               ];
             },
@@ -122,6 +121,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
         itemBuilder: (context, index) {
           var notification = notifications[index];
           DateTime dueDate = DateTime.parse(notification['dueDate']);
+          DateTime currentDate = DateTime.now();
           String dueText = "";
 
           switch (_selectedStatus) {
@@ -140,16 +140,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 dueText = "is due tomorrow!";
               }
               break;
-            case 'Yesterday':
-              if (dueDate.year ==
-                      DateTime.now().subtract(Duration(days: 1)).year &&
-                  dueDate.month ==
-                      DateTime.now().subtract(Duration(days: 1)).month &&
-                  dueDate.day ==
-                      DateTime.now().subtract(Duration(days: 1)).day) {
-                dueText = "was due yesterday!";
+            case 'Overdue':
+              if (dueDate.isBefore(currentDate)) {
+                dueText =
+                    "was due on ${DateFormat('dd/MM/yyyy').format(dueDate)}!";
               }
               break;
+
             default:
               dueText = "is due on ${DateFormat('dd/MM/yyyy').format(dueDate)}";
               break;
@@ -160,11 +157,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
               String type = notification['type'] ?? 'task';
               String taskId = notification['id'] ?? '';
               String projectId = notification['projectId'] ?? '';
-              String projectName =
-                  notification['projectName'] ?? '';
-              bool isCompleted =
-                  notification['completed'] ?? false;
-              bool showCompletedTask = true; 
+              String projectName = notification['projectName'] ?? '';
+              bool isCompleted = notification['completed'] ?? false;
+              bool showCompletedTask = true;
 
               _showTaskDetailsDialog(
                 taskId,
@@ -271,8 +266,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
     );
   }
 
-  void _showTaskDetailsDialog(String taskId, String type,
-      bool showCompletedTask, String projectId, String projectName, bool isCompleted) async {
+  void _showTaskDetailsDialog(
+      String taskId,
+      String type,
+      bool showCompletedTask,
+      String projectId,
+      String projectName,
+      bool isCompleted) async {
     bool permissions =
         await TaskData().isUserInProjectPermissions(type, taskId);
 
