@@ -197,11 +197,23 @@ class FirebaseCommentRepository implements CommentRepository {
           'date': commentData['date'] ?? '',
         });
       }
+      allComments.sort((a, b) {
+        // Chuyển đổi ngày từ chuỗi sang DateTime
+        DateTime dateA = _parseDate(a['date']);
+        DateTime dateB = _parseDate(b['date']);
+
+        // Sắp xếp theo thứ tự giảm dần (mới nhất trước)
+        return dateB.compareTo(dateA);
+      });
 
       return Future.value(allComments);
     } catch (e) {
       throw Exception('Error fetching comments: $e');
     }
+  }
+
+  DateTime _parseDate(String dateStr) {
+    return DateFormat("dd/MM/yyyy, HH:mm").parse(dateStr);
   }
 
   Future<void> logTaskActivity(
