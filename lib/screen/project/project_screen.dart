@@ -1,3 +1,6 @@
+import 'dart:math';
+
+import 'package:bee_task/bloc/invite/invite_bloc.dart';
 import 'package:bee_task/bloc/project/project_bloc.dart';
 import 'package:bee_task/bloc/project/project_event.dart';
 import 'package:bee_task/bloc/project/project_state.dart';
@@ -46,6 +49,8 @@ class _ProjectScreenState extends State<ProjectScreen> {
   var subtasks = TaskData().subtasks;
   var subsubtasks = TaskData().subsubtasks;
   var users = TaskData().users;
+  String currentUserEmail = "";
+  String _ownerEmail = '';
 
   late var task;
 
@@ -54,8 +59,28 @@ class _ProjectScreenState extends State<ProjectScreen> {
     super.initState();
     _taskBloc = TaskBloc(FirebaseFirestore.instance, widget.taskRepository,
         widget.userRepository);
-    _taskBloc.add(
-        LoadTasks(widget.projectId)); // Gọi sự kiện LoadTasks với projectId
+    _taskBloc.add(LoadTasks(widget.projectId));
+    _fetchCurrentUserEmail();
+    _fetchOwner();
+  }
+
+  Future<void> _fetchCurrentUserEmail() async {
+    final email = await widget.userRepository.getUserEmail();
+    if (mounted) {
+      setState(() {
+        currentUserEmail = email!;
+      });
+    }
+  }
+
+  Future<void> _fetchOwner() async {
+    final inviteBloc = context.read<InviteBloc>();
+    final ownerEmail = await inviteBloc.getOwner(widget.projectId);
+    if (mounted) {
+      setState(() {
+        _ownerEmail = ownerEmail;
+      });
+    }
   }
 
   @override
@@ -147,6 +172,10 @@ class _ProjectScreenState extends State<ProjectScreen> {
                       subsubtasks.removeWhere((subsubtask) =>
                           subsubtask['projectId'] == widget.projectId);
                       Navigator.pop(context);
+                    } else if (value == 'leave') {
+                      context.read<ProjectBloc>().add(RemoveProjectMember(
+                                widget.projectId, currentUserEmail));
+                      Navigator.pop(context);
                     }
                   },
                   itemBuilder: (BuildContext context) {
@@ -159,17 +188,30 @@ class _ProjectScreenState extends State<ProjectScreen> {
                           leading: Icon(Icons.edit),
                         ),
                       ),
-                      const PopupMenuItem<String>(
-                        value: 'delete',
-                        child: ListTile(
-                          title: Text(
-                            'Delete',
-                            style: TextStyle(color: Colors.red),
+                      if (_ownerEmail == currentUserEmail)
+                        const PopupMenuItem<String>(
+                          value: 'delete',
+                          child: ListTile(
+                            title: Text(
+                              'Delete',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                            leading: Icon(Icons.delete),
+                            iconColor: Colors.red,
                           ),
-                          leading: Icon(Icons.delete),
-                          iconColor: Colors.red,
+                        )
+                      else
+                        const PopupMenuItem<String>(
+                          value: 'leave',
+                          child: ListTile(
+                            title: Text(
+                              'Leave',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                            leading: Icon(Icons.exit_to_app),
+                            iconColor: Colors.red,
+                          ),
                         ),
-                      ),
                     ];
                   },
                   color: Colors.grey[50],

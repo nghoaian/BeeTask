@@ -290,11 +290,12 @@ class _ProjectMembersCardState extends State<ProjectMembersCard> {
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(_status,
+                    Text(_ownerEmail == widget.userEmail ? "Owner" : _status,
                         style:
                             const TextStyle(color: Colors.grey, fontSize: 14)),
                     if (widget.currentUserPermission != 'Can View' &&
-                        currentUserEmail != widget.userEmail && _ownerEmail != widget.userEmail)
+                        currentUserEmail != widget.userEmail &&
+                        _ownerEmail != widget.userEmail)
                       PopupMenuButton<String>(
                         icon: const Icon(Icons.arrow_drop_down,
                             color: Colors.grey, size: 16),

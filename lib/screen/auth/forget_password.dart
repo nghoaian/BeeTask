@@ -129,6 +129,37 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                         //     .read<AuthBloc>()
                         //     .add(ForgetPasswordRequested(email: email));
                         final email = emailController.text.trim();
+
+                        if (email.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Please enter your email',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              backgroundColor: Colors.red,
+                              duration: Duration(seconds: 1),
+                            ),
+                          );
+                          return;
+                        }
+
+                        final emailRegex = RegExp(
+                            r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+                        if (!emailRegex.hasMatch(email)) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Email is not valid',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              backgroundColor: Colors.red,
+                              duration: Duration(seconds: 1),
+                            ),
+                          );
+                          return;
+                        }
+
                         try {
                           // Kiểm tra email trong cơ sở dữ liệu
                           final userSnapshot = await FirebaseFirestore.instance
@@ -144,6 +175,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                                   style: TextStyle(color: Colors.white),
                                 ),
                                 backgroundColor: Colors.red,
+                              duration: Duration(seconds: 1),
                               ),
                             );
                             return;
