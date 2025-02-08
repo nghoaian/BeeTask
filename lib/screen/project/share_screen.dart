@@ -16,8 +16,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class ShareScreen extends StatefulWidget {
   final String projectId;
   final String projectName;
+  final Function resetScreen;
 
-  ShareScreen({required this.projectId, required this.projectName});
+  ShareScreen(
+      {required this.projectId,
+      required this.projectName,
+      required this.resetScreen});
 
   @override
   _ShareScreenState createState() => _ShareScreenState();
@@ -58,9 +62,11 @@ class _ShareScreenState extends State<ShareScreen> {
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary),
-          onPressed: () => Navigator.pop(context),
-        ),
+            icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary),
+            onPressed: () => {
+                  widget.resetScreen(),
+                  Navigator.pop(context),
+                }),
       ),
       backgroundColor: Colors.grey[200],
       body: Container(
@@ -153,6 +159,7 @@ class _ShareScreenState extends State<ShareScreen> {
                           projectId: widget.projectId,
                           userRepository: userRepository,
                           currentUserPermission: currentUserPermission,
+                          resetScreen: widget.resetScreen,
                         );
                       },
                     );
@@ -178,6 +185,7 @@ class ProjectMembersCard extends StatefulWidget {
   final String projectId;
   final FirebaseUserRepository userRepository;
   final String currentUserPermission;
+  final Function resetScreen;
 
   ProjectMembersCard(
       {required this.userName,
@@ -185,7 +193,8 @@ class ProjectMembersCard extends StatefulWidget {
       required this.userColor,
       required this.projectId,
       required this.userRepository,
-      required this.currentUserPermission});
+      required this.currentUserPermission,
+      required this.resetScreen});
 
   @override
   _ProjectMembersCardState createState() => _ProjectMembersCardState();
@@ -285,9 +294,6 @@ class _ProjectMembersCardState extends State<ProjectMembersCard> {
                           if (value == 'Remove') {
                             context.read<ProjectBloc>().add(RemoveProjectMember(
                                 widget.projectId, widget.userEmail));
-                            context
-                                .read<TaskBloc>()
-                                .add(LoadTasks(widget.projectId));
                           }
                           if (value == 'Can View' || value == 'Can Edit') {
                             context.read<InviteBloc>().add(

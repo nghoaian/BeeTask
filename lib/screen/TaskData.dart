@@ -45,8 +45,14 @@ class TaskData {
         String projectId = projectChange.doc.id;
         String projectName = projectChange.doc['name'];
         // Lắng nghe sự thay đổi của các thành viên trong project
-
-        _listenToTasks(projectId, projectName);
+        if (projectChange.type == DocumentChangeType.removed) {
+          tasks.removeWhere((task) => task['projectId'] == projectId);
+          subtasks.removeWhere((subtask) => subtask['projectId'] == projectId);
+          subsubtasks.removeWhere(
+              (subsubtask) => subsubtask['projectId'] == projectId);
+        } else {
+          _listenToTasks(projectId, projectName);
+        }
       }
     });
   }

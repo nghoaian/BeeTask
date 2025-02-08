@@ -103,7 +103,13 @@ class _ProjectScreenState extends State<ProjectScreen> {
                       MaterialPageRoute(
                         builder: (context) => ShareScreen(
                             projectId: widget.projectId,
-                            projectName: widget.projectName),
+                            projectName: widget.projectName,
+                            resetScreen: () {
+                              setState(() {
+                                _taskBloc.add(LoadTasks(widget
+                                    .projectId)); // Gọi sự kiện LoadTasks với projectId
+                              });
+                            }),
                       ),
                     );
                   },
@@ -134,6 +140,12 @@ class _ProjectScreenState extends State<ProjectScreen> {
                       context
                           .read<ProjectBloc>()
                           .add(DeleteProject(widget.projectId));
+                      tasks.removeWhere(
+                          (task) => task['projectId'] == widget.projectId);
+                      subtasks.removeWhere((subtask) =>
+                          subtask['projectId'] == widget.projectId);
+                      subsubtasks.removeWhere((subsubtask) =>
+                          subsubtask['projectId'] == widget.projectId);
                       Navigator.pop(context);
                     }
                   },
@@ -226,7 +238,11 @@ class _ProjectScreenState extends State<ProjectScreen> {
           ),
         );
       },
-    );
+    ).whenComplete(() {
+      setState(() {
+        _taskBloc.add(LoadTasks(widget.projectId));
+      });
+    });
   }
 
   Widget _buildTaskItem(Task task) {

@@ -47,6 +47,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
 
   final TextEditingController assigneeController =
       TextEditingController(); // Controller cho người được giao việc
+  String taskNameError = '';
 
   DateTime? _selectedDay;
   late String projectID;
@@ -81,11 +82,12 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
             // Không cho phép nhập trực tiếp vào TextField, thay vào đó mở dialog
             child: TextField(
               controller: taskNameController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.all(Radius.circular(10)),
                 ),
                 hintText: 'Enter task name',
+                errorText: taskNameError.isNotEmpty ? taskNameError : null,
               ),
               textInputAction: TextInputAction.done,
             ),
@@ -123,8 +125,16 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
             ),
             ElevatedButton(
               onPressed: () {
-                // Lưu giá trị đã nhập vào taskNameController
                 taskNameController.text = _controller.text;
+                if (taskNameController.text.trim() != '') {
+                  setState(() {
+                    taskNameError = '';
+                  });
+                } else {
+                  setState(() {
+                    taskNameError = 'Task name cannot be empty';
+                  });
+                }
 
                 Navigator.pop(context); // Đóng dialog sau khi lưu
               },
@@ -216,10 +226,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
       return project['permissions'] != null &&
           project['permissions'].contains(user?.email);
     }).toList();
-    print(user?.email);
-    print(filteredProjects);
-    print("----------------------------------------------------------------");
-    print(projects);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -261,8 +268,11 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
         projectController.text.isEmpty ? '' : projectController.text;
 
     var task;
-    // Kiểm tra nếu widget.taskId không phải là rỗng
-    if (widget.taskId.isNotEmpty || widget.taskId != '') {
+    print(widget.projectId);
+
+    if (widget.projectId.isNotEmpty) {
+      selectedProjectId = widget.projectId;
+    } else if (widget.taskId.isNotEmpty || widget.taskId != '') {
       if (widget.type == 'task') {
         // Lấy projectId và projectName từ task
         task = TaskData().tasks.firstWhere(
@@ -285,7 +295,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                   {}, // Nếu không tìm thấy thì trả về một đối tượng trống
             );
       }
-      selectedProjectId = task['projectId'] ?? '';
+      selectedProjectId = '';
     }
 
     // Tìm dự án dựa trên ID
@@ -535,127 +545,134 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
         // Nút Save
         ElevatedButton(
           onPressed: () async {
-            // Hiển thị dialog thông báo đang thêm task
-            showDialog(
-              context: context,
-              barrierDismissible:
-                  false, // Không cho phép đóng dialog bằng cách nhấn ngoài
-              builder: (_) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              },
-            );
+            if (taskNameController.text.trim() == '') {
+              setState(() {
+                taskNameError = 'Task name cannot be empty';
+              });
 
-            // Lấy thông tin dự án và assignee
-            String type = '';
-            String avatar = '';
-            String assignee = assigneeController.text.isNotEmpty
-                ? assigneeController.text
-                : (user?.email ?? '');
-
-            // Lấy id từ projectController
-            String projectId = projectController.text;
-            if (widget.taskId.isNotEmpty || widget.taskId != '') {
-              if (widget.type == 'task') {
-                var task = TaskData().tasks.firstWhere(
-                      (proj) => proj['id'] == widget.taskId,
-                      orElse: () =>
-                          {}, // Nếu không tìm thấy thì trả về một đối tượng trống
-                    );
-                projectId = task['projectId'];
-              } else if (widget.type == 'subtask') {
-                var task = TaskData().subtasks.firstWhere(
-                      (proj) => proj['id'] == widget.taskId,
-                      orElse: () =>
-                          {}, // Nếu không tìm thấy thì trả về một đối tượng trống
-                    );
-                projectId = task['projectId'];
-              } else {
-                var task = TaskData().subsubtasks.firstWhere(
-                      (proj) => proj['id'] == widget.taskId,
-                      orElse: () =>
-                          {}, // Nếu không tìm thấy thì trả về một đối tượng trống
-                    );
-                projectId = task['projectId'];
-              }
-            }
-
-            // Tìm type của project dựa trên id
-            final project = TaskData().projects.firstWhere(
-                  (proj) => proj['id'] == projectId,
-                  orElse: () => {},
-                );
-            if (project.isNotEmpty) {
-              type = project['id'] ?? '';
-            }
-
-            // Cập nhật task với các thông tin từ các trường nhập liệu
-            final task = {
-              'task': taskNameController.text,
-              'status': 'Chưa Hoàn Thành',
-              'priority': priorityController.text,
-              'description': descriptionController.text,
-              'typeID': type,
-              'assignee': assignee ?? user?.email,
-              'date': _selectedDay ?? DateTime.now(),
-            };
-
-            // Tạo đối tượng Task
-            Task taskData = Task(
-              id: '',
-              title: task['task'].toString(),
-              description: task['description'].toString(),
-              dueDate: _formatDueDate(_selectedDay?.toIso8601String() ?? ''),
-              priority: task['priority'].toString(),
-              assignee: task['assignee'].toString(),
-              completed: false,
-              type: type, // Dùng 'type' là type của project
-              projectName: '', // Dùng tên task hoặc projectName nếu cần
-              subtasks: [],
-            );
-
-            try {
-              if (widget.type == 'task') {
-                context.read<TaskBloc>().add(AddTask(
-                    'noID', 'subtask', taskData, widget.taskId, projectId));
-              } else if (widget.type == 'subtask') {
-                context.read<TaskBloc>().add(AddTask(
-                    'noID', 'subsubtask', taskData, widget.taskId, projectId));
-              } else {
-                context.read<TaskBloc>().add(AddTask(
-                    'noID', 'task', taskData, widget.taskId, projectId));
-              }
-
-              // Simulate a delay of 2 seconds before closing the dialog and adding the task
-              await Future.delayed(Duration(seconds: 2));
-              if (widget.type == '') {
-                widget.resetScreen();
-              } else {
-                widget.resetDialog();
-              }
-
-              // Close the loading dialog
-              Navigator.pop(context); // Close loading dialog
-
-              // Now close the task creation dialog as well
-              Navigator.pop(context); // Close the main task dialog
-
-              // Show success message
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Task added successfully!')),
+              // Trỏ lại vào ô nhập liệu
+            } else {
+              // Hiển thị dialog thông báo đang thêm task
+              showDialog(
+                context: context,
+                barrierDismissible:
+                    false, // Không cho phép đóng dialog bằng cách nhấn ngoài
+                builder: (_) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                },
               );
-            } catch (e) {
-              // Close the loading dialog on failure
-              Navigator.pop(context); // Close loading dialog
 
-              // Optionally, close the task creation dialog as well
-              Navigator.pop(context); // Close the task creation dialog
+              // Lấy thông tin dự án và assignee
+              String type = '';
+              String avatar = '';
+              String assignee = assigneeController.text.isNotEmpty
+                  ? assigneeController.text
+                  : (user?.email ?? '');
 
-              // Show error message
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Error while adding task: $e')),
+              // Lấy id từ projectController
+              String projectId = projectController.text;
+              if (widget.taskId.isNotEmpty || widget.taskId != '') {
+                if (widget.type == 'task') {
+                  var task = TaskData().tasks.firstWhere(
+                        (proj) => proj['id'] == widget.taskId,
+                        orElse: () =>
+                            {}, // Nếu không tìm thấy thì trả về một đối tượng trống
+                      );
+                  projectId = task['projectId'];
+                } else if (widget.type == 'subtask') {
+                  var task = TaskData().subtasks.firstWhere(
+                        (proj) => proj['id'] == widget.taskId,
+                        orElse: () =>
+                            {}, // Nếu không tìm thấy thì trả về một đối tượng trống
+                      );
+                  projectId = task['projectId'];
+                } else {
+                  var task = TaskData().subsubtasks.firstWhere(
+                        (proj) => proj['id'] == widget.taskId,
+                        orElse: () =>
+                            {}, // Nếu không tìm thấy thì trả về một đối tượng trống
+                      );
+                  projectId = task['projectId'];
+                }
+              }
+
+              // Tìm type của project dựa trên id
+              final project = TaskData().projects.firstWhere(
+                    (proj) => proj['id'] == projectId,
+                    orElse: () => {},
+                  );
+              if (project.isNotEmpty) {
+                type = project['id'] ?? '';
+              }
+
+              final task = {
+                'task': taskNameController.text,
+                'status': 'Chưa Hoàn Thành',
+                'priority': priorityController.text,
+                'description': descriptionController.text,
+                'typeID': type,
+                'assignee': assignee ?? user?.email,
+                'date': _selectedDay ?? DateTime.now(),
+              };
+
+              // Tạo đối tượng Task
+              Task taskData = Task(
+                id: '',
+                title: task['task'].toString(),
+                description: task['description'].toString(),
+                dueDate: _formatDueDate(_selectedDay?.toIso8601String() ?? ''),
+                priority: task['priority'].toString(),
+                assignee: task['assignee'].toString(),
+                completed: false,
+                type: type, // Dùng 'type' là type của project
+                projectName: '', // Dùng tên task hoặc projectName nếu cần
+                subtasks: [],
               );
+
+              try {
+                if (widget.type == 'task') {
+                  context.read<TaskBloc>().add(AddTask(
+                      'noID', 'subtask', taskData, widget.taskId, projectId));
+                } else if (widget.type == 'subtask') {
+                  context.read<TaskBloc>().add(AddTask('noID', 'subsubtask',
+                      taskData, widget.taskId, projectId));
+                } else {
+                  context.read<TaskBloc>().add(AddTask(
+                      'noID', 'task', taskData, widget.taskId, projectId));
+                }
+
+                // Simulate a delay of 2 seconds before closing the dialog and adding the task
+                await Future.delayed(Duration(seconds: 2));
+                if (widget.type == '') {
+                  widget.resetScreen();
+                } else {
+                  widget.resetDialog();
+                }
+
+                // Close the loading dialog
+                Navigator.pop(context); // Close loading dialog
+
+                // Now close the task creation dialog as well
+                Navigator.pop(context); // Close the main task dialog
+
+                // Show success message
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Task added successfully!')),
+                );
+              } catch (e) {
+                // Close the loading dialog on failure
+                Navigator.pop(context); // Close loading dialog
+
+                // Optionally, close the task creation dialog as well
+                Navigator.pop(context); // Close the task creation dialog
+
+                // Show error message
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error while adding task: $e')),
+                );
+              }
             }
           },
           style: ElevatedButton.styleFrom(

@@ -306,81 +306,15 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
       onTap: () async {
         // Hiển thị dialog chỉnh sửa tên task
         if (widget.permissions == true) {
-          showDialog(
-            context: context,
-            builder: (_) {
-              String initialValue = taskData['title'] ?? '';
-              final TextEditingController _controller =
-                  TextEditingController(text: initialValue);
-              final FocusNode _focusNode = FocusNode();
+          if (widget.permissions == true) {
+            String? newTitle = await _returnTaskName(context, taskData);
 
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                _focusNode.requestFocus();
+            if (newTitle != null && newTitle.trim().isNotEmpty) {
+              setState(() {
+                taskData['title'] = newTitle; // Cập nhật UI ở đây
               });
-
-              String temporaryTitle = initialValue;
-
-              return AlertDialog(
-                title: const Text('Edit Name'),
-                content: TextField(
-                  controller: _controller,
-                  focusNode: _focusNode,
-                  autofocus: true,
-                  onChanged: (value) {
-                    temporaryTitle = value;
-                  },
-                  decoration: const InputDecoration(
-                    labelText: 'Name',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: const Text('Cancel'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      context.read<TaskBloc>().add(logTaskActivity(
-                          taskData['projectId'],
-                          taskData['id'],
-                          'update',
-                          {
-                            'title': {
-                              'oldValue': taskData['title'],
-                              'newValue': temporaryTitle,
-                            },
-                          },
-                          widget.type));
-                      taskData['title'] = temporaryTitle;
-
-                      Task task = Task(
-                        id: taskData['id'],
-                        title: taskData['title'],
-                        description: taskData['description'],
-                        dueDate: taskData['dueDate'],
-                        priority: taskData['priority'],
-                        assignee: taskData['assignee'],
-                        type: widget.type,
-                        projectName: widget.projectName,
-                        completed: taskData['completed'],
-                        subtasks: [],
-                      );
-                      _updateTask(task.id, task, task.type);
-                      setState(() {
-                        taskData['title'] = temporaryTitle;
-                      });
-
-                      Navigator.pop(context);
-                    },
-                    child: const Text('Save'),
-                  ),
-                ],
-              );
-            },
-          );
+            }
+          }
         }
       },
       child: Row(
@@ -662,6 +596,96 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
           ),
         ],
       ),
+    );
+  }
+
+  Future<String?> _returnTaskName(BuildContext context, var taskData) {
+    return showDialog<String>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        String initialValue = taskData['title'] ?? '';
+        final TextEditingController _controller =
+            TextEditingController(text: initialValue);
+        final FocusNode _focusNode = FocusNode();
+        String temporaryTitle = initialValue;
+        String taskNameError = '';
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _focusNode.requestFocus();
+        });
+
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: const Text('Edit Name'),
+              content: TextField(
+                controller: _controller,
+                focusNode: _focusNode,
+                autofocus: true,
+                onChanged: (value) {
+                  setState(() {
+                    temporaryTitle = value;
+                    taskNameError =
+                        value.trim().isEmpty ? 'Task name cannot be empty' : '';
+                  });
+                },
+                decoration: InputDecoration(
+                  errorText: taskNameError.isNotEmpty ? taskNameError : null,
+                  labelText: 'Name',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(dialogContext); // Trả về null khi Cancel
+                  },
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (temporaryTitle.trim().isNotEmpty) {
+                      context.read<TaskBloc>().add(logTaskActivity(
+                          taskData['projectId'],
+                          taskData['id'],
+                          'update',
+                          {
+                            'title': {
+                              'oldValue': taskData['title'],
+                              'newValue': temporaryTitle,
+                            },
+                          },
+                          widget.type));
+
+                      Task task = Task(
+                        id: taskData['id'],
+                        title: temporaryTitle,
+                        description: taskData['description'],
+                        dueDate: taskData['dueDate'],
+                        priority: taskData['priority'],
+                        assignee: taskData['assignee'],
+                        type: widget.type,
+                        projectName: widget.projectName,
+                        completed: taskData['completed'],
+                        subtasks: [],
+                      );
+                      _updateTask(task.id, task, task.type);
+
+                      Navigator.pop(
+                          dialogContext, temporaryTitle); // Trả về giá trị mới
+                    } else {
+                      setState(() {
+                        taskNameError = 'Task name cannot be empty';
+                      });
+                    }
+                  },
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
