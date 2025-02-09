@@ -217,20 +217,20 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
         ),
         body: groupedLogs.isEmpty
             ? Container(
-              color: Colors.grey[200],
-              child: Center(
-                  child:
-                      Text('No activities found', style: TextStyle(fontSize: 18)),
+                color: Colors.grey[200],
+                child: Center(
+                  child: Text('No activities found',
+                      style: TextStyle(fontSize: 18)),
                 ),
-            )
+              )
             : Container(
-              color: Colors.grey[200],
-              child: ListView.builder(
+                color: Colors.grey[200],
+                child: ListView.builder(
                   itemCount: groupedLogs.length,
                   itemBuilder: (context, index) {
                     String date = groupedLogs.keys.elementAt(index);
                     List<Map<String, dynamic>> logsForDate = groupedLogs[date]!;
-              
+
                     return Container(
                       color: Colors.grey[200],
                       child: Column(
@@ -247,9 +247,9 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                           ),
                           // Display each activity log for the given date
                           ...logsForDate.map((log) {
-                            var user = users.firstWhere(
-                                (user) => user['userEmail'] == log['userEmail']);
-              
+                            var user = users.firstWhere((user) =>
+                                user['userEmail'] == log['userEmail']);
+
                             var task;
                             if (log['type'] == 'task') {
                               task = TaskData().tasks.firstWhere(
@@ -267,26 +267,28 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                                     orElse: () => {"id": "noTask"},
                                   );
                             }
-              
+
                             var project = TaskData().projects.firstWhere(
                                 (project) => project['id'] == task['projectId'],
                                 orElse: () =>
                                     {} // Nếu không tìm thấy, trả về một Map trống
                                 );
                             final userF = FirebaseAuth.instance.currentUser;
-              
+
                             String action = log['action'] ?? "Unknown Action";
                             String projectId =
                                 log['projectId'] ?? "Unknown Project";
                             String taskId = log['taskId'] ?? "Unknown Task";
                             String taskName = task['title'] ?? "Unknown Task";
-                            String userEmail = log['userEmail'] ?? "Unknown User";
+                            String userEmail =
+                                log['userEmail'] ?? "Unknown User";
                             if (userEmail == userF?.email) {
                               userEmail = "You";
                             }
                             String projectName =
                                 project['name'] ?? "Unknown Project";
-                            String timestamp = log['timestamp'] ?? "No Timestamp";
+                            String timestamp =
+                                log['timestamp'] ?? "No Timestamp";
                             String type = log['type'] ?? "task";
                             Map<String, dynamic> changedFields =
                                 log['changedFields'] ?? {};
@@ -308,7 +310,7 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                               }
                               logText = "$userEmail $action a $type $taskName";
                             }
-              
+
                             if ((action.toLowerCase() == "update" &&
                                     changedFields.isNotEmpty) ||
                                 (action.toLowerCase() == "edit_comment" &&
@@ -324,34 +326,52 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                                 }
                                 return "$key: $fieldData";
                               }).toList();
-              
+
                               logText += "\n${changeDetails.join(", ")}";
                             }
-              
+
                             return InkWell(
                               onTap: () async {
-                                bool permissions = await TaskData()
-                                    .isUserInProjectPermissions(
-                                        type, log['taskId']);
-              
                                 if (log['action'].contains('comment')) {
-                                  showModalBottomSheet(
-                                    context: context,
-                                    isScrollControlled: true,
-                                    builder: (context) => CommentsDialog(
-                                      idTask:
-                                          log['taskId'], // Pass idTask to dialog
-                                      type: log['type'], // Pass type to dialog
-                                    ),
-                                  );
+                                  if (taskName == "Unknown Task") {
+                                    showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          title: Text("Task Already Deleted"),
+                                          content: Text(
+                                              "This task has already been deleted."),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () {
+                                                Navigator.of(context).pop();
+                                              },
+                                              child: Text("OK"),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  } else {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      builder: (context) => CommentsDialog(
+                                        idTask: log[
+                                            'taskId'], // Pass idTask to dialog
+                                        type:
+                                            log['type'], // Pass type to dialog
+                                      ),
+                                    );
+                                  }
                                 } else if (log['action'] == 'delete') {
                                   showDialog(
                                     context: context,
                                     builder: (BuildContext context) {
                                       return AlertDialog(
                                         title: Text("Restore $type"),
-                                        content:
-                                            Text("This $type has been deleted."),
+                                        content: Text(
+                                            "This $type has been deleted."),
                                         actions: [
                                           TextButton(
                                             onPressed: () {
@@ -364,7 +384,11 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                                     },
                                   );
                                 } else {
-                                  try {
+                                  if (taskName != "Unknown Task" &&
+                                      projectName != "Unknown Project") {
+                                    bool permissions = await TaskData()
+                                        .isUserInProjectPermissions(
+                                            type, log['taskId']);
                                     showModalBottomSheet(
                                       backgroundColor: Colors.white,
                                       context: context,
@@ -390,7 +414,7 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                                     ).whenComplete(() {
                                       setState(() {});
                                     });
-                                  } catch (e) {
+                                  } else {
                                     showDialog(
                                       context: context,
                                       builder: (BuildContext context) {
@@ -461,7 +485,8 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                                             SizedBox(height: 8),
                                             Row(
                                               mainAxisAlignment:
-                                                  MainAxisAlignment.spaceBetween,
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
                                               children: [
                                                 Text(
                                                   formatTimestamp(timestamp),
@@ -491,7 +516,7 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                     );
                   },
                 ),
-            ));
+              ));
   }
 
   IconData getActivityIcon(String action) {

@@ -26,7 +26,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
   late FirebaseUserRepository userRepository;
   var projects = TaskData().projects;
   var users = TaskData().users;
-
+  User? user = FirebaseAuth.instance.currentUser;
   @override
   void initState() {
     super.initState();
@@ -104,7 +104,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
                     return Center(child: CircularProgressIndicator());
                   } else if (state is ProjectLoaded) {
                     final projects = state.projects
-                        .where((project) => project["name"] != "Inbox")
+                        .where((project) => project["id"] != user?.email)
                         .toList();
                     return buildSectionGroup(
                       projects.map((project) {
@@ -114,7 +114,8 @@ class _BrowseScreenState extends State<BrowseScreen> {
                           project["name"],
                           Icons.tag,
                           projectId: project["id"],
-                          isEditProject: true, // chọn cho edit vì để hiển thị nút edit trong project (đã có check permission cho edit trong projectsreen)
+                          isEditProject:
+                              true, // chọn cho edit vì để hiển thị nút edit trong project (đã có check permission cho edit trong projectsreen)
                         );
                       }).toList(),
                     );
