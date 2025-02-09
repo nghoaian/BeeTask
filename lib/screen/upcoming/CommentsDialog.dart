@@ -180,45 +180,65 @@ class _CommentsDialogState extends State<CommentsDialog> {
 
   Future<void> _showCommentInputDialog() async {
     TextEditingController inputController = TextEditingController();
+    String? errorText; // Biến lưu thông báo lỗi
 
     await showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          title: const Text('Enter Comment'),
-          content: TextField(
-            controller: inputController,
-            decoration: const InputDecoration(
-              hintText: 'Type your comment...',
-            ),
-            maxLines: 3,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Đóng dialog
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () async {
-                // Lấy giá trị từ TextField
-                final commentText = inputController.text.trim();
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              title: const Text('Enter Comment'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: inputController,
+                    decoration: InputDecoration(
+                      hintText: 'Type your comment...',
+                      errorText: errorText, // Hiển thị lỗi nếu có
+                    ),
+                    maxLines: 3,
+                    onChanged: (text) {
+                      // Khi người dùng nhập, xóa lỗi
+                      if (errorText != null && text.trim().isNotEmpty) {
+                        setState(() {
+                          errorText = null;
+                        });
+                      }
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Đóng dialog
+                  },
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    final commentText = inputController.text.trim();
 
-                if (commentText.isNotEmpty) {
-                  Navigator.of(context).pop(); // Đóng dialog
+                    if (commentText.isEmpty) {
+                      setState(() {
+                        errorText = 'Comment cannot be empty'; // Cập nhật lỗi
+                      });
+                      return;
+                    }
 
-                  // Gọi hàm thêm comment
-                  await _addComments(commentText);
+                    Navigator.of(context).pop(); // Đóng dialog
 
-                  // Cập nhật giao diện hoặc fetch lại comments nếu cần
-                  await _fetchComments();
-                }
-              },
-              child: const Text('Submit'),
-            ),
-          ],
+                    await _addComments(commentText);
+                    await _fetchComments();
+                  },
+                  child: const Text('Submit'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -227,61 +247,92 @@ class _CommentsDialogState extends State<CommentsDialog> {
   void _editComment(Map<String, dynamic> comment) {
     TextEditingController editController =
         TextEditingController(text: comment['text']);
+    String? errorText;
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Edit Comment'),
-          content: TextField(
-            controller: editController,
-            decoration: const InputDecoration(hintText: 'Edit your comment'),
-            maxLines: 3,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                var taskData;
-                if (widget.type == 'task') {
-                  taskData = TaskData().tasks.firstWhere(
-                      (task) => task['id'] == widget.idTask,
-                      orElse: () => {});
-                } else if (widget.type == 'subtask') {
-                  taskData = TaskData().subtasks.firstWhere(
-                      (task) => task['id'] == widget.idTask,
-                      orElse: () => {});
-                } else {
-                  taskData = TaskData().subsubtasks.firstWhere(
-                      (task) => task['id'] == widget.idTask,
-                      orElse: () => {});
-                }
-                BlocProvider.of<CommentBloc>(context).add(logTaskActivity(
-                  projectId: taskData['projectId'],
-                  taskId: widget.idTask,
-                  action: 'edit_comment',
-                  changedFields: {
-                    'comment': {
-                      'oldValue': comment['text'],
-                      'newValue': editController.text.trim(),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Edit Comment'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: editController,
+                    decoration: InputDecoration(
+                      hintText: 'Edit your comment',
+                      errorText: errorText, // Hiển thị lỗi nếu có
+                    ),
+                    maxLines: 3,
+                    onChanged: (text) {
+                      if (errorText != null && text.trim().isNotEmpty) {
+                        setState(() {
+                          errorText = null; // Xóa lỗi khi người dùng nhập lại
+                        });
+                      }
                     },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
                   },
-                  type: widget.type,
-                ));
-                setState(() {
-                  comment['text'] = editController.text.trim();
-                  _editComments(comment['id'], comment['text']);
-                });
-                Navigator.of(context).pop();
-              },
-              child: const Text('Save'),
-            ),
-          ],
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    String newText = editController.text.trim();
+                    if (newText.isEmpty) {
+                      setState(() {
+                        errorText = 'Comment cannot be empty';
+                      });
+                      return;
+                    }
+
+                    var taskData;
+                    if (widget.type == 'task') {
+                      taskData = TaskData().tasks.firstWhere(
+                          (task) => task['id'] == widget.idTask,
+                          orElse: () => {});
+                    } else if (widget.type == 'subtask') {
+                      taskData = TaskData().subtasks.firstWhere(
+                          (task) => task['id'] == widget.idTask,
+                          orElse: () => {});
+                    } else {
+                      taskData = TaskData().subsubtasks.firstWhere(
+                          (task) => task['id'] == widget.idTask,
+                          orElse: () => {});
+                    }
+
+                    BlocProvider.of<CommentBloc>(context).add(logTaskActivity(
+                      projectId: taskData['projectId'],
+                      taskId: widget.idTask,
+                      action: 'edit_comment',
+                      changedFields: {
+                        'comment': {
+                          'oldValue': comment['text'],
+                          'newValue': newText,
+                        },
+                      },
+                      type: widget.type,
+                    ));
+
+                    setState(() {
+                      comment['text'] = newText;
+                      _editComments(comment['id'], newText);
+                    });
+
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
