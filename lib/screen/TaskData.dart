@@ -569,42 +569,54 @@ class TaskData {
     try {
       User? user = FirebaseAuth.instance.currentUser;
 
-      // Check if there's a logged-in user
+      // Kiểm tra nếu không có người dùng đang đăng nhập
       if (user == null) {
         print('No current user');
         return false;
       }
 
-      // Fetch the project document from Firestore
+      // Kiểm tra nếu projectId bị null hoặc rỗng
+      if (projectId.isEmpty) {
+        print('Invalid project ID');
+        return false;
+      }
+
+      // Truy vấn tài liệu project từ Firestore
       DocumentSnapshot projectSnapshot = await FirebaseFirestore.instance
           .collection('projects')
           .doc(projectId)
           .get();
 
-      // Check if the project exists
+      // Kiểm tra nếu tài liệu không tồn tại
       if (!projectSnapshot.exists) {
         print('Project not found');
         return false;
       }
 
-      // Get the permissions array from the project data
+      // Lấy dữ liệu từ Firestore
       var projectData = projectSnapshot.data() as Map<String, dynamic>?;
-      var permissions = projectData?['permissions'];
 
-      // Check if permissions is null or not an array
-      if (permissions == null || !(permissions is List)) {
-        print('Permissions field is either missing or not an array');
+      // Kiểm tra nếu không có dữ liệu hoặc thiếu field "permissions"
+      if (projectData == null || !projectData.containsKey('permissions')) {
+        print('Project data is missing or has no permissions field');
         return false;
       }
 
-      // Debugging: Log the user email and permissions array
+      var permissions = projectData['permissions'];
 
+      // Kiểm tra nếu permissions không phải là danh sách
+      if (permissions is! List) {
+        print('Permissions field is not a list');
+        return false;
+      }
+
+      // Kiểm tra xem email có trong danh sách quyền hay không
       return permissions
+          .whereType<String>()
           .any((email) => email.toLowerCase() == user.email?.toLowerCase());
     } catch (e) {
-      // Log error
       print('Error checking user permissions: $e');
-      return false; // Return false if an error occurs
+      return false;
     }
   }
 

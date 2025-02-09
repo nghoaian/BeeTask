@@ -147,7 +147,6 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
   }
 
   Future<Widget> _buildProjectDropdown() async {
-    bool check = await TaskData().ProjectPermissions(widget.projectId);
     // Kiểm tra nếu widget.taskId không phải là rỗng
     if (widget.taskId.isNotEmpty || widget.taskId != '') {
       var task;
@@ -192,9 +191,12 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
           ),
         ],
       );
-    } else if (projectID != '' && check == true) {
-      projectController.text = projectID;
-      return _buildProjectDropdownWithChoices();
+    } else if (projectID != '') {
+      bool check = await TaskData().ProjectPermissions(widget.projectId);
+      if (check == true) {
+        projectController.text = projectID;
+        return _buildProjectDropdownWithChoices();
+      }
     }
 
     // Nếu widget.taskId rỗng, kiểm tra nếu projectController là user?.email
@@ -261,7 +263,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     );
   }
 
-  Widget _buildAssigneeDropdown() {
+  Future<Widget> _buildAssigneeDropdown() async {
     // Lấy ID dự án từ projectController
 
     String selectedProjectId =
@@ -270,7 +272,10 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     var task;
 
     if (widget.projectId.isNotEmpty) {
-      selectedProjectId = widget.projectId;
+      bool check = await TaskData().ProjectPermissions(widget.projectId);
+      if (check == true) {
+        selectedProjectId = widget.projectId;
+      }
     } else if (widget.taskId.isNotEmpty || widget.taskId != '') {
       if (widget.type == 'task') {
         // Lấy projectId và projectName từ task
@@ -722,7 +727,18 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
               },
             ),
             const SizedBox(height: 12),
-            _buildAssigneeDropdown(),
+            FutureBuilder<Widget>(
+              future: _buildAssigneeDropdown(),
+              builder: (BuildContext context, AsyncSnapshot<Widget> snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return CircularProgressIndicator();
+                } else if (snapshot.hasError) {
+                  return Text('Error: ${snapshot.error}');
+                } else {
+                  return snapshot.data ?? SizedBox.shrink();
+                }
+              },
+            ),
             const SizedBox(height: 12),
             _buildPriorityDropdown(),
             const SizedBox(height: 12),
