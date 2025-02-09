@@ -445,30 +445,35 @@ class _CommentsDialogState extends State<CommentsDialog> {
                   if (value == 'edit') {
                     _editComment(comment);
                   } else if (value == 'delete') {
-                    var taskData;
-                    if (widget.type == 'task') {
-                      taskData = TaskData().tasks.firstWhere(
-                          (task) => task['id'] == widget.idTask,
-                          orElse: () => {});
-                    } else if (widget.type == 'subtask') {
-                      taskData = TaskData().subtasks.firstWhere(
-                          (task) => task['id'] == widget.idTask,
-                          orElse: () => {});
-                    } else {
-                      taskData = TaskData().subsubtasks.firstWhere(
-                          (task) => task['id'] == widget.idTask,
-                          orElse: () => {});
-                    }
-                    BlocProvider.of<CommentBloc>(context).add(logTaskActivity(
-                      projectId: taskData['projectId'],
-                      taskId: widget.idTask,
-                      action: 'add_comment',
-                      changedFields: comment,
-                      type: widget.type,
-                    ));
-                    _deleteComments(comment['id']);
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text('Confirm Delete'),
+                          content: const Text(
+                              'Are you sure you want to delete this comment?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context)
+                                    .pop(); // Đóng dialog nếu hủy
+                              },
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop(); // Đóng dialog
 
-                    _fetchComments();
+                                _deleteComments(comment['id']);
+                                _fetchComments();
+                              },
+                              child: const Text('Delete',
+                                  style: TextStyle(color: Colors.red)),
+                            ),
+                          ],
+                        );
+                      },
+                    );
                   }
                 },
                 itemBuilder: (BuildContext context) {
