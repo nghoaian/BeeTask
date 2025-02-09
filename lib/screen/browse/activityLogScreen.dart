@@ -216,183 +216,142 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
           ],
         ),
         body: groupedLogs.isEmpty
-            ? Center(
-                child:
-                    Text('No activities found', style: TextStyle(fontSize: 18)),
-              )
-            : ListView.builder(
-                itemCount: groupedLogs.length,
-                itemBuilder: (context, index) {
-                  String date = groupedLogs.keys.elementAt(index);
-                  List<Map<String, dynamic>> logsForDate = groupedLogs[date]!;
-
-                  return Container(
-                    color: Colors.grey[200],
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Display the date header
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            date,
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 16),
+            ? Container(
+              color: Colors.grey[200],
+              child: Center(
+                  child:
+                      Text('No activities found', style: TextStyle(fontSize: 18)),
+                ),
+            )
+            : Container(
+              color: Colors.grey[200],
+              child: ListView.builder(
+                  itemCount: groupedLogs.length,
+                  itemBuilder: (context, index) {
+                    String date = groupedLogs.keys.elementAt(index);
+                    List<Map<String, dynamic>> logsForDate = groupedLogs[date]!;
+              
+                    return Container(
+                      color: Colors.grey[200],
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Display the date header
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              date,
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
                           ),
-                        ),
-                        // Display each activity log for the given date
-                        ...logsForDate.map((log) {
-                          var user = users.firstWhere(
-                              (user) => user['userEmail'] == log['userEmail']);
-
-                          var task;
-                          if (log['type'] == 'task') {
-                            task = TaskData().tasks.firstWhere(
-                                  (taskF) => taskF['id'] == log['taskId'],
-                                  orElse: () => {"id": "noTask"},
-                                );
-                          } else if (log['type'] == 'subtask') {
-                            task = TaskData().subtasks.firstWhere(
-                                  (taskF) => taskF['id'] == log['taskId'],
-                                  orElse: () => {"id": "noTask"},
-                                );
-                          } else {
-                            task = TaskData().subsubtasks.firstWhere(
-                                  (taskF) => taskF['id'] == log['taskId'],
-                                  orElse: () => {"id": "noTask"},
-                                );
-                          }
-
-                          var project = TaskData().projects.firstWhere(
-                              (project) => project['id'] == task['projectId'],
-                              orElse: () =>
-                                  {} // Nếu không tìm thấy, trả về một Map trống
-                              );
-                          final userF = FirebaseAuth.instance.currentUser;
-
-                          String action = log['action'] ?? "Unknown Action";
-                          String projectId =
-                              log['projectId'] ?? "Unknown Project";
-                          String taskId = log['taskId'] ?? "Unknown Task";
-                          String taskName = task['title'] ?? "Unknown Task";
-                          String userEmail = log['userEmail'] ?? "Unknown User";
-                          if (userEmail == userF?.email) {
-                            userEmail = "You";
-                          }
-                          String projectName =
-                              project['name'] ?? "Unknown Project";
-                          String timestamp = log['timestamp'] ?? "No Timestamp";
-                          String type = log['type'] ?? "task";
-                          Map<String, dynamic> changedFields =
-                              log['changedFields'] ?? {};
-                          String logText = '';
-                          if (action.contains('comment')) {
-                            if (action == "add_comment") {
-                              logText =
-                                  "$userEmail add a comment in the $type $taskName";
-                            } else if (action == "edit_comment") {
-                              logText =
-                                  "$userEmail edit a comment in the $type $taskName";
-                            } else if (action == "delete_comment") {
-                              logText =
-                                  "$userEmail delete a comment in the $type $taskName";
+                          // Display each activity log for the given date
+                          ...logsForDate.map((log) {
+                            var user = users.firstWhere(
+                                (user) => user['userEmail'] == log['userEmail']);
+              
+                            var task;
+                            if (log['type'] == 'task') {
+                              task = TaskData().tasks.firstWhere(
+                                    (taskF) => taskF['id'] == log['taskId'],
+                                    orElse: () => {"id": "noTask"},
+                                  );
+                            } else if (log['type'] == 'subtask') {
+                              task = TaskData().subtasks.firstWhere(
+                                    (taskF) => taskF['id'] == log['taskId'],
+                                    orElse: () => {"id": "noTask"},
+                                  );
+                            } else {
+                              task = TaskData().subsubtasks.firstWhere(
+                                    (taskF) => taskF['id'] == log['taskId'],
+                                    orElse: () => {"id": "noTask"},
+                                  );
                             }
-                          } else {
-                            if (action == 'delete') {
-                              taskName = log['changedFields']['title'];
+              
+                            var project = TaskData().projects.firstWhere(
+                                (project) => project['id'] == task['projectId'],
+                                orElse: () =>
+                                    {} // Nếu không tìm thấy, trả về một Map trống
+                                );
+                            final userF = FirebaseAuth.instance.currentUser;
+              
+                            String action = log['action'] ?? "Unknown Action";
+                            String projectId =
+                                log['projectId'] ?? "Unknown Project";
+                            String taskId = log['taskId'] ?? "Unknown Task";
+                            String taskName = task['title'] ?? "Unknown Task";
+                            String userEmail = log['userEmail'] ?? "Unknown User";
+                            if (userEmail == userF?.email) {
+                              userEmail = "You";
                             }
-                            logText = "$userEmail $action a $type $taskName";
-                          }
-
-                          if ((action.toLowerCase() == "update" &&
-                                  changedFields.isNotEmpty) ||
-                              (action.toLowerCase() == "edit_comment" &&
-                                  changedFields.isNotEmpty)) {
-                            List<String> changeDetails =
-                                changedFields.entries.map((entry) {
-                              var key = entry.key;
-                              var fieldData = entry.value;
-                              if (fieldData is Map<String, dynamic>) {
-                                var oldValue = fieldData['oldValue'] ?? "N/A";
-                                var newValue = fieldData['newValue'] ?? "N/A";
-                                return "The $key changed from \"$oldValue\" to \"$newValue\"";
+                            String projectName =
+                                project['name'] ?? "Unknown Project";
+                            String timestamp = log['timestamp'] ?? "No Timestamp";
+                            String type = log['type'] ?? "task";
+                            Map<String, dynamic> changedFields =
+                                log['changedFields'] ?? {};
+                            String logText = '';
+                            if (action.contains('comment')) {
+                              if (action == "add_comment") {
+                                logText =
+                                    "$userEmail add a comment in the $type $taskName";
+                              } else if (action == "edit_comment") {
+                                logText =
+                                    "$userEmail edit a comment in the $type $taskName";
+                              } else if (action == "delete_comment") {
+                                logText =
+                                    "$userEmail delete a comment in the $type $taskName";
                               }
-                              return "$key: $fieldData";
-                            }).toList();
-
-                            logText += "\n${changeDetails.join(", ")}";
-                          }
-
-                          return InkWell(
-                            onTap: () async {
-                              bool permissions = await TaskData()
-                                  .isUserInProjectPermissions(
-                                      type, log['taskId']);
-
-                              if (log['action'].contains('comment')) {
-                                showModalBottomSheet(
-                                  context: context,
-                                  isScrollControlled: true,
-                                  builder: (context) => CommentsDialog(
-                                    idTask:
-                                        log['taskId'], // Pass idTask to dialog
-                                    type: log['type'], // Pass type to dialog
-                                  ),
-                                );
-                              } else if (log['action'] == 'delete') {
-                                showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      title: Text("Restore $type"),
-                                      content:
-                                          Text("This $type has been deleted."),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                          },
-                                          child: Text("OK"),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                );
-                              } else {
-                                try {
+                            } else {
+                              if (action == 'delete') {
+                                taskName = log['changedFields']['title'];
+                              }
+                              logText = "$userEmail $action a $type $taskName";
+                            }
+              
+                            if ((action.toLowerCase() == "update" &&
+                                    changedFields.isNotEmpty) ||
+                                (action.toLowerCase() == "edit_comment" &&
+                                    changedFields.isNotEmpty)) {
+                              List<String> changeDetails =
+                                  changedFields.entries.map((entry) {
+                                var key = entry.key;
+                                var fieldData = entry.value;
+                                if (fieldData is Map<String, dynamic>) {
+                                  var oldValue = fieldData['oldValue'] ?? "N/A";
+                                  var newValue = fieldData['newValue'] ?? "N/A";
+                                  return "The $key changed from \"$oldValue\" to \"$newValue\"";
+                                }
+                                return "$key: $fieldData";
+                              }).toList();
+              
+                              logText += "\n${changeDetails.join(", ")}";
+                            }
+              
+                            return InkWell(
+                              onTap: () async {
+                                bool permissions = await TaskData()
+                                    .isUserInProjectPermissions(
+                                        type, log['taskId']);
+              
+                                if (log['action'].contains('comment')) {
                                   showModalBottomSheet(
-                                    backgroundColor: Colors.white,
                                     context: context,
                                     isScrollControlled: true,
-                                    builder: (context) {
-                                      return SingleChildScrollView(
-                                        child: TaskDetailsDialog(
-                                          taskId: taskId,
-                                          permissions: permissions,
-                                          type: type,
-                                          isCompleted: task['completed'],
-                                          openFirst: true,
-                                          selectDay: DateTime.now(),
-                                          projectName: project['name'],
-                                          showCompletedTasks: true,
-                                          taskBloc: BlocProvider.of<TaskBloc>(
-                                              context),
-                                          resetDialog: () => {},
-                                          resetScreen: () => setState(() {}),
-                                        ),
-                                      );
-                                    },
-                                  ).whenComplete(() {
-                                    setState(() {});
-                                  });
-                                } catch (e) {
+                                    builder: (context) => CommentsDialog(
+                                      idTask:
+                                          log['taskId'], // Pass idTask to dialog
+                                      type: log['type'], // Pass type to dialog
+                                    ),
+                                  );
+                                } else if (log['action'] == 'delete') {
                                   showDialog(
                                     context: context,
                                     builder: (BuildContext context) {
                                       return AlertDialog(
-                                        title: Text("Task Already Deleted"),
-                                        content: Text(
-                                            "This task has already been deleted."),
+                                        title: Text("Restore $type"),
+                                        content:
+                                            Text("This $type has been deleted."),
                                         actions: [
                                           TextButton(
                                             onPressed: () {
@@ -404,88 +363,135 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                                       );
                                     },
                                   );
-                                }
-                              }
-                            },
-                            child: Card(
-                              color: Colors.white,
-                              margin: EdgeInsets.symmetric(
-                                  vertical: 6, horizontal: 16),
-                              elevation: 2,
-                              child: Padding(
-                                padding: EdgeInsets.all(8),
-                                child: Row(
-                                  children: [
-                                    // Stack to overlay the icon at the bottom-right of the avatar
-                                    Stack(
-                                      clipBehavior: Clip.none,
-                                      children: [
-                                        CircleAvatar(
-                                          radius: 16,
-                                          backgroundColor: TaskData()
-                                              .getColorFromString(
-                                                  user['userColor']),
-                                          child: Text(
-                                            user['userName'][0].toUpperCase(),
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
+                                } else {
+                                  try {
+                                    showModalBottomSheet(
+                                      backgroundColor: Colors.white,
+                                      context: context,
+                                      isScrollControlled: true,
+                                      builder: (context) {
+                                        return SingleChildScrollView(
+                                          child: TaskDetailsDialog(
+                                            taskId: taskId,
+                                            permissions: permissions,
+                                            type: type,
+                                            isCompleted: task['completed'],
+                                            openFirst: true,
+                                            selectDay: DateTime.now(),
+                                            projectName: project['name'],
+                                            showCompletedTasks: true,
+                                            taskBloc: BlocProvider.of<TaskBloc>(
+                                                context),
+                                            resetDialog: () => {},
+                                            resetScreen: () => setState(() {}),
+                                          ),
+                                        );
+                                      },
+                                    ).whenComplete(() {
+                                      setState(() {});
+                                    });
+                                  } catch (e) {
+                                    showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          title: Text("Task Already Deleted"),
+                                          content: Text(
+                                              "This task has already been deleted."),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () {
+                                                Navigator.of(context).pop();
+                                              },
+                                              child: Text("OK"),
                                             ),
-                                          ), // Replace with actual user avatar
-                                        ),
-                                        Positioned(
-                                          bottom: -4,
-                                          right: -4,
-                                          child: Icon(
-                                            getActivityIcon(action),
-                                            color: Colors.blue,
-                                            size: 15,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    SizedBox(width: 10),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  }
+                                }
+                              },
+                              child: Card(
+                                color: Colors.white,
+                                margin: EdgeInsets.symmetric(
+                                    vertical: 6, horizontal: 16),
+                                elevation: 2,
+                                child: Padding(
+                                  padding: EdgeInsets.all(8),
+                                  child: Row(
+                                    children: [
+                                      // Stack to overlay the icon at the bottom-right of the avatar
+                                      Stack(
+                                        clipBehavior: Clip.none,
                                         children: [
-                                          Text(
-                                            logText,
+                                          CircleAvatar(
+                                            radius: 16,
+                                            backgroundColor: TaskData()
+                                                .getColorFromString(
+                                                    user['userColor']),
+                                            child: Text(
+                                              user['userName'][0].toUpperCase(),
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ), // Replace with actual user avatar
                                           ),
-                                          SizedBox(height: 8),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text(
-                                                formatTimestamp(timestamp),
-                                                style: TextStyle(
-                                                    color: Colors.grey[600],
-                                                    fontSize: 12),
-                                              ),
-                                              Text(
-                                                "$projectName",
-                                                style: TextStyle(
-                                                    color: Colors.blueGrey,
-                                                    fontSize: 12),
-                                              ),
-                                            ],
+                                          Positioned(
+                                            bottom: -4,
+                                            right: -4,
+                                            child: Icon(
+                                              getActivityIcon(action),
+                                              color: Colors.blue,
+                                              size: 15,
+                                            ),
                                           ),
                                         ],
                                       ),
-                                    ),
-                                  ],
+                                      SizedBox(width: 10),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              logText,
+                                            ),
+                                            SizedBox(height: 8),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Text(
+                                                  formatTimestamp(timestamp),
+                                                  style: TextStyle(
+                                                      color: Colors.grey[600],
+                                                      fontSize: 12),
+                                                ),
+                                                Text(
+                                                  "$projectName",
+                                                  style: TextStyle(
+                                                      color: Colors.blueGrey,
+                                                      fontSize: 12),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
-                        }).toList(),
-                      ],
-                    ),
-                  );
-                },
-              ));
+                            );
+                          }).toList(),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+            ));
   }
 
   IconData getActivityIcon(String action) {

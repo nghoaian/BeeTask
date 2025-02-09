@@ -89,9 +89,14 @@ class _SettingScreenState extends State<SettingScreen> {
             Expanded(
               child: ListView(
                 children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 32.0),
+                    child: Text('PERSONALIZATION',
+                        style: TextStyle(color: Colors.grey[600])),
+                  ),
                   _buildSection(
                     children: [
-                      _buildSectionTitle('PERSONALIZATION'),
+                      // _buildSectionTitle('PERSONALIZATION'),
                       // _buildListTile(
                       //   icon: Icons.person,
                       //   title: 'Account',

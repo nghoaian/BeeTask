@@ -194,12 +194,15 @@ class _ProjectActivityScreenState extends State<ProjectActivityScreen> {
             color: Colors.black, fontSize: 22, fontWeight: FontWeight.bold),
       ),
       body: projectActivity.isEmpty
-          ? Center(
-              child: Text(
-                "No activities available",
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+          ? Container(
+            color: Colors.grey[200],
+            child: Center(
+                child: Text(
+                  "No activities available",
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                ),
               ),
-            )
+          )
           : Container(
             color: Colors.grey[200],
             child: ListView.builder(
