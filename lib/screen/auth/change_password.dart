@@ -47,66 +47,69 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             //   Navigator.of(context).pop(); // Đóng loading dialog nếu đang mở
           }
         },
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildPasswordField(
-                controller: currentPasswordController,
-                labelText: 'Current Password',
-                isVisible: _currentPasswordVisible,
-                onVisibilityToggle: () {
-                  setState(() {
-                    _currentPasswordVisible = !_currentPasswordVisible;
-                  });
-                },
-              ),
-              SizedBox(height: 16),
-              _buildPasswordField(
-                controller: newPasswordController,
-                labelText: 'New Password',
-                isVisible: _newPasswordVisible,
-                onVisibilityToggle: () {
-                  setState(() {
-                    _newPasswordVisible = !_newPasswordVisible;
-                  });
-                },
-              ),
-              SizedBox(height: 16),
-              _buildPasswordField(
-                controller: confirmPasswordController,
-                labelText: 'Confirm New Password',
-                isVisible: _confirmPasswordVisible,
-                onVisibilityToggle: () {
-                  setState(() {
-                    _confirmPasswordVisible = !_confirmPasswordVisible;
-                  });
-                },
-              ),
-              SizedBox(height: 35),
-              ElevatedButton(
-                onPressed: () {
-                  _changePassword(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF4254FE),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+        child: Container(
+          color: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildPasswordField(
+                  controller: currentPasswordController,
+                  labelText: 'Current Password',
+                  isVisible: _currentPasswordVisible,
+                  onVisibilityToggle: () {
+                    setState(() {
+                      _currentPasswordVisible = !_currentPasswordVisible;
+                    });
+                  },
                 ),
-                child: Text(
-                  'Change Password',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
+                SizedBox(height: 16),
+                _buildPasswordField(
+                  controller: newPasswordController,
+                  labelText: 'New Password',
+                  isVisible: _newPasswordVisible,
+                  onVisibilityToggle: () {
+                    setState(() {
+                      _newPasswordVisible = !_newPasswordVisible;
+                    });
+                  },
+                ),
+                SizedBox(height: 16),
+                _buildPasswordField(
+                  controller: confirmPasswordController,
+                  labelText: 'Confirm New Password',
+                  isVisible: _confirmPasswordVisible,
+                  onVisibilityToggle: () {
+                    setState(() {
+                      _confirmPasswordVisible = !_confirmPasswordVisible;
+                    });
+                  },
+                ),
+                SizedBox(height: 35),
+                ElevatedButton(
+                  onPressed: () {
+                    _changePassword(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF4254FE),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+                  ),
+                  child: Text(
+                    'Change Password',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
