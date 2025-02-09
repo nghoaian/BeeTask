@@ -268,7 +268,6 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
         projectController.text.isEmpty ? '' : projectController.text;
 
     var task;
-    print(widget.projectId);
 
     if (widget.projectId.isNotEmpty) {
       selectedProjectId = widget.projectId;
@@ -295,7 +294,6 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                   {}, // Nếu không tìm thấy thì trả về một đối tượng trống
             );
       }
-      selectedProjectId = '';
     }
 
     // Tìm dự án dựa trên ID
