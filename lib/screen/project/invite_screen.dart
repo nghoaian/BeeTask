@@ -19,6 +19,12 @@ class _InvitePeopleScreenState extends State<InvitePeopleScreen> {
   String inputText = "";
   String? selectedEmail;
 
+  bool isValidEmail(String email) {
+    final emailRegex =
+        RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+    return emailRegex.hasMatch(email);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,8 +51,7 @@ class _InvitePeopleScreenState extends State<InvitePeopleScreen> {
                         context
                             .read<InviteBloc>()
                             .add(InviteUser(widget.projectId));
-                        await Future.delayed(
-                            Duration(milliseconds: 300));
+                        await Future.delayed(Duration(milliseconds: 300));
                         Navigator.pop(context, true);
                       }
                     : null,
@@ -78,9 +83,11 @@ class _InvitePeopleScreenState extends State<InvitePeopleScreen> {
                         setState(() {
                           inputText = value;
                         });
-                        context
-                            .read<InviteBloc>()
-                            .add(EmailInputChanged(value));
+                        if (isValidEmail(value)) {
+                          context
+                              .read<InviteBloc>()
+                              .add(EmailInputChanged(value));
+                        }
                       },
                       decoration: InputDecoration(
                         labelText: "To:",

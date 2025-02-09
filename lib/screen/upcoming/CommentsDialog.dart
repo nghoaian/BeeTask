@@ -1,3 +1,4 @@
+import 'package:bee_task/util/colors.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:bee_task/screen/TaskData.dart';
@@ -255,6 +256,7 @@ class _CommentsDialogState extends State<CommentsDialog> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
+              backgroundColor: Colors.white,
               title: const Text('Edit Comment'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -449,6 +451,7 @@ class _CommentsDialogState extends State<CommentsDialog> {
                       context: context,
                       builder: (BuildContext context) {
                         return AlertDialog(
+                          backgroundColor: Colors.white,
                           title: const Text('Confirm Delete'),
                           content: const Text(
                               'Are you sure you want to delete this comment?'),
@@ -510,15 +513,15 @@ class _CommentsDialogState extends State<CommentsDialog> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.blue.shade300),
+                border: Border.all(color: AppColors.primary),
                 borderRadius: BorderRadius.circular(16),
                 color: Colors.white,
               ),
-              child: Row(
-                children: const [
-                  Icon(Icons.comment, color: Colors.blue),
+              child: const Row(
+                children: [
+                  Icon(Icons.comment, color: AppColors.primary),
                   SizedBox(width: 8.0),
-                  Text('Comment', style: TextStyle(color: Colors.blue)),
+                  Text('Comment', style: TextStyle(color: AppColors.primary)),
                 ],
               ),
             ),
