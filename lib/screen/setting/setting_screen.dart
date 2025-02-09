@@ -126,7 +126,7 @@ class _SettingScreenState extends State<SettingScreen> {
                         },
                       ),
                       _buildListTile(
-                        icon: Icons.history,
+                        icon: Icons.list_alt,
                         title: 'Project Activity log',
                         onTap: () {
                           Navigator.push(
