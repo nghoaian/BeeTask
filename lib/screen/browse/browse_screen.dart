@@ -114,7 +114,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
                           project["name"],
                           Icons.tag,
                           projectId: project["id"],
-                          isEditProject: isEditProject,
+                          isEditProject: true, // chọn cho edit vì để hiển thị nút edit trong project (đã có check permission cho edit trong projectsreen)
                         );
                       }).toList(),
                     );

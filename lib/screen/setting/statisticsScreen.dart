@@ -39,6 +39,10 @@ class _StatisScreenState extends State<StatisScreen> {
           "Task Completion Statistics",
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 22),
         ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary),
+          onPressed: () => Navigator.pop(context),
+        ),
         backgroundColor: Colors.grey[200],
       ),
       body: Padding(

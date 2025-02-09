@@ -51,6 +51,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
   var users = TaskData().users;
   String currentUserEmail = "";
   String _ownerEmail = '';
+  String currentUserPermission = 'Can Edit';
 
   late var task;
 
@@ -62,6 +63,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
     _taskBloc.add(LoadTasks(widget.projectId));
     _fetchCurrentUserEmail();
     _fetchOwner();
+    _fetchCurrentUserPermission();
   }
 
   Future<void> _fetchCurrentUserEmail() async {
@@ -69,6 +71,15 @@ class _ProjectScreenState extends State<ProjectScreen> {
     if (mounted) {
       setState(() {
         currentUserEmail = email!;
+      });
+    }
+  }
+
+  Future<void> _fetchCurrentUserPermission() async {
+    final permission = await widget.userRepository.getCurrentUserPermission(widget.projectId);
+    if (mounted) {
+      setState(() {
+        currentUserPermission = permission;
       });
     }
   }
@@ -180,14 +191,15 @@ class _ProjectScreenState extends State<ProjectScreen> {
                   },
                   itemBuilder: (BuildContext context) {
                     return [
-                      const PopupMenuItem<String>(
-                        value: 'edit',
-                        child: ListTile(
-                          title: Text('Edit',
-                              style: TextStyle(color: Colors.black)),
-                          leading: Icon(Icons.edit),
+                      if (currentUserPermission == 'Can Edit')
+                        const PopupMenuItem<String>(
+                          value: 'edit',
+                          child: ListTile(
+                            title: Text('Edit',
+                                style: TextStyle(color: Colors.black)),
+                            leading: Icon(Icons.edit),
+                          ),
                         ),
-                      ),
                       if (_ownerEmail == currentUserEmail)
                         const PopupMenuItem<String>(
                           value: 'delete',

@@ -1,3 +1,4 @@
+import 'package:bee_task/util/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:bee_task/screen/TaskData.dart';
@@ -151,12 +152,13 @@ class _ProjectActivityScreenState extends State<ProjectActivityScreen> {
           }
       },
       child: Card(
-        margin: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        elevation: 3,
+        color: Colors.white,
+        margin: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 2,
         child: ListTile(
           leading: CircleAvatar(
-            backgroundColor: Colors.blueAccent,
+            backgroundColor: AppColors.primary,
             child: Icon(getActionIcon(activity['action']), color: Colors.white),
           ),
           title: Text(
@@ -182,10 +184,14 @@ class _ProjectActivityScreenState extends State<ProjectActivityScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Project Activity'),
-        backgroundColor: Colors.grey[200],
         elevation: 0,
+        backgroundColor: Colors.grey[200],
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary),
+          onPressed: () => Navigator.pop(context),
+        ),
         titleTextStyle: TextStyle(
-            color: Colors.black, fontSize: 20, fontWeight: FontWeight.w500),
+            color: Colors.black, fontSize: 22, fontWeight: FontWeight.bold),
       ),
       body: projectActivity.isEmpty
           ? Center(
@@ -194,33 +200,36 @@ class _ProjectActivityScreenState extends State<ProjectActivityScreen> {
                 style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
             )
-          : ListView.builder(
-              itemCount: groupedActivities.keys.length,
-              itemBuilder: (context, index) {
-                String date = groupedActivities.keys.elementAt(index);
-                List<Map<String, dynamic>> activities =
-                    groupedActivities[date]!;
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Date Header
-                    Padding(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: Text(
-                        date,
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+          : Container(
+            color: Colors.grey[200],
+            child: ListView.builder(
+                itemCount: groupedActivities.keys.length,
+                itemBuilder: (context, index) {
+                  String date = groupedActivities.keys.elementAt(index);
+                  List<Map<String, dynamic>> activities =
+                      groupedActivities[date]!;
+            
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Date Header
+                      Padding(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: Text(
+                          date,
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
                       ),
-                    ),
-                    // Activities List
-                    ...activities
-                        .map((activity) => buildActivityTile(activity)),
-                  ],
-                );
-              },
-            ),
+                      // Activities List
+                      ...activities
+                          .map((activity) => buildActivityTile(activity)),
+                    ],
+                  );
+                },
+              ),
+          ),
     );
   }
 }
