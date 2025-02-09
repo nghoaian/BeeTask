@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bee_task/bloc/task/task_bloc.dart';
 import 'package:bee_task/screen/upcoming/CommentsDialog.dart';
 import 'package:bee_task/data/model/task.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ActivityLogScreen extends StatefulWidget {
   const ActivityLogScreen({super.key});
@@ -267,12 +268,19 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                               orElse: () =>
                                   {} // Nếu không tìm thấy, trả về một Map trống
                               );
+                          final userF = FirebaseAuth.instance.currentUser;
+
                           String action = log['action'] ?? "Unknown Action";
                           String projectId =
                               log['projectId'] ?? "Unknown Project";
                           String taskId = log['taskId'] ?? "Unknown Task";
                           String taskName = task['title'] ?? "Unknown Task";
                           String userEmail = log['userEmail'] ?? "Unknown User";
+                          if (userEmail == userF?.email) {
+                            userEmail = "You";
+                          }
+                          String projectName =
+                              project['name'] ?? "Unknown Project";
                           String timestamp = log['timestamp'] ?? "No Timestamp";
                           String type = log['type'] ?? "task";
                           Map<String, dynamic> changedFields =
@@ -353,9 +361,9 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                               } else {
                                 try {
                                   showModalBottomSheet(
+                                    backgroundColor: Colors.white,
                                     context: context,
                                     isScrollControlled: true,
-                                    isDismissible: false,
                                     builder: (context) {
                                       return SingleChildScrollView(
                                         child: TaskDetailsDialog(
@@ -370,11 +378,13 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                                           taskBloc: BlocProvider.of<TaskBloc>(
                                               context),
                                           resetDialog: () => {},
-                                          resetScreen: () => {},
+                                          resetScreen: () => setState(() {}),
                                         ),
                                       );
                                     },
-                                  );
+                                  ).whenComplete(() {
+                                    setState(() {});
+                                  });
                                 } catch (e) {
                                   showDialog(
                                     context: context,
@@ -455,7 +465,7 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                                                     fontSize: 12),
                                               ),
                                               Text(
-                                                "$projectId",
+                                                "$projectName",
                                                 style: TextStyle(
                                                     color: Colors.blueGrey,
                                                     fontSize: 12),

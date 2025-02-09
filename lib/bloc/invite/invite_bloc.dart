@@ -3,8 +3,10 @@ import 'package:bee_task/bloc/project/project_bloc.dart';
 import 'package:bee_task/bloc/project/project_event.dart';
 import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'invite_event.dart';
 import 'invite_state.dart';
 
@@ -67,6 +69,10 @@ class InviteBloc extends Bloc<InviteEvent, InviteState> {
         'members': FieldValue.arrayUnion([selectedUserEmail]),
         'permissions': FieldValue.arrayUnion([selectedUserEmail])
       });
+      final user = FirebaseAuth.instance.currentUser;
+
+      logProjectActivity(event.projectId, 'invite', user?.email ?? '',
+          selectedUserEmail ?? '');
       emit(InviteSuccess());
     } catch (e) {
       emit(InviteFailure("Failed to invite user: $e"));
@@ -113,14 +119,20 @@ class InviteBloc extends Bloc<InviteEvent, InviteState> {
       final projectDoc = await projectRef.get();
       final permissions =
           List<String>.from(projectDoc.data()?['permissions'] ?? []);
+      final user = FirebaseAuth.instance.currentUser;
 
       if (event.canEdit) {
         if (!permissions.contains(event.userEmail)) {
           permissions.add(event.userEmail);
+          logProjectActivity(
+              event.projectId, 'canEdit', user?.email ?? '', event.userEmail);
+
           debugPrint('Added permission for ${event.userEmail}');
         }
       } else {
         debugPrint('Removed permission for ${event.userEmail}');
+        logProjectActivity(
+            event.projectId, 'canView', user?.email ?? '', event.userEmail);
         permissions.remove(event.userEmail);
       }
 
@@ -129,6 +141,27 @@ class InviteBloc extends Bloc<InviteEvent, InviteState> {
       emit(InviteSuccess());
     } catch (e) {
       emit(InviteFailure("Failed to update permissions: $e"));
+    }
+  }
+
+  Future<void> logProjectActivity(
+      String projectId, String action, String actor, String target) async {
+    final projectActivitiesCollection =
+        FirebaseFirestore.instance.collection('project_activities');
+
+    try {
+      final now = DateTime.now();
+      final formattedDate = DateFormat('HH:mm, dd-MM-yyyy').format(now);
+
+      await projectActivitiesCollection.add({
+        'projectId': projectId,
+        'action': action,
+        'actor': actor,
+        'target': target,
+        'timestamp': formattedDate,
+      });
+    } catch (e) {
+      print('Failed to log activity: $e');
     }
   }
 }

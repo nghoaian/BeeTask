@@ -19,6 +19,7 @@ class TaskData {
   List<Map<String, dynamic>> subsubtasks = [];
   List<Map<String, dynamic>> users = [];
   List<Map<String, dynamic>> activity_log = [];
+  List<Map<String, dynamic>> project_activity = [];
 
   void loadData(String email) {
     resetData();
@@ -31,6 +32,7 @@ class TaskData {
     listenToUserChanges();
     listenToProjects(userEmail);
     listenToActivityChanges();
+    listenToProActivityChanges();
   }
 
   void listenToProjects(String userEmail) {
@@ -113,29 +115,57 @@ class TaskData {
     var userData = activitySnapshot.doc.data() as Map<String, dynamic>;
     userData['id'] = activitySnapshot.doc.id;
 
-    // Nếu là trường hợp thêm người dùng mới
     if (activitySnapshot.type == DocumentChangeType.added) {
-      // Kiểm tra xem người dùng đã tồn tại trong danh sách chưa
-      if (!activity_log.any((user) => user['id'] == userData['id'])) {
-        activity_log.add(userData); // Thêm người dùng mới vào danh sách
+      if (!activity_log.any((activity) => activity['id'] == userData['id'])) {
+        activity_log.add(userData);
       }
-    }
-    // Nếu là trường hợp cập nhật thông tin người dùng
-    else if (activitySnapshot.type == DocumentChangeType.modified) {
-      int index =
-          activity_log.indexWhere((user) => user['id'] == userData['id']);
+    } else if (activitySnapshot.type == DocumentChangeType.modified) {
+      int index = activity_log
+          .indexWhere((activity) => activity['id'] == userData['id']);
       if (index != -1) {
-        // Cập nhật thông tin của người dùng trong danh sách
         activity_log[index] = userData;
       }
-    }
-    // Nếu là trường hợp xóa người dùng
-    else if (activitySnapshot.type == DocumentChangeType.removed) {
-      int index =
-          activity_log.indexWhere((user) => user['id'] == userData['id']);
+    } else if (activitySnapshot.type == DocumentChangeType.removed) {
+      int index = activity_log
+          .indexWhere((activity) => activity['id'] == userData['id']);
       if (index != -1) {
         // Xóa người dùng khỏi danh sách
         activity_log.removeAt(index);
+      }
+    }
+  }
+
+  void listenToProActivityChanges() {
+    firestore
+        .collection('project_activities')
+        .snapshots()
+        .listen((activitySnapshot) {
+      for (var userChange in activitySnapshot.docChanges) {
+        _updateProActivityInfo(userChange);
+      }
+    });
+  }
+
+  void _updateProActivityInfo(DocumentChange activitySnapshot) {
+    var userData = activitySnapshot.doc.data() as Map<String, dynamic>;
+    userData['id'] = activitySnapshot.doc.id;
+
+    // Nếu là trường hợp thêm người dùng mới
+    if (activitySnapshot.type == DocumentChangeType.added) {
+      if (!project_activity.any((activity) => activity['id'] == userData['id'])) {
+        project_activity.add(userData);
+      }
+    } else if (activitySnapshot.type == DocumentChangeType.modified) {
+      int index = project_activity
+          .indexWhere((activity) => activity['id'] == userData['id']);
+      if (index != -1) {
+        project_activity[index] = userData;
+      }
+    } else if (activitySnapshot.type == DocumentChangeType.removed) {
+      int index = project_activity
+          .indexWhere((activity) => activity['id'] == userData['id']);
+      if (index != -1) {
+        project_activity.removeAt(index);
       }
     }
   }
@@ -347,6 +377,8 @@ class TaskData {
     tasks.clear();
     subtasks.clear();
     subsubtasks.clear();
+    activity_log.clear();
+    project_activity.clear();
   }
 
   String getUserNameFromList(String email) {

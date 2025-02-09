@@ -13,6 +13,7 @@ import 'package:bee_task/screen/TaskData.dart';
 import 'package:bee_task/screen/setting/statisticsScreen.dart';
 import 'package:bee_task/screen/browse/activityLogScreen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:bee_task/screen/browse/projectActivity.dart';
 
 class SettingScreen extends StatefulWidget {
   @override
@@ -115,12 +116,23 @@ class _SettingScreenState extends State<SettingScreen> {
                       ),
                       _buildListTile(
                         icon: Icons.history,
-                        title: 'Activity log',
+                        title: 'Task Activity log',
                         onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                                 builder: (context) => ActivityLogScreen()),
+                          );
+                        },
+                      ),
+                      _buildListTile(
+                        icon: Icons.history,
+                        title: 'Project Activity log',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => ProjectActivityScreen()),
                           );
                         },
                       ),

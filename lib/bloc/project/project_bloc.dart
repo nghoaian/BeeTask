@@ -4,6 +4,7 @@ import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
 
 import 'project_event.dart';
 import 'project_state.dart';
@@ -147,31 +148,37 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     }
   }
 
-    Future<void> _onRemoveProjectMember(
+  Future<void> _onRemoveProjectMember(
       RemoveProjectMember event, Emitter<ProjectState> emit) async {
     try {
       final projectRef = firestore.collection('projects').doc(event.projectId);
-  
+
       await projectRef.update({
         'members': FieldValue.arrayRemove([event.userEmail]),
         'permissions': FieldValue.arrayRemove([event.userEmail]),
       });
-  
+      final user = FirebaseAuth.instance.currentUser;
+
+      logProjectActivity(
+          event.projectId, 'remove', user?.email ?? '', event.userEmail);
+
       final tasksSnapshot = await projectRef.collection('tasks').get();
       for (var taskDoc in tasksSnapshot.docs) {
         final taskData = taskDoc.data();
         if (taskData['assignee'] == event.userEmail) {
           await taskDoc.reference.update({'assignee': ""});
         }
-  
-        final subtasksSnapshot = await taskDoc.reference.collection('subtasks').get();
+
+        final subtasksSnapshot =
+            await taskDoc.reference.collection('subtasks').get();
         for (var subtaskDoc in subtasksSnapshot.docs) {
           final subtaskData = subtaskDoc.data();
           if (subtaskData['assignee'] == event.userEmail) {
             await subtaskDoc.reference.update({'assignee': ""});
           }
-  
-          final subsubtasksSnapshot = await subtaskDoc.reference.collection('subsubtasks').get();
+
+          final subsubtasksSnapshot =
+              await subtaskDoc.reference.collection('subsubtasks').get();
           for (var subsubtaskDoc in subsubtasksSnapshot.docs) {
             final subsubtaskData = subsubtaskDoc.data();
             if (subsubtaskData['assignee'] == event.userEmail) {
@@ -180,7 +187,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
           }
         }
       }
-  
+
       add(LoadProjectMembers(event.projectId));
     } catch (e) {
       emit(ProjectError("Failed to remove project member: $e"));
@@ -227,6 +234,27 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
       add(LoadProjectsEvent());
     } catch (e) {
       emit(ProjectError("Failed to delete project: $e"));
+    }
+  }
+
+  Future<void> logProjectActivity(
+      String projectId, String action, String actor, String target) async {
+    final projectActivitiesCollection =
+        FirebaseFirestore.instance.collection('project_activities');
+
+    try {
+      final now = DateTime.now();
+      final formattedDate = DateFormat('HH:mm, dd-MM-yyyy').format(now);
+
+      await projectActivitiesCollection.add({
+        'projectId': projectId,
+        'action': action,
+        'actor': actor,
+        'target': target,
+        'timestamp': formattedDate,
+      });
+    } catch (e) {
+      print('Failed to log activity: $e');
     }
   }
 }
