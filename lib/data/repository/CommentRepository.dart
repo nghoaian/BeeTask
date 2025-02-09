@@ -80,7 +80,7 @@ class FirebaseCommentRepository implements CommentRepository {
       Map<String, dynamic> comment = {
         'author': author,
         'text': content ?? null,
-        'date': DateFormat('dd/MM/yyyy, HH:mm')
+        'date': DateFormat('HH:mm:ss.SSS, dd-MM-yyyy')
             .format(DateTime.now()), // Định dạng ngày/tháng/năm, giờ
       };
 
@@ -213,7 +213,7 @@ class FirebaseCommentRepository implements CommentRepository {
   }
 
   DateTime _parseDate(String dateStr) {
-    return DateFormat("dd/MM/yyyy, HH:mm").parse(dateStr);
+    return DateFormat("HH:mm:ss.SSS, dd-MM-yyyy").parse(dateStr);
   }
 
   Future<void> logTaskActivity(
@@ -230,7 +230,7 @@ class FirebaseCommentRepository implements CommentRepository {
     try {
       // Lấy thời gian hiện tại và định dạng ngày giờ
       final now = DateTime.now();
-      final formattedDate = DateFormat('HH:mm, dd-MM-yyyy').format(now);
+      final formattedDate = DateFormat('HH:mm:ss.SSS, dd-MM-yyyy').format(now);
 
       await taskActivitiesCollection.add({
         'projectId': projectId,

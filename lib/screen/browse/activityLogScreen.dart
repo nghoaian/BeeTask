@@ -65,15 +65,14 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
     }).toList();
   }
 
-  // Helper method to format timestamp
   String formatTimestamp(String timestamp) {
     try {
-      // Parse the timestamp
-      DateTime dateTime = DateFormat('HH:mm, dd-MM-yyyy').parse(timestamp);
-      // Format to show only the time
-      return DateFormat('HH:mm').format(dateTime); // Show only the time
+      DateTime dateTime =
+          DateFormat('HH:mm:ss.SSS, dd-MM-yyyy').parse(timestamp);
+
+      return DateFormat('HH:mm').format(dateTime);
     } catch (e) {
-      return "Invalid time"; // Return a default value in case of invalid timestamp
+      return "Invalid time";
     }
   }
 
@@ -81,13 +80,13 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
     Map<String, List<Map<String, dynamic>>> groupedLogs = {};
 
     for (var log in filteredLogs) {
-      String timestamp = log['timestamp']; // "11:39, 29-01-2025"
-      List<String> parts = timestamp.split(", ");
+      String timestamp = log['timestamp']; // Ex: "09:55:49.579, 09-02-2025"
 
+      // Tách thời gian và ngày
+      List<String> parts = timestamp.split(", ");
       if (parts.length < 2) continue; // Bỏ qua nếu format sai
 
-      String timePart = parts[0]; // "11:39"
-      String datePart = parts[1]; // "29-01-2025"
+      String datePart = parts[1]; // "09-02-2025"
 
       if (!groupedLogs.containsKey(datePart)) {
         groupedLogs[datePart] = [];
@@ -104,17 +103,18 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
         return dateB.compareTo(dateA); // Ngày mới hơn lên trước
       });
 
-    // Sắp xếp log trong mỗi ngày theo giờ giảm dần
+    // Sắp xếp log trong mỗi ngày theo thời gian đầy đủ (giờ, phút, giây, mili-giây)
     Map<String, List<Map<String, dynamic>>> sortedGroupedLogs = {};
     for (var date in sortedDates) {
       List<Map<String, dynamic>> logs = groupedLogs[date]!;
       logs.sort((a, b) {
-        String timeA = a['timestamp'].split(", ")[0]; // "11:39"
-        String timeB = b['timestamp'].split(", ")[0]; // "12:05"
-        return DateFormat("HH:mm")
-            .parse(timeB)
-            .compareTo(DateFormat("HH:mm").parse(timeA));
+        DateTime timeA =
+            DateFormat("HH:mm:ss.SSS, dd-MM-yyyy").parse(a['timestamp']);
+        DateTime timeB =
+            DateFormat("HH:mm:ss.SSS, dd-MM-yyyy").parse(b['timestamp']);
+        return timeB.compareTo(timeA); // Thời gian mới hơn lên trước
       });
+
       sortedGroupedLogs[date] = logs;
     }
 

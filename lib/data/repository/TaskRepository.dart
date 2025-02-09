@@ -809,7 +809,7 @@ class FirebaseTaskRepository implements TaskRepository {
     try {
       // Lấy thời gian hiện tại và định dạng ngày giờ
       final now = DateTime.now();
-      final formattedDate = DateFormat('HH:mm, dd-MM-yyyy').format(now);
+      final formattedDate = DateFormat('HH:mm:ss.SSS, dd-MM-yyyy').format(now);
 
       await taskActivitiesCollection.add({
         'projectId': projectId,

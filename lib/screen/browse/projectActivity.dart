@@ -41,15 +41,17 @@ class _ProjectActivityScreenState extends State<ProjectActivityScreen> {
         .toList();
 
     projectActivity.sort((a, b) {
-      DateTime timeA = DateFormat('HH:mm, dd-MM-yyyy').parse(a['timestamp']);
-      DateTime timeB = DateFormat('HH:mm, dd-MM-yyyy').parse(b['timestamp']);
+      DateTime timeA =
+          DateFormat('HH:mm:ss.SSS, dd-MM-yyyy').parse(a['timestamp']);
+      DateTime timeB =
+          DateFormat('HH:mm:ss.SSS, dd-MM-yyyy').parse(b['timestamp']);
       return timeB.compareTo(timeA); // Sort descending (newest first)
     });
 
     // Group by date
     for (var activity in projectActivity) {
       String date = DateFormat('MMM dd, yyyy').format(
-        DateFormat('HH:mm, dd-MM-yyyy').parse(activity['timestamp']),
+        DateFormat('HH:mm:ss.SSS, dd-MM-yyyy').parse(activity['timestamp']),
       );
       groupedActivities.putIfAbsent(date, () => []).add(activity);
     }
@@ -87,7 +89,8 @@ class _ProjectActivityScreenState extends State<ProjectActivityScreen> {
 
   String formatTimestamp(String timestamp) {
     try {
-      DateTime dateTime = DateFormat('HH:mm, dd-MM-yyyy').parse(timestamp);
+      DateTime dateTime =
+          DateFormat('HH:mm:ss.SSS, dd-MM-yyyy').parse(timestamp);
       return DateFormat('HH:mm').format(dateTime);
     } catch (e) {
       return "Invalid time";

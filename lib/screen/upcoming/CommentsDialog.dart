@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:bee_task/screen/TaskData.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
 
 import 'package:bee_task/bloc/comment/comment_bloc.dart'; // Add this line
 import 'package:bee_task/bloc/comment/comment_state.dart'; // Add this line
@@ -362,6 +363,9 @@ class _CommentsDialogState extends State<CommentsDialog> {
 
 // Hàm xây dựng một item bình luận
   Widget _buildCommentItem(Map<String, dynamic> comment) {
+    String formattedDate = DateFormat('dd/MM/yyyy, HH:mm')
+        .format(DateFormat('HH:mm:ss.SSS, dd-MM-yyyy').parse(comment['date']));
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       child: ListTile(
@@ -380,7 +384,7 @@ class _CommentsDialogState extends State<CommentsDialog> {
           ],
         ),
         subtitle: Text(
-          comment['date'],
+          formattedDate,
           style: const TextStyle(fontSize: 10),
         ),
         trailing: (comment['author'] == user?.email || owner == true)

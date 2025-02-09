@@ -151,7 +151,7 @@ class InviteBloc extends Bloc<InviteEvent, InviteState> {
 
     try {
       final now = DateTime.now();
-      final formattedDate = DateFormat('HH:mm, dd-MM-yyyy').format(now);
+      final formattedDate = DateFormat('HH:mm:ss.SSS, dd-MM-yyyy').format(now);
 
       await projectActivitiesCollection.add({
         'projectId': projectId,

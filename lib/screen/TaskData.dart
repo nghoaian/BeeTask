@@ -152,7 +152,8 @@ class TaskData {
 
     // Nếu là trường hợp thêm người dùng mới
     if (activitySnapshot.type == DocumentChangeType.added) {
-      if (!project_activity.any((activity) => activity['id'] == userData['id'])) {
+      if (!project_activity
+          .any((activity) => activity['id'] == userData['id'])) {
         project_activity.add(userData);
       }
     } else if (activitySnapshot.type == DocumentChangeType.modified) {
@@ -377,8 +378,6 @@ class TaskData {
     tasks.clear();
     subtasks.clear();
     subsubtasks.clear();
-    activity_log.clear();
-    project_activity.clear();
   }
 
   String getUserNameFromList(String email) {
