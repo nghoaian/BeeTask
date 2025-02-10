@@ -304,6 +304,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
 
   // Widget để hiển thị tên task và dialog chỉnh sửa
   Widget _buildTaskNameEditDialog(BuildContext context, var taskData) {
+    final GlobalKey _menuKey = GlobalKey();
     return GestureDetector(
       onTap: () async {
         // Hiển thị dialog chỉnh sửa tên task
@@ -329,10 +330,21 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
           ),
           IconButton(
             icon: const Icon(Icons.more_vert),
+            key: _menuKey,
             onPressed: () {
+              final RenderBox renderBox =
+                  _menuKey.currentContext!.findRenderObject() as RenderBox;
+              final Offset offset = renderBox.localToGlobal(Offset.zero);
+              final Size size = renderBox.size;
+
               showMenu(
                 context: context,
-                position: const RelativeRect.fromLTRB(100, 100, 0, 0),
+                position: RelativeRect.fromLTRB(
+                  offset.dx, // Tọa độ X của widget
+                  offset.dy + size.height, // Ngay dưới widget
+                  offset.dx + size.width,
+                  offset.dy + size.height * 2,
+                ),
                 items: [
                   if (widget.permissions == true) ...[
                     if (isNotOneMem != false) ...[
