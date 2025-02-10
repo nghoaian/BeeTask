@@ -722,15 +722,17 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                 return FractionallySizedBox(
                   heightFactor: 0.9,
                   child: AddTaskDialog(
-                    projectId: '',
-                    taskId: widget.taskId,
-                    type: widget.type,
-                    selectDay: widget.selectDay ?? DateTime.now(),
-                    resetDialog: () => setState(() {
-                      _fetchTask();
-                    }),
-                    resetScreen: () => widget.resetScreen,
-                  ),
+                      projectId: '',
+                      taskId: widget.taskId,
+                      type: widget.type,
+                      selectDay: widget.selectDay ?? DateTime.now(),
+                      resetDialog: () => setState(() {
+                            _fetchTask();
+                            widget.isCompleted = false;
+                          }),
+                      resetScreen: () => () {
+                            widget.resetScreen;
+                          }),
                 );
               },
             );
