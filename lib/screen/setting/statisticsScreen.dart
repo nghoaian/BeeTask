@@ -37,7 +37,8 @@ class _StatisScreenState extends State<StatisScreen> {
       appBar: AppBar(
         title: const Text(
           "Task Completion Statistics",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 22),
+          style: TextStyle(
+              color: Colors.black, fontWeight: FontWeight.bold, fontSize: 22),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary),
@@ -108,13 +109,28 @@ class _StatisScreenState extends State<StatisScreen> {
             context,
             MaterialPageRoute(
               builder: (context) => ProjectScreen(
-                  projectId: project['id'],
-                  projectName: project['name'],
-                  isShare: project['name'] == 'Inbox' ? false : true,
-                  isEditProject: project['name'] == 'Inbox' ? false : true,
-                  taskRepository: taskRepository,
-                  userRepository: userRepository,
-                  resetScreen: () {},),
+                projectId: project['id'],
+                projectName: project['name'],
+                isShare: project['name'] == 'Inbox' ? false : true,
+                isEditProject: project['name'] == 'Inbox' ? false : true,
+                taskRepository: taskRepository,
+                userRepository: userRepository,
+                resetScreen: () {
+                  setState(() {
+                    completedTasks = tasks
+                        .where((task) =>
+                            task['projectId'] == projectId &&
+                            task['completed'] == true)
+                        .length;
+                    totalTasks = tasks
+                        .where((task) => task['projectId'] == projectId)
+                        .length;
+                    completedPercentage = totalTasks > 0
+                        ? (completedTasks / totalTasks) * 100
+                        : 0;
+                  });
+                },
+              ),
             ),
           );
         },

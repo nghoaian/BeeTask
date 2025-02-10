@@ -408,12 +408,39 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                                             taskBloc: BlocProvider.of<TaskBloc>(
                                                 context),
                                             resetDialog: () => {},
-                                            resetScreen: () => setState(() {}),
+                                            resetScreen: () => setState(() {
+                                              Set<String> projectIds = projects
+                                                  .map<String>((project) =>
+                                                      project['id'].toString())
+                                                  .toSet();
+
+                                              // Lọc activityLog để chỉ lấy các activity thuộc project trong danh sách projects
+                                              activityLog = TaskData()
+                                                  .activity_log
+                                                  .where((activity) =>
+                                                      projectIds.contains(
+                                                          activity[
+                                                              'projectId']))
+                                                  .toList();
+                                            }),
                                           ),
                                         );
                                       },
                                     ).whenComplete(() {
-                                      setState(() {});
+                                      setState(() {
+                                        Set<String> projectIds = projects
+                                            .map<String>((project) =>
+                                                project['id'].toString())
+                                            .toSet();
+
+                                        // Lọc activityLog để chỉ lấy các activity thuộc project trong danh sách projects
+                                        activityLog = TaskData()
+                                            .activity_log
+                                            .where((activity) =>
+                                                projectIds.contains(
+                                                    activity['projectId']))
+                                            .toList();
+                                      });
                                     });
                                   } else {
                                     showDialog(
