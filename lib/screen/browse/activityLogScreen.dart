@@ -269,7 +269,7 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                             }
 
                             var project = TaskData().projects.firstWhere(
-                                (project) => project['id'] == task['projectId'],
+                                (project) => project['id'] == log['projectId'],
                                 orElse: () =>
                                     {} // Nếu không tìm thấy, trả về một Map trống
                                 );
@@ -333,7 +333,8 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                             return InkWell(
                               onTap: () async {
                                 if (log['action'].contains('comment')) {
-                                  if (taskName == "Unknown Task") {
+                                  if (taskName == "Unknown Task" ||
+                                      projectName == "Unknown Project") {
                                     showDialog(
                                       context: context,
                                       builder: (BuildContext context) {
@@ -618,6 +619,7 @@ class _FilterDialogState extends State<FilterDialog> {
     'update': 'Update Task',
     'complete': 'Complete Task',
     'uncomplete': 'Uncomplete Task',
+    'delete': 'Delete Task',
     'comments': 'Comments',
   };
 
@@ -634,6 +636,7 @@ class _FilterDialogState extends State<FilterDialog> {
     {'name': 'update', 'icon': Icons.edit},
     {'name': 'complete', 'icon': Icons.check_circle},
     {'name': 'uncomplete', 'icon': Icons.cancel},
+    {'name': 'delete', 'icon': Icons.delete},
     {'name': 'comments', 'icon': Icons.comment},
   ];
 
