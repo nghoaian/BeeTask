@@ -202,8 +202,13 @@ class _SettingScreenState extends State<SettingScreen> {
         TextFormField(
           controller: _nameController,
           onFieldSubmitted: (newName) {
-            BlocProvider.of<AccountBloc>(context)
-                .add(UpdateUserNameRequested(username: newName));
+            if (newName.trim().isNotEmpty) {
+              BlocProvider.of<AccountBloc>(context)
+                  .add(UpdateUserNameRequested(username: newName));
+            } else {
+              _showEmptyDialog(context); // Hiển thị dialog nếu rỗng
+              _nameController.text = userName;
+            }
           },
           decoration: InputDecoration(
             hintText: 'Enter your name',
@@ -223,6 +228,24 @@ class _SettingScreenState extends State<SettingScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  void _showEmptyDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Invalid Name'),
+          content: Text('Name cannot be empty. Please enter a valid name.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
     );
   }
 
