@@ -55,8 +55,9 @@ class ProjectPermissionLoaded extends ProjectState {
 class ProjectUpdated extends ProjectState {
   final String projectId;
   final String projectName;
+  final String oldName;
 
-  ProjectUpdated(this.projectId, this.projectName);
+  ProjectUpdated(this.projectId, this.projectName, this.oldName);
 
   @override
   List<Object> get props => [projectId, projectName];

@@ -75,7 +75,9 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
                 onPressed: () async {
                   if (projectNameController.text.trim().isNotEmpty) {
                     context.read<ProjectBloc>().add(UpdateProject(
-                        widget.projectId, projectNameController.text));
+                        widget.projectId,
+                        projectNameController.text,
+                        widget.projectName));
                     widget.resetScreen();
                     Navigator.pop(context);
                   }

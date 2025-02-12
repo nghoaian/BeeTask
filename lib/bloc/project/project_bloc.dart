@@ -159,8 +159,12 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
       });
       final user = FirebaseAuth.instance.currentUser;
 
-      logProjectActivity(
-          event.projectId, 'remove', user?.email ?? '', event.userEmail);
+      if (user?.email == event.userEmail) {
+        logProjectActivity(event.projectId, 'leave', event.userEmail, '');
+      } else {
+        logProjectActivity(
+            event.projectId, 'remove', user?.email ?? '', event.userEmail);
+      }
 
       final tasksSnapshot = await projectRef.collection('tasks').get();
       for (var taskDoc in tasksSnapshot.docs) {
@@ -219,8 +223,12 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
           .collection('projects')
           .doc(event.projectId)
           .update({'name': event.projectName});
-      emit(ProjectUpdated(event.projectId, event.projectName));
+      emit(ProjectUpdated(event.projectId, event.projectName, event.oldName));
       add(LoadProjectsEvent());
+      final user = FirebaseAuth.instance.currentUser;
+
+      logProjectActivity(
+          event.projectId, 'update', user?.email ?? '', event.oldName);
     } catch (e) {
       emit(ProjectError("Failed to update project: $e"));
     }

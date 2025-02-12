@@ -76,7 +76,8 @@ class _ProjectScreenState extends State<ProjectScreen> {
   }
 
   Future<void> _fetchCurrentUserPermission() async {
-    final permission = await widget.userRepository.getCurrentUserPermission(widget.projectId);
+    final permission =
+        await widget.userRepository.getCurrentUserPermission(widget.projectId);
     if (mounted) {
       setState(() {
         currentUserPermission = permission;
@@ -185,7 +186,8 @@ class _ProjectScreenState extends State<ProjectScreen> {
                       Navigator.pop(context);
                     } else if (value == 'leave') {
                       context.read<ProjectBloc>().add(RemoveProjectMember(
-                                widget.projectId, currentUserEmail));
+                          widget.projectId, currentUserEmail));
+                      widget.resetScreen();
                       Navigator.pop(context);
                     }
                   },

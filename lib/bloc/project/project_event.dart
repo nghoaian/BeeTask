@@ -19,8 +19,9 @@ class AddProjectEvent extends ProjectEvent {
 class UpdateProject extends ProjectEvent {
   final String projectId;
   final String projectName;
+  final String oldName;
 
-  UpdateProject(this.projectId, this.projectName);
+  UpdateProject(this.projectId, this.projectName, this.oldName);
 
   @override
   List<Object> get props => [projectId, projectName];

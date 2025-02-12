@@ -329,25 +329,49 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            value: assigneeController.text.isEmpty ||
-                    !members.contains(assigneeController.text)
-                ? null
-                : assigneeController.text, // Nếu không tìm thấy assignee, null
-            items: members.map<DropdownMenuItem<String>>((member) {
-              return DropdownMenuItem<String>(
-                value: member, // Giá trị là email
-                child: Text(member), // Hiển thị email
-              );
-            }).toList(),
-            onChanged: (value) {
-              setState(() {
-                assigneeController.text = value ?? ''; // Cập nhật assignee
-              });
-            },
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              hintText: 'Select an assignee',
+          SizedBox(
+            width: double.infinity, // Giúp dropdown không bị tràn
+            child: DropdownButtonFormField<String>(
+              isExpanded: true, // Mở rộng dropdown để tránh lỗi tràn chữ
+              value: assigneeController.text.isEmpty ||
+                      !members.contains(assigneeController.text)
+                  ? null
+                  : assigneeController.text,
+              items: members.map<DropdownMenuItem<String>>((member) {
+                return DropdownMenuItem<String>(
+                  value: member,
+                  child: SizedBox(
+                    width: 200, // Giới hạn chiều rộng của dropdown item
+                    child: Text(
+                      member,
+                      overflow:
+                          TextOverflow.ellipsis, // Nếu quá dài thì hiển thị ...
+                      maxLines: 1,
+                    ),
+                  ),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  assigneeController.text = value ?? '';
+                });
+              },
+              selectedItemBuilder: (BuildContext context) {
+                return members.map<Widget>((String member) {
+                  return SizedBox(
+                    width: 150, // Giới hạn chiều rộng của item đã chọn
+                    child: Text(
+                      member,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  );
+                }).toList();
+              },
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                hintText: 'Select an assignee',
+              ),
             ),
           ),
         ],

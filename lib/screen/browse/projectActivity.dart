@@ -58,6 +58,38 @@ class _ProjectActivityScreenState extends State<ProjectActivityScreen> {
     }
   }
 
+  void reloadData() {
+    setState(() {
+      groupedActivities.clear(); // Xóa hết dữ liệu cũ
+
+      Set<String> projectIds =
+          projects.map<String>((project) => project['id'].toString()).toSet();
+
+      // Lọc lại activity
+      projectActivity = TaskData()
+          .project_activity
+          .where((activity) => projectIds.contains(activity['projectId']))
+          .toList();
+
+      // Sắp xếp lại
+      projectActivity.sort((a, b) {
+        DateTime timeA =
+            DateFormat('HH:mm:ss.SSS, dd-MM-yyyy').parse(a['timestamp']);
+        DateTime timeB =
+            DateFormat('HH:mm:ss.SSS, dd-MM-yyyy').parse(b['timestamp']);
+        return timeB.compareTo(timeA);
+      });
+
+      // Nhóm lại theo ngày
+      for (var activity in projectActivity) {
+        String date = DateFormat('MMM dd, yyyy').format(
+          DateFormat('HH:mm:ss.SSS, dd-MM-yyyy').parse(activity['timestamp']),
+        );
+        groupedActivities.putIfAbsent(date, () => []).add(activity);
+      }
+    });
+  }
+
   IconData getActionIcon(String action) {
     switch (action) {
       case 'invite':
@@ -68,6 +100,10 @@ class _ProjectActivityScreenState extends State<ProjectActivityScreen> {
         return Icons.edit;
       case 'canView':
         return Icons.visibility;
+      case 'update':
+        return Icons.update;
+      case 'leave':
+        return Icons.exit_to_app;
       default:
         return Icons.info;
     }
@@ -129,7 +165,13 @@ class _ProjectActivityScreenState extends State<ProjectActivityScreen> {
         orElse: () => {} // Nếu không tìm thấy, trả về một Map trống
         );
     String projectName = project['name'] ?? "Unknown project";
-
+    String content = "$actor ${getActionText(activity['action'])} $target";
+    if (activity['action'] == "update") {
+      content =
+          "$actor changed the project name from \"$target\" to \"$projectName\"";
+    } else if (activity['action'] == "leave") {
+      content = "$actor left the project";
+    }
     return InkWell(
       onTap: () => {
         if (project.isEmpty)
@@ -146,7 +188,11 @@ class _ProjectActivityScreenState extends State<ProjectActivityScreen> {
                     isEditProject: true,
                     taskRepository: taskRepository,
                     userRepository: userRepository,
-                    resetScreen: () {}),
+                    resetScreen: () {
+                      setState(() {
+                        reloadData();
+                      });
+                    }),
               ),
             )
           }
@@ -162,7 +208,7 @@ class _ProjectActivityScreenState extends State<ProjectActivityScreen> {
             child: Icon(getActionIcon(activity['action']), color: Colors.white),
           ),
           title: Text(
-            "$actor ${getActionText(activity['action'])} $target",
+            content,
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
           ),
           subtitle: Column(
@@ -195,23 +241,23 @@ class _ProjectActivityScreenState extends State<ProjectActivityScreen> {
       ),
       body: projectActivity.isEmpty
           ? Container(
-            color: Colors.grey[200],
-            child: Center(
+              color: Colors.grey[200],
+              child: Center(
                 child: Text(
                   "No activities available",
                   style: TextStyle(fontSize: 16, color: Colors.grey),
                 ),
               ),
-          )
+            )
           : Container(
-            color: Colors.grey[200],
-            child: ListView.builder(
+              color: Colors.grey[200],
+              child: ListView.builder(
                 itemCount: groupedActivities.keys.length,
                 itemBuilder: (context, index) {
                   String date = groupedActivities.keys.elementAt(index);
                   List<Map<String, dynamic>> activities =
                       groupedActivities[date]!;
-            
+
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -232,7 +278,7 @@ class _ProjectActivityScreenState extends State<ProjectActivityScreen> {
                   );
                 },
               ),
-          ),
+            ),
     );
   }
 }

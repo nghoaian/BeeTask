@@ -29,6 +29,7 @@ class ShareScreen extends StatefulWidget {
 
 class _ShareScreenState extends State<ShareScreen> {
   late FirebaseUserRepository userRepository;
+
   late String currentUserPermission = 'Can View';
   @override
   void initState() {
