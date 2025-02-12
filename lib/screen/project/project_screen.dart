@@ -185,10 +185,53 @@ class _ProjectScreenState extends State<ProjectScreen> {
                           subsubtask['projectId'] == widget.projectId);
                       Navigator.pop(context);
                     } else if (value == 'leave') {
-                      context.read<ProjectBloc>().add(RemoveProjectMember(
-                          widget.projectId, currentUserEmail));
-                      widget.resetScreen();
-                      Navigator.pop(context);
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext confirmDialogContext) {
+                          return AlertDialog(
+                            title: const Text("Confirm Leave"),
+                            content: const Text(
+                                "Are you sure you want to leave this project?"),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.pop(confirmDialogContext), // Hủy
+                                child: const Text("Cancel"),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(
+                                      confirmDialogContext); // Đóng hộp thoại xác nhận
+                                  _showDeletingDialog(
+                                      context); // Hiển thị hộp thoại đang xóa
+
+                                  // Thực hiện xóa thành viên khỏi dự án
+                                  context
+                                      .read<ProjectBloc>()
+                                      .add(RemoveProjectMember(
+                                        widget.projectId,
+                                        currentUserEmail,
+                                      ));
+
+                                  // Chờ 2 giây rồi kiểm tra context trước khi đóng hộp thoại
+                                  Future.delayed(const Duration(seconds: 2),
+                                      () {
+                                    widget.resetScreen();
+
+                                    if (context.mounted) {
+                                      Navigator.pop(
+                                          context); // Quay lại màn hình trước
+                                      Navigator.pop(
+                                          context); // Quay lại màn hình trước
+                                    }
+                                  });
+                                },
+                                child: const Text("Leave"),
+                              ),
+                            ],
+                          );
+                        },
+                      );
                     }
                   },
                   itemBuilder: (BuildContext context) {
@@ -259,6 +302,24 @@ class _ProjectScreenState extends State<ProjectScreen> {
               _buildFloatingActionButton(context, widget.projectId),
         ),
       ),
+    );
+  }
+
+  void _showDeletingDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Ngăn người dùng đóng hộp thoại
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Row(
+            children: const [
+              CircularProgressIndicator(),
+              SizedBox(width: 16),
+              Text("Leaving project..."),
+            ],
+          ),
+        );
+      },
     );
   }
 
