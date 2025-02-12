@@ -10,9 +10,9 @@ abstract class TaskRepository {
       String date, bool showCompletedTasks, String email);
   Future<void> addTask(
     String thisTaskId,
-    String type, // Type: 'task', 'subtask', or 'subsubtask'
-    Task task, // Đối tượng Task chứa thông tin cần thiết
-    String taskId, // taskId nếu là subtask hoặc subsubtask
+    String type,
+    Task task,
+    String taskId,
     String projectId,
   );
   Future<void> updateTask(String taskId, Task updatedTaskData, String type);
@@ -259,7 +259,6 @@ class FirebaseTaskRepository implements TaskRepository {
   Future<bool> updateTask(
       String taskId, Task updatedTaskData, String type) async {
     try {
-      // Biến tham chiếu đến tài liệu
       DocumentReference? docRef;
       var task;
 
@@ -267,8 +266,7 @@ class FirebaseTaskRepository implements TaskRepository {
       switch (type) {
         case 'task':
           task = tasks.firstWhere((item) => item['id'] == taskId,
-              orElse: () => throw Exception(
-                  'Task not found')); // Throw exception if task not found
+              orElse: () => throw Exception('Task not found'));
 
           docRef = FirebaseFirestore.instance
               .collection('projects')
@@ -280,8 +278,7 @@ class FirebaseTaskRepository implements TaskRepository {
 
         case 'subtask':
           task = subtasks.firstWhere((item) => item['id'] == taskId,
-              orElse: () => throw Exception(
-                  'Subtask not found')); // Throw exception if subtask not found
+              orElse: () => throw Exception('Subtask not found'));
 
           docRef = FirebaseFirestore.instance
               .collection('projects')
@@ -294,8 +291,7 @@ class FirebaseTaskRepository implements TaskRepository {
 
         case 'subsubtask':
           task = subsubtasks.firstWhere((item) => item['id'] == taskId,
-              orElse: () => throw Exception(
-                  'Subsubtask not found')); // Throw exception if subsubtask not found
+              orElse: () => throw Exception('Subsubtask not found'));
 
           docRef = FirebaseFirestore.instance
               .collection('projects')
@@ -348,11 +344,9 @@ class FirebaseTaskRepository implements TaskRepository {
         }
       } else {
         if (type == 'subsubtask') {
-          // Update the parent subtask to completed = false
           await updateSubtaskCompletedStatus(
               task['projectId'], task['taskId'], task['subtaskId'], false);
         } else if (type == 'subtask') {
-          // Update the parent task to completed = false
           await updateTaskCompletedStatus(
               task['projectId'], task['taskId'], false);
         }

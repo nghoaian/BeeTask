@@ -17,7 +17,7 @@ class CommentBloc extends Bloc<CommentEvent, CommentState> {
     on<logTaskActivity>(_onLogTaskActivity);
   }
 
-  // Handle FetchCommentsEvent
+  // Lấy danh sách comment
   Future<void> _onFetchComment(
       FetchCommentsEvent event, Emitter<CommentState> emit) async {
     emit(CommentLoadingState());
@@ -29,7 +29,7 @@ class CommentBloc extends Bloc<CommentEvent, CommentState> {
     }
   }
 
-  // Handle AddCommentEvent
+  // Thêm comment mới
   Future<void> _onAddComment(
       AddCommentEvent event, Emitter<CommentState> emit) async {
     emit(CommentLoadingState());
@@ -43,7 +43,7 @@ class CommentBloc extends Bloc<CommentEvent, CommentState> {
     }
   }
 
-  // Handle EditCommentEvent
+  // Sửa comment
   Future<void> _onUpdateComment(
       EditCommentEvent event, Emitter<CommentState> emit) async {
     emit(CommentLoadingState());
@@ -61,6 +61,7 @@ class CommentBloc extends Bloc<CommentEvent, CommentState> {
     }
   }
 
+  // Xoá comment
   Future<void> _onDeleteComment(
       DeleteCommentEvent event, Emitter<CommentState> emit) async {
     emit(CommentLoadingState());
@@ -80,8 +81,13 @@ class CommentBloc extends Bloc<CommentEvent, CommentState> {
       final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
       User? user = firebaseAuth.currentUser;
 
-      final taskActivity = await commentRepository.logTaskActivity(event.projectId,event.taskId,
-          event.action, event.changedFields, user?.email ?? '', event.type);
+      final taskActivity = await commentRepository.logTaskActivity(
+          event.projectId,
+          event.taskId,
+          event.action,
+          event.changedFields,
+          user?.email ?? '',
+          event.type);
     } catch (e) {
       emit(CommentErrorState(error: 'Error editing comment: $e'));
     }

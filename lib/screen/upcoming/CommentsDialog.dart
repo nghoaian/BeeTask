@@ -4,11 +4,10 @@ import 'dart:async';
 import 'package:bee_task/screen/TaskData.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
-
-import 'package:bee_task/bloc/comment/comment_bloc.dart'; // Add this line
-import 'package:bee_task/bloc/comment/comment_state.dart'; // Add this line
-import 'package:bee_task/bloc/comment/comment_event.dart'; // Add this line
-import 'package:flutter_bloc/flutter_bloc.dart'; // Add this line
+import 'package:bee_task/bloc/comment/comment_bloc.dart'; 
+import 'package:bee_task/bloc/comment/comment_state.dart'; 
+import 'package:bee_task/bloc/comment/comment_event.dart'; 
+import 'package:flutter_bloc/flutter_bloc.dart'; 
 
 class CommentsDialog extends StatefulWidget {
   final String idTask;
@@ -76,7 +75,7 @@ class _CommentsDialogState extends State<CommentsDialog> {
     );
 
     await completer.future;
-    subscription.cancel(); // Hủy đăng ký sau khi hoàn tất
+    subscription.cancel(); 
   }
 
   Future<void> _addComments(String commentText) async {
@@ -116,7 +115,7 @@ class _CommentsDialogState extends State<CommentsDialog> {
     ));
 
     await completer.future;
-    subscription.cancel(); // Hủy đăng ký sau khi hoàn tất
+    subscription.cancel(); 
   }
 
   Future<void> _editComments(String commentId, String commentText) async {
@@ -136,7 +135,7 @@ class _CommentsDialogState extends State<CommentsDialog> {
     ));
 
     await completer.future;
-    subscription.cancel(); // Hủy đăng ký sau khi hoàn tất
+    subscription.cancel(); 
   }
 
   Future<void> _deleteComments(String commentId) async {
@@ -176,7 +175,7 @@ class _CommentsDialogState extends State<CommentsDialog> {
     ));
 
     await completer.future;
-    subscription.cancel(); // Hủy đăng ký sau khi hoàn tất
+    subscription.cancel(); 
   }
 
   Future<void> _showCommentInputDialog() async {
@@ -202,7 +201,6 @@ class _CommentsDialogState extends State<CommentsDialog> {
                     ),
                     maxLines: 3,
                     onChanged: (text) {
-                      // Khi người dùng nhập, xóa lỗi
                       if (errorText != null && text.trim().isNotEmpty) {
                         setState(() {
                           errorText = null;
@@ -347,11 +345,10 @@ class _CommentsDialogState extends State<CommentsDialog> {
       title:
           const Text('Comments', style: TextStyle(fontWeight: FontWeight.bold)),
       content: SizedBox(
-        width: double.maxFinite, // Đảm bảo nội dung có thể cuộn ngang nếu cần
+        width: double.maxFinite, 
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // StreamBuilder để lắng nghe và cập nhật dữ liệu
             StreamBuilder<CommentState>(
               stream: BlocProvider.of<CommentBloc>(context).stream,
               builder: (context, snapshot) {
@@ -498,7 +495,7 @@ class _CommentsDialogState extends State<CommentsDialog> {
                   ];
                 },
               )
-            : null, // No trailing widget if author does not match
+            : null, 
       ),
     );
   }

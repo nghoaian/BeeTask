@@ -21,7 +21,7 @@ class TaskDetailsDialog extends StatefulWidget {
   final DateTime selectDay; // Ngày được chọn để thêm task
 
   bool showCompletedTasks;
-  final TaskBloc taskBloc; // Accept TaskBloc via constructor
+  final TaskBloc taskBloc; 
   final Function resetScreen;
   final Function resetDialog;
   final bool permissions;
@@ -767,7 +767,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: DropdownButton<String>(
-                  value: taskData['priority'] ?? 'Low', // Default priority
+                  value: taskData['priority'] ?? 'Low', 
                   onChanged: (String? newValue) {
                     if (newValue != null) {
                       context.read<TaskBloc>().add(logTaskActivity(
@@ -782,7 +782,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                           },
                           widget.type));
                       setState(() {
-                        taskData['priority'] = newValue; // Update priority
+                        taskData['priority'] = newValue;
                         Task task = Task(
                           id: taskData['id'],
                           title: taskData['title'],
@@ -1209,7 +1209,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   var member = projectMembers[index];
                   return RadioListTile<String>(
                     title: Text(member), // Hiển thị tên người dùng
-                    value: member, // Giá trị là tên của member
+                    value: member, 
                     groupValue: selectedAssignee,
                     onChanged: (value) {
                       selectedAssignee = value;
@@ -1271,7 +1271,6 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
 
   Future<void> _deleteTask() async {
     try {
-      // Hiển thị dialog với vòng tròn xoay
       var dialogContext;
       showDialog(
         context: context,
@@ -1292,14 +1291,13 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
         },
       );
 
-      // Thực hiện thêm sự kiện để xoá task
       widget.taskBloc.add(DeleteTask(widget.taskId, widget.type));
 
       // Chờ Firebase cập nhật hoàn tất
       await Future.delayed(Duration(seconds: 2));
 
       // Đóng dialog sau khi cập nhật xong
-      Navigator.pop(dialogContext); // Dùng context đã lưu ở trên
+      Navigator.pop(dialogContext); 
       if (widget.openFirst != true) {
         widget.resetDialog();
       } else {

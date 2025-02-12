@@ -202,7 +202,7 @@ class FirebaseCommentRepository implements CommentRepository {
         DateTime dateA = _parseDate(a['date']);
         DateTime dateB = _parseDate(b['date']);
 
-        // Sắp xếp theo thứ tự giảm dần (mới nhất trước)
+        // Sắp xếp theo thứ tự giảm dần 
         return dateB.compareTo(dateA);
       });
 

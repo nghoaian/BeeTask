@@ -62,7 +62,7 @@ class _SearchScreenState extends State<SearchScreen> {
           style: TextStyle(
               color: Colors.black,
               fontSize: 30,
-              fontWeight: FontWeight.bold), // Chữ màu đen
+              fontWeight: FontWeight.bold), 
         ),
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
@@ -93,13 +93,12 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
           ),
           const SizedBox(height: 16.0),
-          // Nội dung thay đổi dựa trên trạng thái của thanh tìm kiếm
           Expanded(
             child: Column(
               children: [
                 _searchQuery != ''
-                    ? _buildSearchOptions() // Hiển thị ba lựa chọn khi nhấn vào thanh tìm kiếm
-                    : _buildDefaultContent(), // Hiển thị nội dung mặc định khi chưa nhấn
+                    ? _buildSearchOptions() 
+                    : _buildDefaultContent(), 
                 const SizedBox(height: 16.0),
                 if (_searchQuery != '')
                   _buildSearchResults(), // Hiển thị kết quả tìm kiếm
@@ -286,7 +285,7 @@ class _SearchScreenState extends State<SearchScreen> {
     return const SizedBox.shrink();
   }
 
-// Hàm điều hướng đến chi tiết Project
+// Điều hướng đến chi tiết Project
   void _navigateToProjectDetails(var project) {
     Navigator.push(
       context,

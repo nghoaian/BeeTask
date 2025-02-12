@@ -346,8 +346,8 @@ class _ProjectScreenState extends State<ProjectScreen> {
           child: SingleChildScrollView(
             child: AddTaskDialog(
               projectId: projectId,
-              taskId: '', // Add appropriate taskId
-              type: '', // Add appropriate type
+              taskId: '', 
+              type: '', 
               selectDay: DateTime.now(),
               resetDialog: () => {},
               resetScreen: () => setState(() {}),

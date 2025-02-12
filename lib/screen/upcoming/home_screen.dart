@@ -87,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // Widget xây dựng lịch với TableCalendar
   Widget _buildCalendar() {
     return Container(
-      color: Colors.white, // Đặt màu nền của toàn bộ Container là màu trắng
+      color: Colors.white, 
       child: TableCalendar(
         firstDay: DateTime.utc(2000, 1, 1),
         lastDay: DateTime.utc(2100, 12, 31),
@@ -133,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
           leftChevronIcon: Icon(Icons.chevron_left, color: Colors.black),
           rightChevronIcon: Icon(Icons.chevron_right, color: Colors.black),
           decoration: BoxDecoration(
-            color: Colors.white, // Đặt màu nền của header thành màu trắng
+            color: Colors.white,
           ),
         ),
         calendarStyle: const CalendarStyle(
@@ -149,7 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
           weekendTextStyle: TextStyle(color: Colors.black),
           outsideTextStyle: TextStyle(color: Colors.black),
           rowDecoration: BoxDecoration(
-            color: Colors.white, // Đặt màu nền của calendar thành màu trắng
+            color: Colors.white, 
           ),
         ),
       ),

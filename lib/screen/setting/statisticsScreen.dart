@@ -89,7 +89,7 @@ class _StatisScreenState extends State<StatisScreen> {
         color: AppColors.primary,
         radius: 50,
         titleStyle: const TextStyle(
-          color: Colors.white, // Đặt màu chữ thành màu trắng
+          color: Colors.white, 
           fontSize: 16,
           fontWeight: FontWeight.bold,
         ),

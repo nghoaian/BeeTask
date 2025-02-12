@@ -36,7 +36,6 @@ class _ProjectActivityScreenState extends State<ProjectActivityScreen> {
     Set<String> projectIds =
         projects.map<String>((project) => project['id'].toString()).toSet();
 
-    // Filter and sort activities
     projectActivity = projectActivity
         .where((activity) => projectIds.contains(activity['projectId']))
         .toList();
@@ -49,7 +48,6 @@ class _ProjectActivityScreenState extends State<ProjectActivityScreen> {
       return timeB.compareTo(timeA); // Sort descending (newest first)
     });
 
-    // Group by date
     for (var activity in projectActivity) {
       String date = DateFormat('MMM dd, yyyy').format(
         DateFormat('HH:mm:ss.SSS, dd-MM-yyyy').parse(activity['timestamp']),

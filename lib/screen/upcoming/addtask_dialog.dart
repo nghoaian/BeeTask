@@ -11,7 +11,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class AddTaskDialog extends StatefulWidget {
   final String projectId;
-  final String taskId; // Có thể là null nếu tạo mới
+  final String taskId; 
   final DateTime selectDay; // Ngày được chọn để thêm task
   final String type;
   final Function resetScreen;
@@ -79,7 +79,6 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
             _showTaskNameDialog();
           },
           child: AbsorbPointer(
-            // Không cho phép nhập trực tiếp vào TextField, thay vào đó mở dialog
             child: TextField(
               controller: taskNameController,
               decoration: InputDecoration(
@@ -110,7 +109,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
           content: TextField(
             controller: _controller,
             autofocus:
-                true, // Đảm bảo TextField có tiêu điểm khi dialog xuất hiện
+                true, 
             decoration: const InputDecoration(
               labelText: 'Task Name',
               border: OutlineInputBorder(),
@@ -219,11 +218,9 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
 
 // Hàm dựng dropdown để người dùng chọn project
   Widget _buildProjectDropdownWithChoices() {
-    // Filter the projects based on the user's email
 
     var projects = TaskData().projects;
 
-    // Filter the projects based on the user's email
     final filteredProjects = projects.where((project) {
       return project['permissions'] != null &&
           project['permissions'].contains(user?.email);
@@ -241,14 +238,14 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
           value: projectController.text.isEmpty ? null : projectController.text,
           items: filteredProjects.map((project) {
             return DropdownMenuItem<String>(
-              value: project['id'], // Use 'id' as the value
-              child: Text(project['name']), // Display 'name' in the dropdown
+              value: project['id'], // Sử dụng id cho value
+              child: Text(project['name']), // Hiển thị name 
             );
           }).toList(),
           onChanged: (value) {
             setState(() {
-              projectController.text = value ?? ''; // Update projectController
-              assigneeController.clear(); // Clear assignee data
+              projectController.text = value ?? ''; 
+              assigneeController.clear(); 
               projectID = '';
             });
           },
@@ -487,7 +484,6 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
             ),
             ElevatedButton(
               onPressed: () {
-                // Lưu giá trị từ _dialogController vào descriptionController
                 setState(() {
                   descriptionController.text = _dialogController.text;
                 });
@@ -503,7 +499,6 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
 
 // Trường nhập ngày
   Widget _buildDateField() {
-    // Initialize the dateController with the formatted selectedDay if it's not null
     if (_selectedDay != null) {
       dateController.text = "${_selectedDay!.toLocal()}".split(' ')[0];
     }
@@ -518,17 +513,16 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
         const SizedBox(height: 8),
         TextField(
           controller: dateController,
-          readOnly: true, // Prevent user from typing directly
+          readOnly: true, 
           decoration: const InputDecoration(
             hintText: 'Select a date',
             border: OutlineInputBorder(
               borderRadius: BorderRadius.all(Radius.circular(10)),
-            ), // Border for the input field
+            ), 
             suffixIcon:
-                Icon(Icons.calendar_today), // Calendar icon on the right
+                Icon(Icons.calendar_today), 
           ),
           onTap: () async {
-            // Show date picker
             final DateTime? pickedDate = await showDatePicker(
               context: context,
               initialDate: _selectedDay ?? DateTime.now(),
@@ -537,9 +531,9 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
             );
             if (pickedDate != null && pickedDate != _selectedDay) {
               setState(() {
-                _selectedDay = pickedDate; // Store the selected date
+                _selectedDay = pickedDate; 
                 dateController.text = "${_selectedDay!.toLocal()}"
-                    .split(' ')[0]; // Update the text field
+                    .split(' ')[0]; 
               });
             }
           },
@@ -653,8 +647,8 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                 priority: task['priority'].toString(),
                 assignee: task['assignee'].toString(),
                 completed: false,
-                type: type, // Dùng 'type' là type của project
-                projectName: '', // Dùng tên task hoặc projectName nếu cần
+                type: type, 
+                projectName: '', 
                 subtasks: [],
               );
 
@@ -670,7 +664,6 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                       'noID', 'task', taskData, widget.taskId, projectId));
                 }
 
-                // Simulate a delay of 2 seconds before closing the dialog and adding the task
                 await Future.delayed(Duration(seconds: 2));
                 if (widget.type == '') {
                   widget.resetScreen();
@@ -678,22 +671,17 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                   widget.resetDialog();
                 }
 
-                // Close the loading dialog
-                Navigator.pop(context); // Close loading dialog
+                Navigator.pop(context); 
 
-                // Now close the task creation dialog as well
-                Navigator.pop(context); // Close the main task dialog
+                Navigator.pop(context); 
 
-                // Show success message
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Task added successfully!')),
                 );
               } catch (e) {
-                // Close the loading dialog on failure
-                Navigator.pop(context); // Close loading dialog
+                Navigator.pop(context); 
 
-                // Optionally, close the task creation dialog as well
-                Navigator.pop(context); // Close the task creation dialog
+                Navigator.pop(context);
 
                 // Show error message
                 ScaffoldMessenger.of(context).showSnackBar(

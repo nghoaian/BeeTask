@@ -18,7 +18,7 @@ class ActivityLogScreen extends StatefulWidget {
 }
 
 class _ActivitylogscreenState extends State<ActivityLogScreen> {
-  List<String> selectedEventTypes = ['All events']; // Default to 'All events'
+  List<String> selectedEventTypes = ['All events']; 
   String selectedCollaborator = '';
   String selectedProject = 'All Projects';
 
@@ -42,7 +42,7 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
       List<dynamic> members = project['members'];
       for (var member in members) {
         uniqueMembers
-            .add(member); // Adding members to the Set will ensure uniqueness
+            .add(member); 
       }
     }
     collaborators = uniqueMembers.toList();
@@ -143,7 +143,6 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                 color: AppColors.primary,
               ),
               onPressed: () async {
-                // Pass the updated `selectedProject` to the dialog
                 String? selectedProjectResult = await showDialog<String>(
                   context: context,
                   builder: (context) => SelectProjectDialog(
@@ -183,7 +182,6 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                   ),
                 ).then((selectedOption) {
                   if (selectedOption == 'By event task') {
-                    // Show the dialog for event task filter
                     showDialog(
                       context: context,
                       builder: (context) => FilterDialog(
@@ -191,13 +189,12 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                         onEventTypesChanged: (value) {
                           setState(() {
                             selectedEventTypes =
-                                value; // Update selectedEventTypes
+                                value; 
                           });
                         },
                       ),
                     );
                   } else if (selectedOption == 'By collaborator') {
-                    // Show the dialog for collaborator filter
                     showDialog(
                       context: context,
                       builder: (context) => CollaboratorDialog(
@@ -236,7 +233,6 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Display the date header
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Text(
@@ -245,7 +241,6 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                                   fontWeight: FontWeight.bold, fontSize: 16),
                             ),
                           ),
-                          // Display each activity log for the given date
                           ...logsForDate.map((log) {
                             var user = users.firstWhere((user) =>
                                 user['userEmail'] == log['userEmail']);
@@ -359,9 +354,9 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                                       isScrollControlled: true,
                                       builder: (context) => CommentsDialog(
                                         idTask: log[
-                                            'taskId'], // Pass idTask to dialog
+                                            'taskId'], 
                                         type:
-                                            log['type'], // Pass type to dialog
+                                            log['type'], 
                                       ),
                                     );
                                   }
@@ -473,7 +468,6 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                                   padding: EdgeInsets.all(8),
                                   child: Row(
                                     children: [
-                                      // Stack to overlay the icon at the bottom-right of the avatar
                                       Stack(
                                         clipBehavior: Clip.none,
                                         children: [
@@ -488,7 +482,7 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
                                                 color: Colors.white,
                                                 fontWeight: FontWeight.bold,
                                               ),
-                                            ), // Replace with actual user avatar
+                                            ),
                                           ),
                                           Positioned(
                                             bottom: -4,
@@ -560,7 +554,7 @@ class _ActivitylogscreenState extends State<ActivityLogScreen> {
       case 'uncomplete':
         return Icons.cancel;
       default:
-        return Icons.info; // Default icon for unknown actions
+        return Icons.info; 
     }
   }
 }
@@ -653,10 +647,9 @@ class _FilterDialogState extends State<FilterDialog> {
   @override
   void initState() {
     super.initState();
-    selectedEventTypes = widget.selectedEventTypes; // Default to 'All events'
+    selectedEventTypes = widget.selectedEventTypes; 
   }
 
-  // List of events with corresponding icons
   final List<Map<String, dynamic>> events = [
     {'name': 'All events', 'icon': Icons.event_available},
     {'name': 'add', 'icon': Icons.add_circle},
@@ -697,19 +690,15 @@ class _FilterDialogState extends State<FilterDialog> {
                     selectedEventTypes = ['All events'];
                   } else {
                     if (isSelected) {
-                      // If already selected, deselect it
                       selectedEventTypes.remove(event['name']);
                     } else {
-                      // If not selected, add it to the list
                       selectedEventTypes.add(event['name']);
                     }
 
-                    // Remove 'All events' if another event is selected
                     if (selectedEventTypes.contains(event['name'])) {
                       selectedEventTypes.remove('All events');
                     }
 
-                    // If no events are selected, select 'All events' by default
                     if (selectedEventTypes.isEmpty) {
                       selectedEventTypes.add('All events');
                     }
@@ -732,7 +721,7 @@ class _FilterDialogState extends State<FilterDialog> {
             ),
           ),
           onPressed: () {
-            Navigator.of(context).pop(); // Close dialog
+            Navigator.of(context).pop(); 
           },
         ),
       ],
@@ -787,7 +776,7 @@ class _CollaboratorDialogState extends State<CollaboratorDialog> {
               tileColor: selectedCollaborator.isEmpty ? Colors.blue[100] : null,
               onTap: () {
                 setState(() {
-                  selectedCollaborator = ''; // Clear the selection
+                  selectedCollaborator = ''; 
                 });
                 widget.onCollaboratorChanged('');
                 Navigator.pop(context);
