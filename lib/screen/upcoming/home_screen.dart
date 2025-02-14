@@ -29,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   var subtasks = TaskData().subtasks;
   var subsubtasks = TaskData().subsubtasks;
   var users = TaskData().users;
+  var project = TaskData().projects;
 
   @override
   void initState() {
@@ -48,6 +49,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print(TaskData().projects);
+    print(TaskData().tasks);
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
@@ -87,7 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // Widget xây dựng lịch với TableCalendar
   Widget _buildCalendar() {
     return Container(
-      color: Colors.white, 
+      color: Colors.white,
       child: TableCalendar(
         firstDay: DateTime.utc(2000, 1, 1),
         lastDay: DateTime.utc(2100, 12, 31),
@@ -149,7 +153,7 @@ class _HomeScreenState extends State<HomeScreen> {
           weekendTextStyle: TextStyle(color: Colors.black),
           outsideTextStyle: TextStyle(color: Colors.black),
           rowDecoration: BoxDecoration(
-            color: Colors.white, 
+            color: Colors.white,
           ),
         ),
       ),

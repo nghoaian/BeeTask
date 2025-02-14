@@ -217,6 +217,17 @@ class _ProjectScreenState extends State<ProjectScreen> {
                                   Future.delayed(const Duration(seconds: 2),
                                       () {
                                     widget.resetScreen();
+                                    TaskData().tasks.removeWhere((task) =>
+                                        task['projectId'] == widget.projectId);
+                                    TaskData().subtasks.removeWhere((subtask) =>
+                                        subtask['projectId'] ==
+                                        widget.projectId);
+                                    TaskData().subsubtasks.removeWhere(
+                                        (subsubtask) =>
+                                            subsubtask['projectId'] ==
+                                            widget.projectId);
+                                    TaskData().projects.removeWhere(
+                                        (p) => p['id'] == widget.projectId);
 
                                     if (context.mounted) {
                                       Navigator.pop(
@@ -346,8 +357,8 @@ class _ProjectScreenState extends State<ProjectScreen> {
           child: SingleChildScrollView(
             child: AddTaskDialog(
               projectId: projectId,
-              taskId: '', 
-              type: '', 
+              taskId: '',
+              type: '',
               selectDay: DateTime.now(),
               resetDialog: () => {},
               resetScreen: () => setState(() {}),

@@ -45,6 +45,7 @@ class TaskData {
         _updateProjects(projectChange);
 
         String projectId = projectChange.doc.id;
+
         String projectName = projectChange.doc['name'];
         // Lắng nghe sự thay đổi của các thành viên trong project
         if (projectChange.type == DocumentChangeType.removed) {

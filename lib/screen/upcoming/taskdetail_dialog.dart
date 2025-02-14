@@ -21,7 +21,7 @@ class TaskDetailsDialog extends StatefulWidget {
   final DateTime selectDay; // Ngày được chọn để thêm task
 
   bool showCompletedTasks;
-  final TaskBloc taskBloc; 
+  final TaskBloc taskBloc;
   final Function resetScreen;
   final Function resetDialog;
   final bool permissions;
@@ -767,7 +767,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: DropdownButton<String>(
-                  value: taskData['priority'] ?? 'Low', 
+                  value: taskData['priority'] ?? 'Low',
                   onChanged: (String? newValue) {
                     if (newValue != null) {
                       context.read<TaskBloc>().add(logTaskActivity(
@@ -973,6 +973,9 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
           .where((subsubtask) => subsubtask['completed'] == true)
           .length;
     }
+    if (widget.isCompleted == true) {
+      subtask['completed'] = true;
+    }
 
     return GestureDetector(
       onTap: () async {
@@ -1055,6 +1058,9 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
   }
 
   Widget buildSubsubtasks(var task, var subtask, var subsubtask) {
+    if (widget.isCompleted == true) {
+      subsubtask['completed'] = true;
+    }
     return Column(
       children: [
         Padding(
@@ -1209,7 +1215,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
                   var member = projectMembers[index];
                   return RadioListTile<String>(
                     title: Text(member), // Hiển thị tên người dùng
-                    value: member, 
+                    value: member,
                     groupValue: selectedAssignee,
                     onChanged: (value) {
                       selectedAssignee = value;
@@ -1297,7 +1303,7 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
       await Future.delayed(Duration(seconds: 2));
 
       // Đóng dialog sau khi cập nhật xong
-      Navigator.pop(dialogContext); 
+      Navigator.pop(dialogContext);
       if (widget.openFirst != true) {
         widget.resetDialog();
       } else {
@@ -1463,8 +1469,11 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
       } else {
         if (task.type == 'subsubtask') {
           subtaskF['completed'] = false;
+          widget.isCompleted = false;
           taskF['completed'] = false;
         } else if (task.type == 'subtask') {
+          widget.isCompleted = false;
+
           taskF['completed'] = false;
         }
       }
