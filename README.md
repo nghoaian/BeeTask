@@ -21,6 +21,6 @@
       1.	Kết nối thiết bị thực với máy tính sử dụng cáp USB
       2.	Bật chế độ debug trên thiết bị
       3.	Chạy ứng dụng Flutter bằng lệnh: flutter run
-Tài khoản đăng nhập demo:
+- Tài khoản đăng nhập demo:
 Email: bee@gmail.com
 Password: bee123
